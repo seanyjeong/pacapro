@@ -1,85 +1,51 @@
 import type { PendingUser } from '@/lib/api/users';
-import { AlertCircle, Building2, Clock3, RefreshCw, ShieldCheck, UserCheck, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Building2, Clock3 } from 'lucide-react';
+import { SectionCard } from '@/components/ui/page';
 import { formatAdminUserDate } from './admin-users-utils';
 
 interface AdminUsersOperationsBoardProps {
   users: PendingUser[];
-  onRefresh: () => void;
 }
 
-export function AdminUsersOperationsBoard({ users, onRefresh }: AdminUsersOperationsBoardProps) {
-  const ownerCount = users.filter((user) => user.role === 'owner').length;
-  const instructorCount = users.filter((user) => user.role === 'instructor').length;
-  const unassignedCount = users.filter((user) => !user.academy_name).length;
+// 가장 오래 기다린 요청과 학원별 대기. 숫자 요약은 위 칸에 있다.
+export function AdminUsersOperationsBoard({ users }: AdminUsersOperationsBoardProps) {
   const oldestUser = [...users].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
   const academyCounts = getAcademyCounts(users);
 
   return (
-    <aside
-      aria-label="사용자 승인 작업 보드"
-      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
-      data-testid="admin-users-operations-board"
-    >
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-normal text-foreground">승인 작업 보드</h2>
-        <p className="text-sm leading-6 text-secondary-foreground">역할, 지점, 연락처를 확인한 뒤 계정 접근을 열어줍니다.</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<Users className="h-4 w-4" />} label="승인 대기" value={`${users.length}명`} />
-        <Metric icon={<ShieldCheck className="h-4 w-4" />} label="원장" value={`원장 ${ownerCount}명`} />
-        <Metric icon={<UserCheck className="h-4 w-4" />} label="강사" value={`강사 ${instructorCount}명`} />
-        <Metric icon={<AlertCircle className="h-4 w-4" />} label="학원 미지정" value={`${unassignedCount}명`} />
-      </div>
-
-      <div className="rounded-md border border-border bg-muted p-3">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock3 className="h-4 w-4" />
-          <span className="text-xs font-medium">가장 오래 대기</span>
+    <aside aria-label="사용자 승인 작업 보드" className="space-y-4" data-testid="admin-users-operations-board">
+      <SectionCard title="가장 오래 대기">
+        <div className="flex items-start gap-3 rounded-xl bg-muted p-3">
+          <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold text-foreground">{oldestUser ? oldestUser.name : '대기 없음'}</p>
+            <p className="mt-0.5 text-[13px] text-secondary-foreground">{oldestUser ? formatAdminUserDate(oldestUser.created_at) : '신규 요청이 들어오면 보여요.'}</p>
+          </div>
         </div>
-        <p className="mt-2 text-sm font-semibold text-foreground">{oldestUser ? oldestUser.name : '대기 없음'}</p>
-        <p className="mt-1 text-xs text-secondary-foreground">{oldestUser ? formatAdminUserDate(oldestUser.created_at) : '신규 요청이 들어오면 표시됩니다.'}</p>
-      </div>
+      </SectionCard>
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">지점별 대기</p>
+      <SectionCard title="학원별 대기">
         {academyCounts.length > 0 ? (
-          academyCounts.map((item) => (
-            <div key={item.name} className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm">
-              <span className="flex min-w-0 items-center gap-2 text-secondary-foreground">
-                <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="truncate">{item.name}</span>
-              </span>
-              <span className="font-semibold text-foreground">{item.count}명</span>
-            </div>
-          ))
+          <div className="divide-y divide-border/60">
+            {academyCounts.map((item) => (
+              <div key={item.name} className="flex items-center justify-between py-2.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2 text-secondary-foreground">
+                  <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{item.name}</span>
+                </span>
+                <span className="font-bold tabular-nums text-foreground">{item.count}명</span>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-secondary-foreground">대기 중인 계정이 없습니다.</div>
+          <p className="rounded-xl bg-muted px-3 py-2 text-sm text-secondary-foreground">대기 중인 계정이 없어요.</p>
         )}
-      </div>
+      </SectionCard>
 
-      <div className="rounded-md border border-primary/30 bg-primary-soft p-3 text-sm leading-6 text-primary">
-        학원명과 역할이 맞지 않으면 거절하세요. 거절된 사용자는 가입 신청을 다시 해야 합니다.
-      </div>
-
-      <Button className="w-full justify-center gap-2" type="button" variant="outline" onClick={onRefresh}>
-        <RefreshCw className="h-4 w-4" />
-        목록 새로고침
-      </Button>
+      <p className="rounded-2xl bg-primary-soft p-4 text-sm leading-6 text-primary">
+        학원명·역할·연락처를 확인한 뒤 승인하세요. 맞지 않으면 거절하고, 거절된 사용자는 가입 신청을 다시 해야 해요.
+      </p>
     </aside>
-  );
-}
-
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-border bg-muted p-3">
-      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-xs font-medium">{label}</span>
-      </div>
-      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
-    </div>
   );
 }
 

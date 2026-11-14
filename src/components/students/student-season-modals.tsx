@@ -74,7 +74,7 @@ export function StudentSeasonEditModal({
               type="date"
               value={editData.registration_date}
               onChange={(e) => onEditDataChange({ ...editData, registration_date: e.target.value })}
-              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
             <p className="text-xs text-muted-foreground mt-1">
               시즌 시작일 이후로 설정하면 일할계산이 적용됩니다.
@@ -87,7 +87,7 @@ export function StudentSeasonEditModal({
               id="student-season-edit-fee"
               value={editData.season_fee}
               onChange={(season_fee) => onEditDataChange({ ...editData, season_fee })}
-              className="focus:ring-primary-500 focus:border-primary-500"
+              className="focus:outline-none"
             />
             <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
           </div>
@@ -98,7 +98,7 @@ export function StudentSeasonEditModal({
               id="student-season-edit-discount"
               value={editData.discount_amount}
               onChange={(discount_amount) => onEditDataChange({ ...editData, discount_amount })}
-              className="focus:ring-primary-500 focus:border-primary-500"
+              className="focus:outline-none"
             />
             <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
           </div>
@@ -111,11 +111,11 @@ export function StudentSeasonEditModal({
               maxLength={255}
               value={editData.discount_reason}
               onChange={(e) => onEditDataChange({ ...editData, discount_reason: e.target.value })}
-              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
           </div>
 
-          <div className="p-3 bg-muted rounded-lg">
+          <div className="rounded-xl bg-muted p-3">
             <div className="flex justify-between text-sm">
               <span className="text-secondary-foreground">지금 청구 금액</span>
               <span>{formatSeasonFee(editingEnrollment.season_fee)}</span>
@@ -308,7 +308,7 @@ function SeasonPreview({ preview }: { preview: ProRatedPreview }) {
 
       <div className="flex justify-between font-semibold border-t pt-2">
         <span>총 납부액</span>
-        <span className="text-primary-600">
+        <span className="text-primary">
           {formatSeasonFee(preview.final_calculation.total_due)}
         </span>
       </div>

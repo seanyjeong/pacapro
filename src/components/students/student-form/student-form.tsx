@@ -55,7 +55,7 @@ export function StudentForm({
 
   return (
     <>
-    <form onSubmit={hook.handleSubmit} className="space-y-5">
+    <form onSubmit={hook.handleSubmit} className="space-y-4">
       <StudentPhotoField
         mode={mode}
         pendingPhotoFile={hook.pendingPhotoFile}
@@ -161,7 +161,7 @@ export function StudentForm({
       {/* 에러 메시지 */}
       {hook.errors.submit && (
         <section
-          className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+          className="rounded-2xl bg-warning-soft p-5 text-warning"
           data-testid="student-form-submit-error"
           role="alert"
         >

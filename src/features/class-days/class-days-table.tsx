@@ -35,9 +35,9 @@ export function ClassDaysTable({
   onCancelSchedule,
 }: ClassDaysTableProps) {
   return (
-    <Card className="rounded-md shadow-none">
+    <Card>
       <CardContent className="p-0">
-        <div className="space-y-3 p-3 lg:hidden">
+        <div className="space-y-2 lg:hidden">
           {students.map((student) => (
             <ClassDaysMobileCard
               key={student.id}
@@ -57,7 +57,7 @@ export function ClassDaysTable({
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[920px]">
             <thead>
-              <tr className="border-b bg-muted/60">
+              <tr className="border-b border-border/60">
                 <th className="w-10 p-3 text-left">
                   <Checkbox
                     aria-label="전체 학생 선택"
@@ -65,11 +65,11 @@ export function ClassDaysTable({
                     onCheckedChange={onToggleSelectAll}
                   />
                 </th>
-                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">이름</th>
-                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">학년</th>
-                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">현재 수업일</th>
-                <th className="p-3 text-center text-xs font-semibold uppercase tracking-normal text-muted-foreground">수업일 변경</th>
-                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">변경 예정</th>
+                <th className="whitespace-nowrap p-3 text-left text-[13px] font-semibold text-muted-foreground">이름</th>
+                <th className="whitespace-nowrap p-3 text-left text-[13px] font-semibold text-muted-foreground">학년</th>
+                <th className="whitespace-nowrap p-3 text-left text-[13px] font-semibold text-muted-foreground">현재 수업일</th>
+                <th className="whitespace-nowrap p-3 text-center text-[13px] font-semibold text-muted-foreground">수업일 변경</th>
+                <th className="whitespace-nowrap p-3 text-left text-[13px] font-semibold text-muted-foreground">변경 예정</th>
               </tr>
             </thead>
             <tbody>
@@ -97,7 +97,7 @@ export function ClassDaysTable({
 
 function ClassDaysEmptyState() {
   return (
-    <div className="rounded-md border border-border bg-background p-8 text-center text-muted-foreground">
+    <div className="rounded-xl bg-muted p-8 text-center text-muted-foreground">
       <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
       표시할 학생이 없습니다.
     </div>
@@ -144,7 +144,7 @@ function ClassDaysMobileCard({
   const hasScheduled = student.class_days_next !== null;
 
   return (
-    <article className={cn('rounded-md border border-border bg-background p-4', hasChange && 'border-primary/30 bg-primary-soft/45')}>
+    <article className={cn('rounded-xl bg-muted p-4', hasChange && 'bg-primary-soft')}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <Checkbox
@@ -179,7 +179,7 @@ function ClassDaysMobileCard({
           onResetEdit={onResetEdit}
         />
       </div>
-      <div className="mt-4 border-t border-border/70 pt-3">
+      <div className="mt-4 border-t border-border/60 pt-3">
         <ScheduleStatus
           student={student}
           currentSlots={currentSlots}
@@ -213,8 +213,8 @@ function ClassDaysRow({
   return (
     <tr
       className={cn(
-        'border-b transition-colors hover:bg-muted/30',
-        hasChange && 'bg-primary-soft/50'
+        'border-b border-border/60 transition-colors last:border-0 hover:bg-muted/60',
+        hasChange && 'bg-primary-soft/60'
       )}
     >
       <td className="p-3">
@@ -302,12 +302,12 @@ function ClassDayEditor({
               aria-pressed={isActive}
               onClick={() => onToggleDay(student.id, option.value)}
               className={cn(
-                'h-9 w-9 rounded-md border text-xs font-medium transition-all',
+                'h-9 w-9 rounded-lg text-xs font-semibold transition-all',
                 isActive
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-muted-foreground border-input hover:border-primary/50',
-                isChanged && isActive && 'ring-2 ring-primary',
-                isChanged && !isActive && 'ring-2 ring-destructive/30 border-destructive/30'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground ring-1 ring-inset ring-border hover:text-foreground',
+                isChanged && isActive && 'ring-2 ring-primary/40 ring-offset-1 ring-offset-card',
+                isChanged && !isActive && 'ring-2 ring-destructive/30'
               )}
             >
               {option.label}
@@ -334,7 +334,7 @@ function ClassDayEditor({
               aria-label={`${student.name} ${WEEKDAY_MAP[slot.day]}요일 시간대`}
               value={slot.timeSlot}
               onChange={(event) => onChangeDayTimeSlot(student.id, slot.day, event.target.value as TimeSlot)}
-              className="min-w-[74px] rounded border border-input bg-background px-2 py-1 text-xs"
+              className="min-w-[74px] rounded-lg bg-muted px-2 py-1 text-xs"
               title={`${WEEKDAY_MAP[slot.day]} 시간대`}
             >
               <option value="morning">{WEEKDAY_MAP[slot.day]} 오전</option>

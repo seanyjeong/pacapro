@@ -16,8 +16,8 @@ export function StudentsBulkPlacementBar({ branches, count, moving, onMove, onCl
   const [target, setTarget] = useState<StudentPlacement>({ branch_id: null, class_id: null });
 
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3 sm:flex-row sm:items-center" aria-label="선택한 학생 옮기기">
-      <p className="shrink-0 text-sm font-semibold text-foreground">{count}명 선택</p>
+    <section className="flex flex-col gap-2 rounded-xl bg-primary-soft p-3 sm:flex-row sm:items-center" aria-label="선택한 학생 옮기기">
+      <p className="shrink-0 text-sm font-bold text-primary">{count}명 선택</p>
       <div className="min-w-0 flex-1 sm:max-w-xs">
         <StudentPlacementSelect branches={branches} value={target} onChange={setTarget} disabled={moving} placeholder="옮길 지점·반 선택" />
       </div>

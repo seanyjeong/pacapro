@@ -190,7 +190,7 @@ export function StaffFormModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -217,7 +217,7 @@ export function StaffFormModal({
                   }}
                   aria-invalid={!!errors.instructor_id}
                   aria-describedby={errors.instructor_id ? 'staff-instructor-error' : undefined}
-                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="">강사를 선택하세요</option>
                   {availableInstructors.map((instructor) => (
@@ -245,7 +245,7 @@ export function StaffFormModal({
                   setFormData((prev) => ({ ...prev, email: e.target.value }));
                   clearFieldError('email');
                 }}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-muted"
+                className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-60"
                 placeholder="example@email.com"
                 disabled={isEdit}
                 autoComplete="off"
@@ -271,7 +271,7 @@ export function StaffFormModal({
                     setFormData((prev) => ({ ...prev, password: e.target.value }));
                     clearFieldError('password');
                   }}
-                  className="w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="min-h-11 w-full rounded-xl border border-transparent bg-muted pl-4 pr-10 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
                   placeholder="8자 이상"
                   autoComplete="new-password"
                   name="staff-password"
@@ -298,7 +298,7 @@ export function StaffFormModal({
                 type="text"
                 value={formData.position}
                 onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
                 placeholder="부원장, 경리, 실장 등"
               />
             </div>
@@ -364,7 +364,7 @@ export function StaffFormModal({
                   const categoryEditIndeterminate = isCategoryIndeterminate(category.title, 'edit');
 
                   return (
-                    <div key={category.title} className="border border-border rounded-lg overflow-hidden">
+                    <div key={category.title} className="overflow-hidden rounded-xl bg-muted">
                       {/* 카테고리 헤더 */}
                       <div className="bg-muted">
                         <div className="flex flex-col sm:flex-row sm:items-center">
@@ -382,7 +382,7 @@ export function StaffFormModal({
                             <span className="text-xs text-muted-foreground">({category.items.length}개)</span>
                           </button>
                           <div className="grid grid-cols-2 gap-2 px-4 pb-3 sm:flex sm:items-center sm:gap-6 sm:pb-0">
-                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-2 py-2 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryViewChecked}
@@ -390,11 +390,11 @@ export function StaffFormModal({
                                   if (el) el.indeterminate = categoryViewIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'view', e.target.checked)}
-                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                className="h-4 w-4 accent-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 보기</span>
                             </label>
-                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-2 py-2 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryEditChecked}
@@ -402,7 +402,7 @@ export function StaffFormModal({
                                   if (el) el.indeterminate = categoryEditIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'edit', e.target.checked)}
-                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                className="h-4 w-4 accent-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 수정</span>
                             </label>
@@ -429,7 +429,7 @@ export function StaffFormModal({
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'view', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                      className="h-4 w-4 accent-primary"
                                     />
                                   </td>
                                   <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
@@ -439,7 +439,7 @@ export function StaffFormModal({
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'edit', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                      className="h-4 w-4 accent-primary"
                                     />
                                   </td>
                                 </tr>
@@ -456,7 +456,7 @@ export function StaffFormModal({
 
             {/* 버튼 */}
             {errors.submit && (
-              <p className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              <p className="rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive">
                 {errors.submit}
               </p>
             )}

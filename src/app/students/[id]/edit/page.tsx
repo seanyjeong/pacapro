@@ -68,20 +68,19 @@ export default function EditStudentPage() {
   // 로딩 화면
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-5">
+      <div className="mx-auto w-full max-w-7xl space-y-4">
         <StudentFormPageHeader
           backLabel="돌아가기"
-          description="학생 정보를 불러오는 중입니다."
-          eyebrow="Student Profile"
+          description="학생 정보를 불러오고 있어요."
           title="학생 정보 수정"
           onBack={() => router.push(`/students/${studentId}`)}
         />
-        <section className="rounded-md border border-border bg-card p-5" aria-busy="true">
+        <section className="rounded-2xl bg-card p-5 sm:p-6" aria-busy="true">
           <div className="grid gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="rounded-md border border-border/70 p-4">
-                <div className="h-3 w-20 rounded-md bg-muted" />
-                <div className="mt-3 h-9 rounded-md bg-muted" />
+              <div key={index}>
+                <div className="h-3 w-20 rounded-lg bg-muted" />
+                <div className="mt-3 h-11 rounded-xl bg-muted" />
               </div>
             ))}
           </div>
@@ -93,26 +92,25 @@ export default function EditStudentPage() {
   // 에러 화면
   if (error || !student) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-5">
+      <div className="mx-auto w-full max-w-7xl space-y-4">
         <StudentFormPageHeader
           description="학생 정보를 다시 불러올 수 있습니다."
-          eyebrow="Student Profile"
           title="학생 정보 수정"
           onBack={() => router.push('/students')}
         />
         <section
-          className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+          className="rounded-2xl bg-warning-soft p-5 text-warning"
           role="alert"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div className="space-y-1">
-                <h2 className="text-sm font-semibold">학생 정보를 불러올 수 없습니다</h2>
+                <h2 className="text-[15px] font-bold">학생 정보를 불러올 수 없어요</h2>
                 <p className="text-sm">{error || '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'}</p>
               </div>
             </div>
-            <Button className="gap-2" size="sm" type="button" variant="outline" onClick={reload}>
+            <Button className="w-full sm:w-auto" size="sm" type="button" variant="outline" onClick={reload}>
               <RefreshCw className="h-4 w-4" />
               다시 불러오기
             </Button>
@@ -125,13 +123,12 @@ export default function EditStudentPage() {
   const isTrialActivation = searchParams.get('activate_trial') === 'true' && !student.is_trial;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full max-w-7xl space-y-4">
       <StudentFormPageHeader
         backLabel="돌아가기"
         description={isTrialActivation
           ? `${student.name} 학생의 오늘 이후 새 체험 일정을 입력해주세요.`
           : `${student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.`}
-        eyebrow={isTrialActivation ? 'Trial Schedule' : 'Student Profile'}
         title={isTrialActivation ? '새 체험 일정 등록' : '학생 정보 수정'}
         onBack={handleCancel}
       />

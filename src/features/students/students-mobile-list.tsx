@@ -1,108 +1,81 @@
-import { StudentParentNames } from '@/components/students/student-parent-names';
-import { Calendar, ChevronRight, Phone, School } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { ChevronRight, Loader2, Users } from 'lucide-react';
+import { EmptyState } from '@/components/ui/page';
 import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student } from '@/lib/types/student';
-import { STATUS_LABELS } from '@/lib/types/student';
 import {
     formatClassDays,
-    formatCurrency,
-    formatDate,
     formatPhoneNumber,
-    getStatusColor,
     getStudentDisplayInfo,
 } from '@/lib/utils/student-helpers';
+import { visibleParentName } from '@/lib/utils/student-parent-names';
+import { StudentStatusBadge } from './student-status-badge';
 
 interface StudentsMobileListProps {
-    hideMonthlyTuition?: boolean;
     loading: boolean;
     students: Student[];
     onStudentClick: (id: number) => void;
+    /** 지점·반을 쓰는 학원만: 학생의 지점·반 이름 */
+    placementOf?: (student: Student) => string;
 }
 
+// 휴대폰 학생 목록: 한 명이 한 줄(사진 · 이름 + 상태 · 학년/지점·반 · 연락처).
 export function StudentsMobileList({
-    hideMonthlyTuition,
     loading,
     students,
     onStudentClick,
+    placementOf,
 }: StudentsMobileListProps) {
     if (loading) {
         return (
-            <div className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-                학생 목록을 불러오는 중입니다.
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                학생 목록을 불러오는 중이에요
             </div>
         );
     }
 
     if (students.length === 0) {
-        return (
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-                <p className="text-sm font-semibold text-foreground">표시할 학생이 없습니다</p>
-                <p className="mt-1 text-xs text-muted-foreground">검색어나 필터를 조정해 주세요.</p>
-            </div>
-        );
+        return <EmptyState icon={Users} title="표시할 학생이 없어요" description="검색어나 필터를 바꿔 보세요." />;
     }
 
     return (
-        <div className="space-y-3">
-            {students.map((student) => (
-                <article
-                    key={student.id}
-                    className="rounded-lg border border-border bg-card p-4 shadow-sm"
-                >
-                    <div className="flex items-start gap-3">
+        <ul className="divide-y divide-border/60">
+            {students.map((student) => {
+                const placement = placementOf?.(student);
+                const meta = [
+                    getStudentDisplayInfo(student),
+                    placement && placement !== '-' ? placement : null,
+                    student.school || null,
+                ].filter(Boolean).join(' · ');
+                const father = visibleParentName(student.father_name);
+                const mother = visibleParentName(student.mother_name);
+                const parents = [father && `아버지 ${father}`, mother && `어머니 ${mother}`].filter(Boolean).join(' · ');
+
+                return (
+                    <li key={student.id} className="flex items-center gap-3 py-3">
                         <StudentAvatar student={student} />
-                        <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-base font-semibold text-foreground">{student.name}</span>
-                                <Badge className={`border text-xs ${getStatusColor(student.status)}`}>
-                                    {STATUS_LABELS[student.status] || student.status}
-                                </Badge>
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                {getStudentDisplayInfo(student)}
-                                {student.school ? ` · ${student.school}` : ''}
-                            </p>
-                            <StudentParentNames student={student} />
-                        </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 shrink-0" />
-                            {formatPhoneNumber(student.phone)}
-                        </span>
-                        <span className="flex items-center gap-2">
-                            <School className="h-4 w-4 shrink-0" />
-                            {formatClassDays(student.class_days)} · 주 {student.weekly_count}회
-                        </span>
-                        <span className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 shrink-0" />
-                            등록 {formatDate(student.enrollment_date)}
-                        </span>
-                    </div>
-
-                    {!hideMonthlyTuition && (
-                        <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/45 px-3 py-2">
-                            <span className="text-xs font-medium text-muted-foreground">월 학원비</span>
-                            <span className="text-sm font-semibold text-foreground">
-                                {formatCurrency(student.monthly_tuition)}
-                            </span>
-                        </div>
-                    )}
-                    <div className="mt-4 flex justify-end border-t border-border/70 pt-3">
                         <button
                             type="button"
                             aria-label={`${student.name} 상세 보기`}
                             onClick={() => onStudentClick(student.id)}
-                            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                            className="flex min-w-0 flex-1 items-center gap-2 rounded-xl text-left transition-colors active:bg-muted"
                         >
-                            상세
-                            <ChevronRight className="h-4 w-4" />
+                            <span className="min-w-0 flex-1">
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                    <span className="truncate text-[16px] font-bold text-foreground">{student.name}</span>
+                                    <StudentStatusBadge status={student.status} className="shrink-0" />
+                                </span>
+                                <span className="mt-0.5 block truncate text-[13px] text-secondary-foreground">{meta}</span>
+                                <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                                    {formatPhoneNumber(student.phone)} · {formatClassDays(student.class_days)} 주 {student.weekly_count}회
+                                </span>
+                                {parents && <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">{parents}</span>}
+                            </span>
+                            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" />
                         </button>
-                    </div>
-                </article>
-            ))}
-        </div>
+                    </li>
+                );
+            })}
+        </ul>
     );
 }

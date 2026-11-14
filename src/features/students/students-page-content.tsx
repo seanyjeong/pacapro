@@ -28,23 +28,6 @@ import { StudentsPageHeader } from './students-page-header';
 import { StudentsPageList } from './students-page-list';
 import { StudentsResultsToolbar } from './students-results-toolbar';
 import { StudentsStatusTabs } from './students-status-tabs';
-import { StudentsWorkQueue } from './students-work-queue';
-
-interface StudentSummaryStats {
-    active: number;
-    paused: number;
-    pending: number;
-    total: number;
-    trial: number;
-}
-
-const EMPTY_SUMMARY_STATS: StudentSummaryStats = {
-    active: 0,
-    paused: 0,
-    pending: 0,
-    total: 0,
-    trial: 0,
-};
 
 export function StudentsPageContent() {
     const router = useRouter();
@@ -59,7 +42,6 @@ export function StudentsPageContent() {
     const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
     const [excelDownloading, setExcelDownloading] = useState(false);
     const [excelUploading, setExcelUploading] = useState(false);
-    const [summaryStats, setSummaryStats] = useState<StudentSummaryStats>(EMPTY_SUMMARY_STATS);
 
     const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(initialState.filters);
 
@@ -211,7 +193,7 @@ export function StudentsPageContent() {
     };
 
     return (
-        <div className="w-full max-w-full space-y-5" data-testid="students-operations-workspace">
+        <div className="w-full max-w-full space-y-4" data-testid="students-operations-workspace">
             <StudentsPageHeader
                 activeTab={activeTab}
                 excelDownloading={excelDownloading}
@@ -233,9 +215,11 @@ export function StudentsPageContent() {
                 <StudentsPageError onRetry={handleReload} />
             ) : (
                 <>
-                    <StudentsStatusTabs activeTab={activeTab} onChange={handleTabChange} />
-
-                    <StudentStatsCards refreshTrigger={statsRefreshTrigger} onStatsLoaded={setSummaryStats} />
+                    <StudentStatsCards
+                        refreshTrigger={statsRefreshTrigger}
+                        activeKey={activeTab}
+                        onSelect={handleTabChange}
+                    />
 
                     {branchTree.enabled && (
                         <StudentsBranchBar
@@ -250,60 +234,47 @@ export function StudentsPageContent() {
                         />
                     )}
 
-                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-                        <div className="order-2 min-w-0 space-y-5 xl:order-1">
-                            {showFilters && (
+                    <section className="min-w-0 space-y-4 rounded-2xl bg-card p-5 sm:p-6" aria-label="학생 목록">
+                        <StudentsStatusTabs activeTab={activeTab} onChange={handleTabChange} />
+
+                        <StudentsResultsToolbar
+                            count={students.length}
+                            filterLabels={filterLabels}
+                            searchQuery={searchQuery}
+                            onSearch={handleSearch}
+                            filters={showFilters ? (
                                 <StudentFiltersComponent
                                     filters={filters}
                                     onFilterChange={updateFilters}
                                     hideStatusFilter
                                     onReset={handleResetFilters}
                                 />
-                            )}
+                            ) : undefined}
+                        />
 
-                            <StudentsResultsToolbar
-                                count={students.length}
-                                filterLabels={filterLabels}
-                                searchQuery={searchQuery}
-                                onSearch={handleSearch}
+                        {selectedIds.size > 0 && (
+                            <StudentsBulkPlacementBar
+                                branches={branchTree.branches}
+                                count={selectedIds.size}
+                                moving={movingStudents}
+                                onMove={handleMoveStudents}
+                                onClear={() => setSelectedIds(new Set())}
                             />
+                        )}
 
-                            {selectedIds.size > 0 && (
-                                <StudentsBulkPlacementBar
-                                    branches={branchTree.branches}
-                                    count={selectedIds.size}
-                                    moving={movingStudents}
-                                    onMove={handleMoveStudents}
-                                    onClear={() => setSelectedIds(new Set())}
-                                />
-                            )}
+                        <StudentsPageList
+                            activeTab={activeTab}
+                            loading={loading}
+                            sort={sort}
+                            students={students}
+                            onReload={handleReload}
+                            onSortChange={handleSortChange}
+                            onStudentClick={openStudentDetail}
+                            placement={placement}
+                        />
+                    </section>
 
-                            <StudentsPageList
-                                activeTab={activeTab}
-                                loading={loading}
-                                sort={sort}
-                                students={students}
-                                onReload={handleReload}
-                                onSortChange={handleSortChange}
-                                onStudentClick={openStudentDetail}
-                                placement={placement}
-                            />
-
-                            {showEmptyGuide && <StudentsEmptyGuide />}
-                        </div>
-
-                        <aside className="order-1 min-w-0 xl:order-2">
-                            <StudentsWorkQueue
-                                activeTab={activeTab}
-                                currentCount={students.length}
-                                stats={summaryStats}
-                                students={students}
-                                onAddStudent={() => router.push('/students/new')}
-                                onTabChange={handleTabChange}
-                                onStudentClick={openStudentDetail}
-                            />
-                        </aside>
-                    </div>
+                    {showEmptyGuide && <StudentsEmptyGuide />}
                 </>
             )}
         </div>

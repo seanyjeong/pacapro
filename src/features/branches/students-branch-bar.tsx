@@ -17,12 +17,12 @@ function Chip({ active, label, count, onClick }: { active: boolean; label: strin
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
-        active ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:bg-muted',
+        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition-colors',
+        active ? 'bg-foreground text-background' : 'bg-card text-secondary-foreground hover:bg-muted hover:text-foreground',
       )}
     >
       {label}
-      <span className={cn('text-xs', active ? 'text-background/80' : 'text-muted-foreground')}>{count}</span>
+      <span className={cn('text-xs tabular-nums', active ? 'text-background/80' : 'text-muted-foreground')}>{count}</span>
     </button>
   );
 }
@@ -33,8 +33,8 @@ export function StudentsBranchBar({ branches, unassignedCount, branchId, classId
   const selectedBranch = branches.find((branch) => branch.id === branchId);
 
   return (
-    <section className="space-y-2 rounded-lg border border-border bg-card p-3" aria-label="지점·반">
-      <div className="flex flex-wrap gap-2">
+    <section className="space-y-2" aria-label="지점·반">
+      <div className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1 py-0.5">
         <Chip active={!branchId} label="전체 지점" count={total} onClick={() => onChange({ branch_id: undefined, class_id: undefined })} />
         {branches.map((branch) => (
           <Chip
@@ -55,7 +55,7 @@ export function StudentsBranchBar({ branches, unassignedCount, branchId, classId
         )}
       </div>
       {selectedBranch && (
-        <div className="flex flex-wrap gap-2 border-t border-border/70 pt-2">
+        <div className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1 py-0.5">
           <Chip active={!classId} label={`${selectedBranch.name} 전체`} count={selectedBranch.active_count}
             onClick={() => onChange({ branch_id: selectedBranch.id, class_id: undefined })} />
           {selectedBranch.classes.map((cls) => (

@@ -20,8 +20,8 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
 
   if (loading) {
     return (
-      <Card className="rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
+      <Card>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
@@ -34,8 +34,8 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
 
   if (salaries.length === 0) {
     return (
-      <Card className="rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
+      <Card>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
@@ -60,8 +60,8 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
 
   return (
     <>
-      <Card className="overflow-hidden rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
             <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-4">
@@ -79,29 +79,29 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-border bg-muted/60">
+              <thead className="border-b border-border/60">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     급여월
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     근무시간
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     기본급
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     세금
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     실수령액
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                  <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     상태
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border bg-card">
+              <tbody className="divide-y divide-border/60">
                 {salaries.map((salary) => (
                   <tr
                     key={salary.id}
@@ -182,16 +182,16 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
       {/* 급여 상세 모달 */}
       {selectedSalary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-md rounded-md border border-border bg-card shadow-xl">
+          <div className="mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
             {/* 모달 헤더 */}
-            <div className="flex items-center justify-between border-b border-border p-4">
+            <div className="flex items-center justify-between border-b border-border/60 p-5">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">급여 상세</h3>
                 <p className="text-sm text-muted-foreground">{selectedSalary.year_month} 급여</p>
               </div>
               <button
                 onClick={() => setSelectedSalary(null)}
-                className="rounded-md p-2 transition-colors hover:bg-muted"
+                className="rounded-xl p-2 transition-colors hover:bg-muted"
               >
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -201,7 +201,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
             <div className="p-4 space-y-4">
               {/* 근무시간 (시급제인 경우) */}
               {selectedSalary.total_hours && (
-                <div className="rounded-md bg-muted p-3">
+                <div className="rounded-xl bg-muted p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">총 근무시간</span>
                     <span className="font-semibold text-foreground">
@@ -247,7 +247,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
                   </div>
                 )}
 
-                <div className="border-t border-border pt-3">
+                <div className="border-t border-border/60 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">실수령액</span>
                     <span className="text-xl font-semibold text-primary">
@@ -258,7 +258,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
               </div>
 
               {/* 상태 및 지급일 */}
-              <div className="space-y-2 border-t border-border pt-3">
+              <div className="space-y-2 border-t border-border/60 pt-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">지급 상태</span>
                   <span
@@ -281,7 +281,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
 
               {/* 메모 */}
               {selectedSalary.notes && (
-                <div className="border-t border-border pt-3">
+                <div className="border-t border-border/60 pt-3">
                   <span className="text-sm text-muted-foreground">메모</span>
                   <p className="mt-1 text-foreground">{selectedSalary.notes}</p>
                 </div>
@@ -289,10 +289,10 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
             </div>
 
             {/* 모달 푸터 */}
-            <div className="border-t border-border bg-muted p-4">
+            <div className="border-t border-border/60 p-4">
               <button
                 onClick={() => setSelectedSalary(null)}
-                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
+                className="h-11 w-full rounded-xl bg-primary px-4 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 닫기
               </button>

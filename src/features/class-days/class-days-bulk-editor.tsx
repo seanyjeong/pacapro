@@ -58,20 +58,20 @@ export function ClassDaysBulkEditor({
   const canApply = selectedCount > 0 && sortedSlots.length > 0;
 
   return (
-    <section className="rounded-md border border-border bg-card p-4">
+    <section className="rounded-2xl bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">선택 학생 일괄 변경</h2>
-            <Badge variant={selectedCount > 0 ? 'secondary' : 'outline'}>{selectedCount}명 선택</Badge>
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-[17px] font-bold tracking-tight text-foreground">선택 학생 일괄 변경</h2>
+            <Badge variant={selectedCount > 0 ? 'default' : 'secondary'}>{selectedCount}명 선택</Badge>
           </div>
 
           <div className="flex flex-wrap gap-2" aria-label="수업일 프리셋">
             {DAY_PRESETS.map((preset) => (
               <Button
                 key={preset.label}
-                className="h-8 px-2.5 text-xs"
+                size="sm"
                 type="button"
                 variant="outline"
                 onClick={() => onUsePreset(preset.slots)}
@@ -92,10 +92,10 @@ export function ClassDaysBulkEditor({
                   aria-pressed={isActive}
                   onClick={() => onToggleDay(option.value)}
                   className={cn(
-                    'h-9 w-9 rounded-md border text-xs font-medium transition-colors',
+                    'h-10 w-10 rounded-xl text-sm font-semibold transition-colors',
                     isActive
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {option.label}
@@ -107,11 +107,11 @@ export function ClassDaysBulkEditor({
           {sortedSlots.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {sortedSlots.map((slot) => (
-                <label key={slot.day} className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs">
+                <label key={slot.day} className="flex items-center gap-2 rounded-xl bg-muted px-2.5 py-1.5 text-xs">
                   <span className="font-medium text-muted-foreground">{WEEKDAY_MAP[slot.day]}</span>
                   <select
                     aria-label={`일괄 ${WEEKDAY_MAP[slot.day]}요일 시간대`}
-                    className="rounded border border-input bg-background px-2 py-1 text-xs text-foreground"
+                    className="rounded-lg bg-card px-2 py-1 text-xs text-foreground"
                     value={slot.timeSlot}
                     onChange={(event) => onChangeTimeSlot(slot.day, event.target.value as TimeSlot)}
                   >
@@ -129,12 +129,12 @@ export function ClassDaysBulkEditor({
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {selectedCount > 0 ? (
-            <Button className="gap-2" type="button" variant="ghost" onClick={onClearSelection}>
+            <Button type="button" variant="ghost" onClick={onClearSelection}>
               <X className="h-4 w-4" />
               선택 해제
             </Button>
           ) : null}
-          <Button className="gap-2" disabled={!canApply} type="button" onClick={onApply}>
+          <Button disabled={!canApply} type="button" variant="secondary" onClick={onApply}>
             <Check className="h-4 w-4" />
             선택 학생에 적용
           </Button>

@@ -25,12 +25,12 @@ export function ClassInfoSection({
   handleChange, handleClassDayToggle, handleDayTimeSlotChange,
 }: ClassInfoSectionProps) {
   return (
-    <Card className="rounded-md shadow-none">
+    <Card>
       <CardHeader><CardTitle>수업 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {/* 수업요일 + 시간대 */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             수업요일 <span className="text-muted-foreground text-xs">(선택하면 주 수업횟수가 자동 계산됩니다)</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -39,10 +39,10 @@ export function ClassInfoSection({
               return (
                 <button key={option.value} type="button"
                   onClick={() => handleClassDayToggle(option.value)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
+                  className={`h-11 min-w-11 rounded-xl px-4 text-[15px] font-semibold transition-colors ${
                     isSelected
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-card text-foreground border-border hover:border-primary'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-secondary-foreground hover:text-foreground'
                   }`}>
                   {option.label}
                 </button>
@@ -62,7 +62,7 @@ export function ClassInfoSection({
                       <span className="text-sm font-medium min-w-[1.5rem]">{dayLabel}</span>
                       <select value={slot.timeSlot}
                         onChange={(e) => handleDayTimeSlotChange(slot.day, e.target.value as 'morning' | 'afternoon' | 'evening')}
-                        className="text-xs bg-background border border-border rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary">
+                        className="rounded-lg bg-card px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
                         <option value="morning">오전</option>
                         <option value="afternoon">오후</option>
                         <option value="evening">저녁</option>
@@ -76,7 +76,7 @@ export function ClassInfoSection({
 
           {/* 예약 변경 알림 (수정 모드에서만) */}
           {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && !classDaysChanged && (
-            <div className="mt-2 p-3 bg-warning-soft border border-warning/30 rounded-lg">
+            <div className="mt-2 rounded-xl bg-warning-soft p-3">
               <p className="text-sm text-warning">
                 변경 예정: {(() => {
                   const nextSlots = parseClassDaysWithSlots(initialData.class_days_next, initialData.time_slot || 'evening');
@@ -92,7 +92,7 @@ export function ClassInfoSection({
           )}
 
           {mode === 'edit' && (
-            <div className="mt-3 rounded-md border border-border bg-muted/25 p-3">
+            <div className="mt-3 rounded-xl bg-muted p-4">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-foreground">변경 저장 방식</p>
@@ -100,15 +100,15 @@ export function ClassInfoSection({
                     요일이나 시간대를 바꾸면 즉시 적용 또는 예약 적용을 선택할 수 있습니다.
                   </p>
                 </div>
-                <span className={`w-fit rounded-md px-2 py-1 text-xs font-medium ${classDaysChanged ? 'bg-warning-soft text-warning' : 'bg-muted text-secondary-foreground'}`}>
+                <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${classDaysChanged ? 'bg-warning-soft text-warning' : 'bg-muted text-secondary-foreground'}`}>
                   {classDaysChanged ? '변경 있음' : '변경 없음'}
                 </span>
               </div>
               {classDaysChanged ? (
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-foreground mb-2">적용 시작월</label>
+                  <label className="mb-2 block text-sm font-semibold text-foreground">적용 시작월</label>
               <select value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)}
-                className="w-full sm:w-[220px] bg-background border border-border rounded-lg px-3 py-2 text-sm">
+                className="w-full sm:w-[220px] min-h-11 rounded-xl border border-transparent bg-card px-3 text-[15px] focus:border-primary focus:outline-none">
                 {effectiveMonthOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -127,7 +127,7 @@ export function ClassInfoSection({
 
         {/* 기본 시간대 */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             기본 시간대 <span className="text-muted-foreground text-xs">(새 요일 추가 시 기본값)</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -138,10 +138,10 @@ export function ClassInfoSection({
             ].map((slot) => (
               <button key={slot.value} type="button"
                 onClick={() => handleChange('time_slot', slot.value as 'morning' | 'afternoon' | 'evening')}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`h-11 min-w-11 rounded-xl px-4 text-[15px] font-semibold transition-colors ${
                   formData.time_slot === slot.value
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card text-foreground border-border hover:border-primary'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-secondary-foreground hover:text-foreground'
                 }`}>
                 {slot.label}
               </button>
@@ -152,18 +152,18 @@ export function ClassInfoSection({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* 주 수업횟수 - 읽기 전용 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">주 수업횟수</label>
-            <div className="w-full px-4 py-2 border border-border rounded-lg bg-muted text-foreground font-medium">
+            <label className="mb-2 block text-sm font-semibold text-foreground">주 수업횟수</label>
+            <div className="w-full min-h-11 rounded-xl bg-muted px-4 py-2.5 text-[15px] font-semibold text-foreground">
               주 {formData.weekly_count}회
             </div>
           </div>
 
           {/* 등록일 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">등록일</label>
+            <label className="mb-2 block text-sm font-semibold text-foreground">등록일</label>
             <input type="date" value={formData.enrollment_date || ''}
               onChange={(e) => handleChange('enrollment_date', e.target.value)}
-              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10" />
           </div>
         </div>
       </CardContent>

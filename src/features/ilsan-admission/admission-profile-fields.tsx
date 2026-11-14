@@ -1,10 +1,11 @@
 import type { AdmissionProfile } from '@/lib/types/ilsan-admission';
-import { ADMISSION_FIELD_CLASS, ADMISSION_GRADES } from '@/constants/ilsan-admission';
+import { ADMISSION_GRADES } from '@/constants/ilsan-admission';
 import { cn } from '@/lib/utils/cn';
 import { AdmissionInput } from './admission-input';
 import { AdmissionSection } from './admission-section';
+import { ADMISSION_FIELD } from './admission-styles';
 interface Props {value:AdmissionProfile;onChange:(field:keyof AdmissionProfile,value:string|boolean)=>void}
-const SELECT_CLASS=cn(ADMISSION_FIELD_CLASS,'h-12');
+const SELECT_CLASS=cn(ADMISSION_FIELD,'h-12');
 const SELECT_LABEL_CLASS='block min-w-0 space-y-1.5 text-sm font-medium text-foreground/80';
 export function AdmissionProfileFields({value,onChange}:Props) {
   return <>
@@ -30,11 +31,11 @@ export function AdmissionProfileFields({value,onChange}:Props) {
     </AdmissionSection>
     <AdmissionSection step={2} title="보호자 정보" description="두 분 정보를 각각 입력할 수 있습니다. 연락 가능한 보호자 전화번호는 한 분 이상 필요합니다.">
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
+        <div className="space-y-4 rounded-xl border border-border/60 p-4">
           <AdmissionInput id="admission-father-name" label="아버님 성함" maxLength={50} value={value.father_name} onChange={e=>onChange('father_name',e.target.value)}/>
           <AdmissionInput id="admission-father-phone" label="아버님 전화번호" type="tel" maxLength={20} placeholder="010-0000-0000" value={value.father_phone} onChange={e=>onChange('father_phone',e.target.value)}/>
         </div>
-        <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
+        <div className="space-y-4 rounded-xl border border-border/60 p-4">
           <AdmissionInput id="admission-mother-name" label="어머님 성함" maxLength={50} value={value.mother_name} onChange={e=>onChange('mother_name',e.target.value)}/>
           <AdmissionInput id="admission-mother-phone" label="어머님 전화번호" type="tel" maxLength={20} placeholder="010-0000-0000" value={value.mother_phone} onChange={e=>onChange('mother_phone',e.target.value)}/>
         </div>

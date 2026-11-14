@@ -9,31 +9,30 @@ interface StudentsStatusTabsProps {
 
 export function StudentsStatusTabs({ activeTab, onChange }: StudentsStatusTabsProps) {
     return (
-        <section className="overflow-x-auto rounded-lg border border-border bg-card">
-            <div className="flex min-w-max">
+        <div className="scrollbar-none -mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6" role="tablist" aria-label="학생 상태">
+            <div className="flex w-max gap-1.5">
                 {STUDENT_TABS.map((tab) => {
-                    const Icon = tab.icon;
                     const active = activeTab === tab.id;
 
                     return (
                         <button
                             key={tab.id}
                             type="button"
+                            role="tab"
+                            aria-selected={active}
+                            aria-label={`${tab.label} ${tab.description}`}
+                            title={tab.description}
                             onClick={() => onChange(tab.id)}
                             className={cn(
-                                'flex w-[124px] shrink-0 items-center gap-2 border-r border-border px-3 py-3 text-left last:border-r-0 transition-colors sm:w-[148px] sm:gap-3 sm:px-4',
-                                active ? 'bg-muted/60 text-foreground' : 'text-muted-foreground hover:bg-muted/35 hover:text-foreground'
+                                'inline-flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold transition-colors',
+                                active ? 'bg-foreground text-background' : 'bg-muted text-secondary-foreground hover:text-foreground'
                             )}
                         >
-                            <Icon className={cn('h-4 w-4 shrink-0', active ? tab.toneClass : 'text-muted-foreground')} />
-                            <span className="min-w-0">
-                                <span className="block whitespace-nowrap text-sm font-semibold">{tab.label}</span>
-                                <span className="mt-0.5 hidden whitespace-nowrap text-xs text-muted-foreground sm:block">{tab.description}</span>
-                            </span>
+                            {tab.label}
                         </button>
                     );
                 })}
             </div>
-        </section>
+        </div>
     );
 }

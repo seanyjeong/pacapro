@@ -1,4 +1,5 @@
-import { Filter, Search } from 'lucide-react';
+import { FilterX, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Branch } from '@/lib/api/branches';
@@ -44,15 +45,25 @@ export function ClassDaysFilters({
   showScheduledOnly,
 }: ClassDaysFiltersProps) {
   return (
-    <section className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
-      <div className="flex items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
+      <div className="relative lg:w-64">
+        <Search className="absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
+        <Input
+          aria-label="학생 이름 검색"
+          className="pl-10"
+          placeholder="학생 이름 검색"
+          type="search"
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         {branches.length > 0 ? (
           <select
             aria-label="지점·반 필터"
             value={filterPlacement}
             onChange={(event) => onPlacementChange(event.target.value)}
-            className="h-8 w-[170px] rounded-md border border-border bg-background px-2 text-sm text-foreground"
+            className="col-span-2 h-11 rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none sm:w-[180px]"
           >
             <option value="all">전체 지점·반</option>
             {branches.map((branch) => (
@@ -66,7 +77,7 @@ export function ClassDaysFilters({
           </select>
         ) : null}
         <Select value={filterGrade} onValueChange={onGradeChange}>
-          <SelectTrigger aria-label="학년 필터" className="h-8 w-[120px] text-sm">
+          <SelectTrigger aria-label="학년 필터" className="sm:w-[130px]">
             <SelectValue placeholder="학년" />
           </SelectTrigger>
           <SelectContent>
@@ -78,7 +89,7 @@ export function ClassDaysFilters({
           </SelectContent>
         </Select>
         <Select value={filterWeekly} onValueChange={onWeeklyChange}>
-          <SelectTrigger aria-label="수업 횟수 필터" className="h-8 w-[130px] text-sm">
+          <SelectTrigger aria-label="수업 횟수 필터" className="sm:w-[130px]">
             <SelectValue placeholder="수업 횟수" />
           </SelectTrigger>
           <SelectContent>
@@ -92,33 +103,19 @@ export function ClassDaysFilters({
           </SelectContent>
         </Select>
         {hasActiveFilters ? (
-          <Button className="h-8 px-2 text-xs" size="sm" type="button" variant="ghost" onClick={onReset}>
-            초기화
+          <Button className="col-span-2 sm:col-span-1" type="button" variant="ghost" onClick={onReset}>
+            <FilterX className="h-4 w-4" />
+            필터 초기화
           </Button>
         ) : null}
       </div>
-      {focusedStudentName ? (
-        <span className="rounded-md border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-semibold text-primary">
-          {focusedStudentName} 집중 보기
+      <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+        {focusedStudentName ? <Badge>{focusedStudentName} 집중 보기</Badge> : null}
+        {showScheduledOnly ? <Badge variant="warning">예약 변경만 보기</Badge> : null}
+        <span className="text-[13px] text-muted-foreground">
+          총 <span className="font-bold tabular-nums text-foreground">{resultCount}</span>명
         </span>
-      ) : null}
-      {showScheduledOnly ? (
-        <span className="rounded-md border border-warning/30 bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">
-          예약 변경만 보기
-        </span>
-      ) : null}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          aria-label="학생 이름 검색"
-          className="h-8 w-[200px] pl-8 text-sm"
-          placeholder="학생 이름 검색"
-          type="search"
-          value={searchQuery}
-          onChange={(event) => onSearchChange(event.target.value)}
-        />
       </div>
-      <span className="text-sm text-muted-foreground">{resultCount}명</span>
-    </section>
+    </div>
   );
 }

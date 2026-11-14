@@ -21,7 +21,7 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label htmlFor="instructor-salary-type" className="mb-2 block text-sm font-medium text-foreground">
+        <label htmlFor="instructor-salary-type" className="mb-2 block text-sm font-semibold text-foreground">
           급여타입 <span className="text-destructive">*</span>
         </label>
         <select
@@ -40,14 +40,14 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
       </div>
 
       <div>
-        <label htmlFor="instructor-tax-type" className="mb-2 block text-sm font-medium text-foreground">
+        <label htmlFor="instructor-tax-type" className="mb-2 block text-sm font-semibold text-foreground">
           세금타입 <span className="text-destructive">*</span>
         </label>
         <select
           id="instructor-tax-type"
           value={formData.tax_type}
           onChange={(event) => onChange('tax_type', event.target.value as TaxType)}
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
         >
           {TAX_TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -59,14 +59,14 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {formData.salary_type === 'hourly' && (
         <div>
-          <label htmlFor="instructor-type" className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor="instructor-type" className="mb-2 block text-sm font-semibold text-foreground">
             강사 유형 <span className="text-destructive">*</span>
           </label>
           <select
             id="instructor-type"
             value={formData.instructor_type || 'teacher'}
             onChange={(event) => onChange('instructor_type', event.target.value as InstructorType)}
-            className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
           >
             {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -82,7 +82,7 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {showHourlyRate && (
         <div>
-          <label htmlFor="instructor-hourly-rate" className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor="instructor-hourly-rate" className="mb-2 block text-sm font-semibold text-foreground">
             {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-destructive">*</span>
           </label>
           <MoneyInput
@@ -98,7 +98,7 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {showBaseSalary && (
         <div>
-          <label htmlFor="instructor-base-salary" className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor="instructor-base-salary" className="mb-2 block text-sm font-semibold text-foreground">
             월급 <span className="text-destructive">*</span>
           </label>
           <MoneyInput

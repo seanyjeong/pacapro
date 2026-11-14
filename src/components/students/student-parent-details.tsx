@@ -10,25 +10,25 @@ export function StudentParentDetails({ student }: { student: StudentParentNames 
     visibleParentName(student[field]) || visibleParentName(student[phoneField]));
 
   return (
-    <div className="mt-5 border-t border-border pt-4" data-testid="student-parent-details">
+    <div className="border-t border-border/60 pt-4" data-testid="student-parent-details">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-foreground">보호자 정보</h3>
+        <h3 className="text-[15px] font-bold text-foreground">보호자 정보</h3>
         <Link
           href={`/students/${student.id}/edit#${STUDENT_PARENT_INFO_SECTION_ID}`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
           {hasInfo ? '보호자 정보 수정' : '보호자 정보 입력'}
         </Link>
       </div>
-      <dl className="mt-4 grid gap-x-6 gap-y-4 md:grid-cols-2">
+      <dl className="mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-1">
         {STUDENT_PARENT_NAME_FIELDS.map(({ field, label, phoneField, phoneLabel }) => (
           <div key={field} className="min-w-0 space-y-1">
-            <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+            <dt className="text-[13px] font-medium text-muted-foreground">{label}</dt>
             <dd className="break-words text-sm font-medium text-foreground [overflow-wrap:anywhere]">
               {visibleParentName(student[field]) || '미입력'}
             </dd>
-            <dt className="pt-2 text-xs font-medium text-muted-foreground">{phoneLabel}</dt>
+            <dt className="pt-2 text-[13px] font-medium text-muted-foreground">{phoneLabel}</dt>
             <dd className="break-words text-sm font-medium text-foreground">
               {visibleParentName(student[phoneField]) ? (
                 <a href={`tel:${visibleParentName(student[phoneField])}`}

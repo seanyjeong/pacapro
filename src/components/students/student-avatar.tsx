@@ -112,8 +112,9 @@ export function StudentAvatar({ cacheKey, className, forcePhoto, imageFit = 'cov
       <div
         aria-label={`${student.name} 사진`}
         className={cn(
-          'flex shrink-0 items-center justify-center overflow-hidden rounded-md font-semibold text-slate-50',
-          imageUrl && imageFit === 'contain' ? 'bg-muted' : 'bg-foreground',
+          'flex shrink-0 items-center justify-center overflow-hidden font-bold',
+          size === 'sm' || size === 'md' ? 'rounded-full' : 'rounded-2xl',
+          imageUrl ? 'bg-muted' : 'bg-primary-soft text-primary',
           SIZE_CLASSES[size],
           className
         )}
@@ -122,7 +123,7 @@ export function StudentAvatar({ cacheKey, className, forcePhoto, imageFit = 'cov
           <button
             type="button"
             aria-label={`${student.name} 사진 크게 보기`}
-            className="h-full w-full cursor-zoom-in overflow-hidden rounded-md"
+            className="h-full w-full cursor-zoom-in overflow-hidden rounded-[inherit]"
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();

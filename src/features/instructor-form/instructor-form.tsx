@@ -80,8 +80,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-      <div className="order-2 space-y-5 xl:order-1">
+    <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+      <div className="order-2 space-y-4 xl:order-1">
         <FormSection title="기본 정보">
           <BasicInfoSection formData={formData} errors={errors} onChange={handleChange} />
         </FormSection>
@@ -104,7 +104,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
         {errors.submit && (
           <div
-            className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+            className="rounded-2xl bg-warning-soft p-5 text-warning"
             role="alert"
           >
             <div className="flex items-start gap-3">

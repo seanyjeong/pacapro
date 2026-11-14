@@ -13,7 +13,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label htmlFor="instructor-name" className="mb-2 block text-sm font-medium text-foreground">
+        <label htmlFor="instructor-name" className="mb-2 block text-sm font-semibold text-foreground">
           이름 <span className="text-destructive">*</span>
         </label>
         <input
@@ -28,7 +28,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
       </div>
 
       <div>
-        <label htmlFor="instructor-phone" className="mb-2 block text-sm font-medium text-foreground">
+        <label htmlFor="instructor-phone" className="mb-2 block text-sm font-semibold text-foreground">
           전화번호 <span className="text-destructive">*</span>
         </label>
         <input
@@ -43,12 +43,12 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
       </div>
 
       <div>
-        <label htmlFor="instructor-gender" className="mb-2 block text-sm font-medium text-foreground">성별</label>
+        <label htmlFor="instructor-gender" className="mb-2 block text-sm font-semibold text-foreground">성별</label>
         <select
           id="instructor-gender"
           value={formData.gender || ''}
           onChange={(event) => onChange('gender', event.target.value ? event.target.value as Gender : undefined)}
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
         >
           <option value="">선택</option>
           {GENDER_OPTIONS.map((option) => (
@@ -60,32 +60,32 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
       </div>
 
       <div>
-        <label htmlFor="instructor-email" className="mb-2 block text-sm font-medium text-foreground">이메일</label>
+        <label htmlFor="instructor-email" className="mb-2 block text-sm font-semibold text-foreground">이메일</label>
         <input
           id="instructor-email"
           type="email"
           value={formData.email || ''}
           onChange={(event) => onChange('email', event.target.value)}
           placeholder="instructor@example.com"
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
         />
       </div>
 
       <div>
-        <label htmlFor="instructor-resident-number" className="mb-2 block text-sm font-medium text-foreground">주민번호</label>
+        <label htmlFor="instructor-resident-number" className="mb-2 block text-sm font-semibold text-foreground">주민번호</label>
         <input
           id="instructor-resident-number"
           type="text"
           value={formData.resident_number || ''}
           onChange={(event) => onChange('resident_number', event.target.value)}
           placeholder="000000-0000000"
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
         />
         <p className="text-xs text-muted-foreground mt-1">세무 신고용 (선택사항)</p>
       </div>
 
       <div>
-        <label htmlFor="instructor-hire-date" className="mb-2 block text-sm font-medium text-foreground">
+        <label htmlFor="instructor-hire-date" className="mb-2 block text-sm font-semibold text-foreground">
           입사일 <span className="text-destructive">*</span>
         </label>
         <input
@@ -99,14 +99,14 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
       </div>
 
       <div className="md:col-span-2">
-        <label htmlFor="instructor-address" className="mb-2 block text-sm font-medium text-foreground">주소</label>
+        <label htmlFor="instructor-address" className="mb-2 block text-sm font-semibold text-foreground">주소</label>
         <input
           id="instructor-address"
           type="text"
           value={formData.address || ''}
           onChange={(event) => onChange('address', event.target.value)}
           placeholder="서울시 강남구..."
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="min-h-11 w-full rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
         />
       </div>
     </div>

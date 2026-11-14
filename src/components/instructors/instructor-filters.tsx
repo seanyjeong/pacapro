@@ -4,8 +4,8 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Filter, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { InstructorFilters } from '@/lib/types/instructor';
 import {
   SALARY_TYPE_OPTIONS,
@@ -34,92 +34,44 @@ export function InstructorFiltersComponent({
 
   const hasActiveFilters = filters.status || filters.salary_type || filters.instructor_type || filters.gender;
 
+  const fields: { key: keyof InstructorFilters; label: string; options: ReadonlyArray<{ value: string; label: string }> }[] = [
+    { key: 'salary_type', label: '급여타입', options: SALARY_TYPE_OPTIONS },
+    { key: 'instructor_type', label: '강사 유형', options: INSTRUCTOR_TYPE_OPTIONS },
+    { key: 'gender', label: '성별', options: GENDER_OPTIONS },
+    { key: 'status', label: '상태', options: INSTRUCTOR_STATUS_OPTIONS },
+  ];
+
   return (
-    <Card className="rounded-md">
-      <CardContent className="p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground">필터</h3>
-          </div>
-          {hasActiveFilters && (
-            <Button variant="outline" size="sm" className="gap-1" onClick={onReset}>
-              <X className="h-4 w-4" />
-              초기화
-            </Button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {/* 급여타입 */}
-          <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">급여타입</label>
+    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+      {fields.map((field) => {
+        const value = (filters[field.key] as string | undefined) || '';
+        return (
+          <label key={field.key} className="min-w-0 sm:w-36">
+            <span className="sr-only">{field.label}</span>
             <select
-              value={filters.salary_type || ''}
-              onChange={(e) => handleChange('salary_type', e.target.value || undefined)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={value}
+              onChange={(e) => handleChange(field.key, e.target.value || undefined)}
+              className={cn(
+                'h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10',
+                value && 'bg-primary-soft font-semibold text-primary'
+              )}
             >
-              <option value="">전체</option>
-              {SALARY_TYPE_OPTIONS.map((option) => (
+              <option value="">{field.label} 전체</option>
+              {field.options.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* 강사 유형 */}
-          <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">강사 유형</label>
-            <select
-              value={filters.instructor_type || ''}
-              onChange={(e) => handleChange('instructor_type', e.target.value || undefined)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">전체</option>
-              {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 성별 */}
-          <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">성별</label>
-            <select
-              value={filters.gender || ''}
-              onChange={(e) => handleChange('gender', e.target.value || undefined)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">전체</option>
-              {GENDER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 상태 */}
-          <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">상태</label>
-            <select
-              value={filters.status || ''}
-              onChange={(e) => handleChange('status', e.target.value || undefined)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">전체</option>
-              {INSTRUCTOR_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </label>
+        );
+      })}
+      {hasActiveFilters && (
+        <Button variant="ghost" className="col-span-2 sm:col-span-1" onClick={onReset}>
+          <X className="h-4 w-4" />
+          초기화
+        </Button>
+      )}
+    </div>
   );
 }

@@ -10,13 +10,11 @@ import {
   formatPhoneNumber,
   formatDate,
   formatCurrency,
-  getStatusColor,
   calculateYearsOfService,
 } from '@/lib/utils/instructor-helpers';
 import {
   SALARY_TYPE_LABELS,
   TAX_TYPE_LABELS,
-  INSTRUCTOR_STATUS_LABELS,
 } from '@/lib/types/instructor';
 
 interface InstructorCardProps {
@@ -25,42 +23,20 @@ interface InstructorCardProps {
 
 export function InstructorCard({ instructor }: InstructorCardProps) {
   return (
-    <Card className="rounded-md">
-      <CardHeader className="border-b border-border px-4 py-3">
-        <CardTitle className="text-base tracking-normal">기본 정보</CardTitle>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-[17px]">기본 정보</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5 p-4">
-        {/* 이름 & 상태 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-primary">
-              <span className="text-xl font-bold text-white">
-                {instructor.name.charAt(0)}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-foreground">{instructor.name}</h3>
-              <p className="text-sm text-muted-foreground">강사</p>
-            </div>
-          </div>
-          <span
-            className={`inline-flex px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(
-              instructor.status
-            )}`}
-          >
-            {INSTRUCTOR_STATUS_LABELS[instructor.status]}
-          </span>
-        </div>
-
+      <CardContent className="space-y-5">
         {/* 연락처 정보 */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex items-center gap-3">
-            <div className="rounded-md bg-muted p-2">
+            <div className="rounded-xl bg-muted p-2">
               <Phone className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">전화번호</div>
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-[13px] text-muted-foreground">전화번호</div>
+              <div className="text-[15px] font-semibold text-foreground">
                 {instructor.phone ? formatPhoneNumber(instructor.phone) : '-'}
               </div>
             </div>
@@ -68,12 +44,12 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
 
           {instructor.email && (
             <div className="flex items-center gap-3">
-              <div className="rounded-md bg-muted p-2">
+              <div className="rounded-xl bg-muted p-2">
                 <Mail className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">이메일</div>
-                <div className="text-sm font-medium text-foreground">{instructor.email}</div>
+                <div className="text-[13px] text-muted-foreground">이메일</div>
+                <div className="text-[15px] font-semibold text-foreground">{instructor.email}</div>
               </div>
             </div>
           )}
@@ -81,30 +57,30 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
 
         {/* 입사일 & 근속년수 */}
         <div className="flex items-center gap-3">
-          <div className="rounded-md bg-muted p-2">
+          <div className="rounded-xl bg-muted p-2">
             <Calendar className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">입사일</div>
-            <div className="text-sm font-medium text-foreground">
+            <div className="text-[13px] text-muted-foreground">입사일</div>
+            <div className="text-[15px] font-semibold text-foreground">
               {instructor.hire_date ? `${formatDate(instructor.hire_date)} (근속 ${calculateYearsOfService(instructor.hire_date)}년)` : '-'}
             </div>
           </div>
         </div>
 
         {/* 급여 정보 */}
-        <div className="space-y-4 border-t border-border pt-4">
-          <h4 className="text-sm font-semibold text-foreground">급여 정보</h4>
+        <div className="space-y-4 border-t border-border/60 pt-4">
+          <h4 className="text-[15px] font-bold text-foreground">급여 정보</h4>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* 급여타입 */}
             <div className="flex items-center gap-3">
-              <div className="rounded-md bg-muted p-2">
+              <div className="rounded-xl bg-muted p-2">
                 <Banknote className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">급여타입</div>
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-[13px] text-muted-foreground">급여타입</div>
+                <div className="text-[15px] font-semibold text-foreground">
                   {SALARY_TYPE_LABELS[instructor.salary_type]}
                 </div>
               </div>
@@ -112,12 +88,12 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
 
             {/* 세금타입 */}
             <div className="flex items-center gap-3">
-              <div className="rounded-md bg-muted p-2">
+              <div className="rounded-xl bg-muted p-2">
                 <CreditCard className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">세금타입</div>
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-[13px] text-muted-foreground">세금타입</div>
+                <div className="text-[15px] font-semibold text-foreground">
                   {TAX_TYPE_LABELS[instructor.tax_type]}
                 </div>
               </div>
@@ -129,14 +105,14 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
               instructor.salary_type === 'mixed') &&
               parseFloat(instructor.hourly_rate || '0') > 0 && (
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-muted p-2">
+                  <div className="rounded-xl bg-muted p-2">
                     <Banknote className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {instructor.salary_type === 'per_class' ? '수업료' : '시급'}
                     </div>
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="text-[15px] font-semibold text-foreground">
                       {formatCurrency(parseFloat(instructor.hourly_rate || '0'))}
                     </div>
                   </div>
@@ -147,12 +123,12 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
             {(instructor.salary_type === 'monthly' || instructor.salary_type === 'mixed') &&
               parseFloat(instructor.base_salary || '0') > 0 && (
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-muted p-2">
+                  <div className="rounded-xl bg-muted p-2">
                     <Banknote className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">월급</div>
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="text-[13px] text-muted-foreground">월급</div>
+                    <div className="text-[15px] font-semibold text-foreground">
                       {formatCurrency(parseFloat(instructor.base_salary || '0'))}
                     </div>
                   </div>
@@ -163,8 +139,8 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
 
         {/* 계좌 정보 */}
         {(instructor.bank_name || instructor.account_number) && (
-          <div className="space-y-4 border-t border-border pt-4">
-            <h4 className="text-sm font-semibold text-foreground">계좌 정보</h4>
+          <div className="space-y-4 border-t border-border/60 pt-4">
+            <h4 className="text-[15px] font-bold text-foreground">계좌 정보</h4>
 
             <div className="space-y-2">
               {instructor.bank_name && (
@@ -188,12 +164,12 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
         {/* 주소 */}
         {instructor.address && (
           <div className="flex items-center gap-3">
-            <div className="rounded-md bg-muted p-2">
+            <div className="rounded-xl bg-muted p-2">
               <MapPin className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">주소</div>
-              <div className="text-sm font-medium text-foreground">{instructor.address}</div>
+              <div className="text-[13px] text-muted-foreground">주소</div>
+              <div className="text-[15px] font-semibold text-foreground">{instructor.address}</div>
             </div>
           </div>
         )}

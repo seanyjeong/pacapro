@@ -9,7 +9,7 @@ export function LifecycleBillingPreviewPanel({ preview, title = '학원비 처�
 }) {
   const { data, error, loading } = preview;
   return (
-    <section className="space-y-3 rounded-md border border-border p-3" aria-label={title} aria-busy={loading}>
+    <section className="space-y-3 rounded-xl bg-muted p-4" aria-label={title} aria-busy={loading}>
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       {loading ? <p className="text-sm text-muted-foreground" role="status">실제 청구와 납부 내역을 확인하고 있습니다.</p> : null}
       {error ? (
@@ -81,7 +81,7 @@ export function LifecycleBillingResultPanel({ title, result }: {
   result: { summary?: LifecycleBillingSummary; rows?: LifecycleBillingRow[]; message: string; requires_payment_review?: boolean };
 }) {
   return (
-    <section className="space-y-3 rounded-md border border-border p-3" role="status" aria-label={title}>
+    <section className="space-y-3 rounded-xl bg-muted p-4" role="status" aria-label={title}>
       <h3 className="text-sm font-semibold">{title}</h3>
       <p className="text-sm">{result.message}</p>
       {result.summary ? <LifecycleBillingAmounts summary={result.summary} rows={result.rows} requiresPaymentReview={result.requires_payment_review} /> : null}

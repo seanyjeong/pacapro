@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { ADMISSION_FIELD_CLASS } from '@/constants/ilsan-admission';
+import { ADMISSION_FIELD } from './admission-styles';
 import type { useIlsanAdmissions } from '@/hooks/use-ilsan-admissions';
 import { STATUS_LABELS, type StudentStatus } from '@/lib/types/student';
 import { AdmissionReviewQuote } from './admission-review-quote';
@@ -9,10 +9,10 @@ import { AdmissionReviewTerms } from './admission-review-terms';
 export function AdmissionReviewExisting({admissions:a}:{admissions:ReturnType<typeof useIlsanAdmissions>}) {
   if(!a.editable || !a.existingStudents.length)return null;
   const p=a.existingPreview,immediate=p?.quote?.enrollment_date===a.today;
-  return <section className="space-y-4 rounded-md border border-border bg-card p-4 sm:p-5">
+  return <section className="space-y-4 rounded-2xl bg-card p-5 sm:p-6">
     <h3 className="font-semibold">같은 이름의 기존 학생이 있습니다</h3>
     <label className="block text-sm">처리 방법
-      <select aria-label="처리 방법" className={ADMISSION_FIELD_CLASS} value={a.mode} disabled={a.busy} onChange={e=>a.changeMode(e.target.value as 'new'|'existing')}>
+      <select aria-label="처리 방법" className={ADMISSION_FIELD} value={a.mode} disabled={a.busy} onChange={e=>a.changeMode(e.target.value as 'new'|'existing')}>
         <option value="existing">기존 학생에 원서 내용 반영</option>
         <option value="new">다른 사람임을 확인하고 신규 등록</option>
       </select>
@@ -20,7 +20,7 @@ export function AdmissionReviewExisting({admissions:a}:{admissions:ReturnType<ty
     {a.mode==='existing' && <>
       <p className="text-sm text-muted-foreground">미등록·체험·퇴원·졸업 학생은 이 화면에서 요일·학원비를 정해 재원 등록합니다. 재원·휴원 학생은 정보만 바꿉니다. 동명이인이면 전화번호·학교를 확인해 선택해 주세요.</p>
       <label className="block text-sm">기존 학생
-        <select aria-label="기존 학생" className={ADMISSION_FIELD_CLASS} value={a.existingStudentId ?? ''} disabled={a.busy} onChange={e=>a.chooseExisting(e.target.value?Number(e.target.value):null)}>
+        <select aria-label="기존 학생" className={ADMISSION_FIELD} value={a.existingStudentId ?? ''} disabled={a.busy} onChange={e=>a.chooseExisting(e.target.value?Number(e.target.value):null)}>
           <option value="">학생을 선택해 주세요</option>
           {a.existingStudents.map(s=><option key={s.id} value={s.id}>{s.name} · {STATUS_LABELS[s.status as StudentStatus] ?? s.status} · {s.student_number||`학생 ${s.id}`} · {s.phone||'전화 미입력'} · {s.school||'학교 미입력'} {s.grade}</option>)}
         </select>

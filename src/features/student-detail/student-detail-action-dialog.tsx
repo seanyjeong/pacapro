@@ -142,7 +142,7 @@ export function StudentDetailActionDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>취소</AlertDialogCancel>
           <Button
-            className={action === 'delete' ? 'bg-destructive text-white hover:bg-destructive/90' : undefined}
+            className={action === 'delete' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
             disabled={confirmDisabled}
             type="button"
             onClick={handleConfirm}

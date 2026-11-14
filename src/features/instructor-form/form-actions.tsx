@@ -8,7 +8,7 @@ interface FormActionsProps {
 
 export function FormActions({ mode, submitting, onCancel }: FormActionsProps) {
   return (
-    <div className="flex items-center justify-end space-x-3">
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
       <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
         취소
       </Button>

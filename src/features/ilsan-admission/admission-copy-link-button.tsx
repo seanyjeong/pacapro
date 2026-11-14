@@ -61,7 +61,7 @@ export function AdmissionCopyLinkButton() {
       <p role="status" className="text-sm text-muted-foreground">자동 복사가 허용되지 않았습니다. 아래 링크를 선택해 복사해 주세요.</p>
       <input aria-label="복사할 입학원서 링크" readOnly value={manualLink} autoFocus
         onFocus={event => event.currentTarget.select()} onClick={event => event.currentTarget.select()}
-        className="w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        className="w-full min-w-0 rounded-xl bg-muted px-3 py-2 text-sm" />
     </div>}
   </div>;
 }
