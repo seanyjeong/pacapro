@@ -27,8 +27,9 @@ async function updatePendingPayments(context) {
     if (monthlyTuition === undefined && discountRate === undefined) return;
 
     try {
-        const nextTuition = monthlyTuition !== undefined ? monthlyTuition : updatedStudent.monthly_tuition;
-        const nextDiscountRate = discountRate !== undefined ? discountRate : (updatedStudent.discount_rate || 0);
+        // 저장된 값(DECIMAL 칸에 맞춰진 학원비·할인율)으로 계산한다
+        const nextTuition = updatedStudent ? updatedStudent.monthly_tuition : monthlyTuition;
+        const nextDiscountRate = updatedStudent ? (updatedStudent.discount_rate || 0) : (discountRate || 0);
         // 반 학원비 적용·반 이동도 같은 함수로 미납 월 청구를 맞춘다.
         // 금액은 월 자동 청구와 같은 식(할인액·최종 천원 절삭, 추가 금액·크레딧 유지).
         const { final } = await updatePendingMonthlyTuition(pool, {
@@ -202,6 +203,10 @@ async function createActivationPayment(context) {
         return;
     }
 
+    // 저장된 값(DECIMAL 칸에 맞춰진 학원비·할인율)으로 계산한다 — 본문 값과 소수 자리가 다를 수 있다
+    const tuition = Number(context.updatedStudent?.monthly_tuition ?? monthlyTuition);
+    const rate = Number(context.updatedStudent?.discount_rate ?? discountRate) || 0;
+
     try {
         const enrollmentDateText = enrollmentDate || getKoreaDateText();
         const enrollDate = new Date(`${enrollmentDateText}T00:00:00`);
@@ -223,10 +228,10 @@ async function createActivationPayment(context) {
         );
         const remainingDays = lastDayOfMonth - enrollDay + 1;
         const proratedAmount = totalClassDaysInMonth > 0
-            ? floorRatio(monthlyTuition, classDaysCount, totalClassDaysInMonth)
-            : monthlyTuition;
-        const discountAmount = discountRate
-            ? floorPercent(proratedAmount, discountRate)
+            ? floorRatio(tuition, classDaysCount, totalClassDaysInMonth)
+            : tuition;
+        const discountAmount = rate
+            ? floorPercent(proratedAmount, rate)
             : 0;
         const finalAmount = proratedAmount - discountAmount;
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;

@@ -309,8 +309,9 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             }
 
             // 일할계산 금액 (천원 단위 절삭)
-            const baseAmount = parseFloat(monthly_tuition);
-            const discountRateNum = parseFloat(discount_rate) || 0;
+            // 저장된 값(DECIMAL 칸에 맞춰진 학원비·할인율)으로 계산한다 — 본문 값과 소수 자리가 다를 수 있다
+            const baseAmount = createdStudent.monthly_tuition;
+            const discountRateNum = createdStudent.discount_rate || 0;
             let proRatedAmount;
 
             if (totalClassDaysInMonth > 0 && classDaysCount > 0) {

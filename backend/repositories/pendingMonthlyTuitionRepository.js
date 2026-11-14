@@ -11,17 +11,18 @@ const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 /**
  * 미납 월 청구를 맞추는 UPDATE [sql, params]. 부르는 쪽이 자기 연결 방식(query/execute)으로 실행한다.
  * 최종 금액은 청구마다 추가 금액·크레딧이 달라 SQL 에서 monthlyBillAmounts 와 같은 순서로 계산한다
- * (학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상).
+ * (학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상). 학원비 인자는 DECIMAL 로 바꿔 넣어
+ * 소수(DOUBLE) 계산이 섞이지 않게 한다(학원비는 DECIMAL(10,2) 저장값이라 넷째 자리 안에서 그대로다).
  */
 function pendingMonthlyTuitionUpdate({ studentId, academyId, tuition, discountRate }) {
     const base = Number(tuition);
-    const { discount } = monthlyBillAmounts(base, Number(discountRate) || 0);
+    const { discount } = monthlyBillAmounts(tuition, discountRate || 0);
     const currentYearMonth = getKoreaDateText().slice(0, 7);
     return [
         `UPDATE student_payments
          SET base_amount = ?,
              discount_amount = ?,
-             final_amount = GREATEST(FLOOR((? - ? + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0)) / 1000) * 1000, 0),
+             final_amount = GREATEST(FLOOR((CAST(? AS DECIMAL(14,4)) - ? + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0)) / 1000) * 1000, 0),
              updated_at = NOW()
          WHERE student_id = ?
            AND academy_id = ?
@@ -35,7 +36,7 @@ function pendingMonthlyTuitionUpdate({ studentId, academyId, tuition, discountRa
 
 async function updatePendingMonthlyTuition(conn, args) {
     await conn.execute(...pendingMonthlyTuitionUpdate(args));
-    return monthlyBillAmounts(Number(args.tuition), Number(args.discountRate) || 0);
+    return monthlyBillAmounts(args.tuition, args.discountRate || 0);
 }
 
 // 위 UPDATE 가 바꿀 청구(미리보기용). 학생 여러 명을 한 번에.
