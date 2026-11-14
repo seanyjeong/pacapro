@@ -395,7 +395,7 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect(await monthBill(m2)).toEqual([22000, 0, null, 428000, 428000, 'paid']); // 새 선납 청구는 크레딧 칸을 쓰지 않는다(예전과 같음)
     });
 
-    test('유일 키가 없는 표에서도 학생 잠금으로: 학생별·일괄·자동 청구·미리 납부를 동시에 두 번 → 청구 하나·크레딧 한 번, 교착 없음', async () => {
+    test('유일 키가 없는 표에서도 학생 잠금으로: 학생별·일괄·자동 청구·미리 납부·선납·청구 직접 만들기를 동시에 두 번 → 청구 하나·크레딧 한 번, 교착 없음', async () => {
         const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
         const monthBills = async () => (await pool.query('SELECT carryover_amount, final_amount, payment_status FROM student_payments WHERE `year_month` = ?', [month]))[0];
         const creditLeft = async () => (await pool.query('SELECT remaining_amount FROM rest_credits WHERE id = 1'))[0][0].remaining_amount;
@@ -447,6 +447,15 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
                 .send({ student_id: 1, months, prepaid_discount_rate: 5, payment_method: 'cash' })));
             const [prepaid] = await pool.query('SELECT `year_month` AS ym, COUNT(*) AS n FROM student_payments GROUP BY `year_month` ORDER BY ym');
             expect(prepaid.map(row => [row.ym, row.n])).toEqual(months.map(ym => [ym, 1]));
+
+            // 청구 직접 만들기 동시 두 번(월 청구): 201·409, 청구 하나. 시즌비는 같은 달에도 만든다
+            await seed({ tuition: 300000, rate: 0, bills: false });
+            const create = type => request(app()).post('/paca/payments')
+                .send({ student_id: 1, payment_type: type, base_amount: 300000, due_date: `${month}-05`, year_month: month });
+            expect((await Promise.all([create('monthly'), create('monthly')])).map(res => res.status).sort()).toEqual([201, 409]);
+            expect((await create('season')).status).toBe(201);
+            const [byType] = await pool.query('SELECT payment_type, COUNT(*) AS n FROM student_payments WHERE `year_month` = ? GROUP BY payment_type ORDER BY payment_type', [month]);
+            expect(byType.map(row => [row.payment_type, row.n])).toEqual([['monthly', 1], ['season', 1]]);
         } finally {
             await pool.query('DELETE FROM student_payments');
             await admin.query('ALTER TABLE student_payments ADD UNIQUE KEY uq_student_month_type (student_id, `year_month`, payment_type)');

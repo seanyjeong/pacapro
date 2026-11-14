@@ -37,6 +37,7 @@ const { pool, decryptStudentName, logger } = require('./_utils');
 const { billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
+const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 module.exports = function(router) {
 
@@ -127,38 +128,67 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
         // 최종 금액: 월 청구와 같은 공통 식(천원 절삭, 0 미만이면 0)
         const finalAmount = billFinalAmount(base_amount, discount_amount, additional_amount);
 
-        // Insert payment record
-        const [result] = await pool.execute(
-            `INSERT INTO student_payments (
-                student_id,
-                academy_id,
-                \`year_month\`,
-                payment_type,
-                base_amount,
-                discount_amount,
-                additional_amount,
-                final_amount,
-                due_date,
-                payment_status,
-                description,
-                notes,
-                recorded_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
-            [
-                student_id,
-                students[0].academy_id,
-                year_month,
-                payment_type,
-                base_amount,
-                discount_amount || 0,
-                additional_amount || 0,
-                finalAmount,
-                due_date,
-                description ?? null,
-                notes ?? null,
-                req.user.userId
-            ]
-        );
+        // 학생을 잠그고(다른 청구 경로와 같은 순서) 월 청구는 같은 학생·같은 달 월 청구가 이미 있으면 409.
+        // 운영 표의 유일 키 유무와 상관없이 같은 달 월 청구가 두 개 생기지 않는다. 시즌비 등 다른 종류는 예전처럼 여러 건 가능.
+        const conn = await pool.getConnection();
+        let result;
+        try {
+            await conn.beginTransaction();
+            await lockStudentForBilling(conn, student_id, req.user.academyId);
+            if (payment_type === 'monthly') {
+                const [existing] = await conn.execute(
+                    `SELECT id FROM student_payments
+                     WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly' FOR UPDATE`,
+                    [student_id, year_month]
+                );
+                if (existing.length > 0) {
+                    await conn.rollback();
+                    return res.status(409).json({
+                        error: 'Conflict',
+                        message: `${year_month} 월 학원비 청구가 이미 있습니다. 금액은 그 청구를 수정해 주세요.`
+                    });
+                }
+            }
+
+            // Insert payment record
+            [result] = await conn.execute(
+                `INSERT INTO student_payments (
+                    student_id,
+                    academy_id,
+                    \`year_month\`,
+                    payment_type,
+                    base_amount,
+                    discount_amount,
+                    additional_amount,
+                    final_amount,
+                    due_date,
+                    payment_status,
+                    description,
+                    notes,
+                    recorded_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                [
+                    student_id,
+                    students[0].academy_id,
+                    year_month,
+                    payment_type,
+                    base_amount,
+                    discount_amount || 0,
+                    additional_amount || 0,
+                    finalAmount,
+                    due_date,
+                    description ?? null,
+                    notes ?? null,
+                    req.user.userId
+                ]
+            );
+            await conn.commit();
+        } catch (error) {
+            await conn.rollback();
+            throw error;
+        } finally {
+            conn.release();
+        }
 
         // Fetch created payment
         const [payments] = await pool.execute(

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import axios from 'axios';
 import type { PaymentFormData } from '@/lib/types/payment';
 import { createPaymentFromEditor, getActiveStudentsForPaymentForm } from './payment-editor-api';
 import type { PaymentEditorStateBase } from './payment-editor-types';
@@ -36,8 +37,11 @@ export function usePaymentCreateState(): PaymentEditorStateBase & {
       await createPaymentFromEditor(data);
       toast.success('학원비가 청구되었습니다.');
       onCreated();
-    } catch {
-      toast.error('학원비 청구를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (err: unknown) {
+      // 409: 같은 달 월 학원비 청구가 이미 있음 — 서버 안내 문구(그 청구를 수정하라는)를 그대로 보여 준다
+      toast.error(axios.isAxiosError(err) && err.response?.status === 409 && err.response.data?.message
+        ? err.response.data.message
+        : '학원비 청구를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setState((previous) => ({ ...previous, saving: false }));
     }

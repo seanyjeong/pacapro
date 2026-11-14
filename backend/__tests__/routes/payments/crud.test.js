@@ -18,6 +18,9 @@ jest.mock('../../../config/database', () => ({
     getConnection: jest.fn(),
 }));
 
+// 학생 잠금(SELECT … FOR UPDATE)은 실제 MySQL 시험(integration/pending-bill-mysql)에서 확인
+jest.mock('../../../repositories/studentBillingLock', () => ({ lockStudentForBilling: jest.fn().mockResolvedValue({ id: 7 }) }));
+
 jest.mock('../../../middleware/auth', () => ({
     verifyToken: jest.fn((req, res, next) => {
         req.user = { academyId: 5, userId: 100, role: 'owner' };
@@ -50,6 +53,13 @@ jest.mock('../../../utils/logger', () => ({
 const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
+const conn = {
+    execute: (...args) => pool.execute(...args),
+    beginTransaction: jest.fn().mockResolvedValue(),
+    commit: jest.fn().mockResolvedValue(),
+    rollback: jest.fn().mockResolvedValue(),
+    release: jest.fn(),
+};
 
 function makeApp() {
     const app = express();
@@ -63,6 +73,8 @@ function makeApp() {
 beforeEach(() => {
     pool.execute.mockReset();
     pool.execute.mockResolvedValue([[]]);
+    pool.getConnection.mockResolvedValue(conn);
+    conn.rollback.mockClear();
 });
 
 describe('GET /paca/payments/:id', () => {
@@ -122,6 +134,7 @@ describe('POST /paca/payments', () => {
     test('201: { message, payment } + truncateToThousands(base - discount + additional)', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 7, academy_id: 5 }]]) // student lookup
+            .mockResolvedValueOnce([[]])                         // 같은 달 월 청구 없음(학생 잠근 뒤)
             .mockResolvedValueOnce([{ insertId: 42 }])           // INSERT
             .mockResolvedValueOnce([[{ id: 42, student_id: 7, student_name: 'enc_홍길동', final_amount: 95000 }]]); // SELECT created
         const res = await request(makeApp())
@@ -140,8 +153,33 @@ describe('POST /paca/payments', () => {
         expect(res.body.payment.id).toBe(42);
 
         // INSERT params: final_amount = floor((100000 - 5000 + 0) / 1000) * 1000 = 95000
-        const insertCall = pool.execute.mock.calls[1];
+        const insertCall = pool.execute.mock.calls[2];
         expect(insertCall[1][7]).toBe(95000); // final_amount index
+    });
+
+    test('409: 같은 학생·같은 달 월 청구가 이미 있으면 만들지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 7, academy_id: 5 }]])
+            .mockResolvedValueOnce([[{ id: 41 }]]); // 같은 달 월 청구 있음
+        const res = await request(makeApp())
+            .post('/paca/payments')
+            .send({ student_id: 7, payment_type: 'monthly', base_amount: 100000, due_date: '2026-05-05', year_month: '2026-05' });
+        expect(res.status).toBe(409);
+        expect(res.body).toEqual({ error: 'Conflict', message: '2026-05 월 학원비 청구가 이미 있습니다. 금액은 그 청구를 수정해 주세요.' });
+        expect(pool.execute.mock.calls.some(([sql]) => /INSERT INTO student_payments/.test(sql))).toBe(false);
+        expect(conn.rollback).toHaveBeenCalled();
+    });
+
+    test('201: 시즌비 등 다른 종류는 같은 달에 있어도 만든다(예전처럼)', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 7, academy_id: 5 }]])
+            .mockResolvedValueOnce([{ insertId: 43 }])
+            .mockResolvedValueOnce([[{ id: 43, student_id: 7, student_name: 'enc_홍길동' }]]);
+        const res = await request(makeApp())
+            .post('/paca/payments')
+            .send({ student_id: 7, payment_type: 'season', base_amount: 500000, due_date: '2026-05-05', year_month: '2026-05' });
+        expect(res.status).toBe(201);
+        expect(pool.execute.mock.calls.some(([sql]) => /payment_type = 'monthly' FOR UPDATE/.test(sql))).toBe(false);
     });
 
     test('500: 한국어 메시지', async () => {
