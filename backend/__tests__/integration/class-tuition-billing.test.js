@@ -204,4 +204,4 @@ test('반 학원비 적용 뒤 반 표가 있는 반 학생은 새 금액으로,
     expect(only(after.resume, 1)).toEqual(typedIn.resume);
     expect(only(after.firstMonth, 1)).toEqual(typedIn.firstMonth);
     expect(only(after.resume, 1)[0].base).toBeGreaterThan(only(before.resume, 1)[0].base);
-});
+}, 30000); // 청구 경로 다섯 곳을 두 번씩 돌려, 전체 시험을 함께 돌릴 때 기본 5초를 넘을 수 있다
