@@ -45,6 +45,7 @@ const {
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
+const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 const { monthlyBillAmounts, floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
 const { parseClassDaysWithSlots, extractDayNumbers } = require('../../services/studentScheduleAssignment');
 const { deductMonthlyCredit } = require('../../services/monthlyCreditDeduction');
@@ -137,6 +138,8 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             const conn = await pool.getConnection();
             try {
                 await conn.beginTransaction();
+                // 학생 → 청구 → 크레딧 순서로 잠근다 — 유일 키가 없어도 동시에 두 번 돌려 같은 달 청구가 두 개 생기지 않는다
+                await lockStudentForBilling(conn, student.id, req.user.academyId);
                 // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
                 // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
                 const [existingPayment] = await conn.execute(
@@ -260,7 +263,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
 
         // 시즌으로 이 달 월회비가 빠진 학생의 1일~비시즌 종강일 수업료 — 매월 자동 청구와 같은 규칙
         for (const candidate of await nonSeasonProratedCandidates(pool, req.user.academyId, yearMonth)) {
-            await insertNonSeasonProrated(pool, req.user.academyId, candidate, planNonSeasonProrated(candidate, yearMonth), req.user.userId);
+            if (!await insertNonSeasonProrated(pool, req.user.academyId, candidate, planNonSeasonProrated(candidate, yearMonth), req.user.userId)) continue;
             created++;
             withNonSeasonProrated++;
         }

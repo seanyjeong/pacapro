@@ -12,6 +12,7 @@ const { calculateDueDate } = require('../utils/dueDateCalculator');
 const { graduateDueSeasonStudents } = require('../services/seasonGraduationService');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../services/nonSeasonProratedBilling');
+const { lockStudentForBilling } = require('../repositories/studentBillingLock');
 const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 
 /**
@@ -91,6 +92,9 @@ async function generateMonthlyPayments() {
                 
                 try {
                     await connection.beginTransaction();
+
+                    // 학생 → 청구 → 크레딧 순서로 잠근다 — 유일 키가 없어도 같은 달 청구가 두 개 생기지 않는다(repositories/studentBillingLock)
+                    await lockStudentForBilling(connection, student.id, academy.academy_id);
 
                     // 이미 해당 월 학원비가 있는지 확인
                     const [existing] = await connection.query(`
@@ -268,7 +272,7 @@ async function generateMonthlyPayments() {
             // 시즌으로 이 달 월회비가 빠진 학생의 1일~비시즌 종강일 수업료 (services/nonSeasonProratedBilling)
             for (const candidate of await nonSeasonProratedCandidates(db, academy.academy_id, yearMonth)) {
                 try {
-                    await insertNonSeasonProrated(db, academy.academy_id, candidate, planNonSeasonProrated(candidate, yearMonth));
+                    if (!await insertNonSeasonProrated(db, academy.academy_id, candidate, planNonSeasonProrated(candidate, yearMonth))) continue;
                     totalGenerated++;
                     console.log(`[PaymentScheduler] Generated non-season prorated payment for student ${candidate.student_id} - ${yearMonth}`);
                 } catch (err) {

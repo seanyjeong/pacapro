@@ -8,6 +8,7 @@ const { pool, decrypt, logger } = require('./_utils');
 const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 module.exports = function(router) {
 
@@ -38,6 +39,9 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         const payDate = payment_date || getKoreaDateText();
 
         await connection.beginTransaction();
+
+        // 학생 → 청구 순서로 잠근다 — 다른 청구 경로와 같은 순서, 유일 키가 없어도 같은 달 청구가 두 개 생기지 않는다
+        await lockStudentForBilling(connection, student_id, req.user.academyId);
 
         const [students] = await connection.execute(
             `SELECT s.id, s.name, s.monthly_tuition, s.discount_rate, s.payment_due_day, s.status, s.academy_id,

@@ -395,6 +395,64 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect(await monthBill(m2)).toEqual([22000, 0, null, 428000, 428000, 'paid']); // 새 선납 청구는 크레딧 칸을 쓰지 않는다(예전과 같음)
     });
 
+    test('유일 키가 없는 표에서도 학생 잠금으로: 학생별·일괄·자동 청구·미리 납부를 동시에 두 번 → 청구 하나·크레딧 한 번, 교착 없음', async () => {
+        const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
+        const monthBills = async () => (await pool.query('SELECT carryover_amount, final_amount, payment_status FROM student_payments WHERE `year_month` = ?', [month]))[0];
+        const creditLeft = async () => (await pool.query('SELECT remaining_amount FROM rest_credits WHERE id = 1'))[0][0].remaining_amount;
+        await admin.query('ALTER TABLE student_payments DROP INDEX uq_student_month_type');
+        try {
+            // 학생별 청구 동시 두 번
+            await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+            const single = await Promise.all([1, 2].map(() =>
+                request(app()).post('/paca/payments/generate-monthly-for-student').send({ student_id: 1, year, month: mon })));
+            expect(single.map(res => res.status).sort()).toEqual([201, 400]);
+            expect((await monthBills()).map(row => [row.carryover_amount, Number(row.final_amount)])).toEqual([[12300, 287000]]);
+            expect(await creditLeft()).toBe(0);
+
+            // 일괄 청구 동시 두 번: 둘 다 200(교착 없음), 청구 하나, 크레딧 한 번
+            await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+            const bulk = await Promise.all([1, 2].map(() => request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })));
+            expect(bulk.map(res => res.status)).toEqual([200, 200]);
+            expect((await monthBills()).map(row => [row.carryover_amount, Number(row.final_amount)])).toEqual([[12300, 287000]]);
+            expect(await creditLeft()).toBe(0);
+
+            // 일괄 청구 + 학생별 청구 동시: 청구 하나
+            await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+            await Promise.all([request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon }),
+                request(app()).post('/paca/payments/generate-monthly-for-student').send({ student_id: 1, year, month: mon })]);
+            expect(await monthBills()).toHaveLength(1);
+            expect(await creditLeft()).toBe(0);
+
+            // 매달 자동 청구 동시 두 번(이번 달): 청구 하나
+            await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+            const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+            const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
+            await Promise.all([generateMonthlyPayments(), generateMonthlyPayments()]);
+            log.mockRestore();
+            const [thisMonth] = await pool.query("SELECT carryover_amount FROM student_payments WHERE `year_month` = ? AND payment_type = 'monthly'", [THIS_MONTH]);
+            expect(thisMonth.map(row => row.carryover_amount)).toEqual([12300]);
+            expect(await creditLeft()).toBe(0);
+
+            // 미리 납부 동시 두 번: 청구 하나(완납), 뒤 요청은 400
+            await seed({ tuition: 300000, rate: 0, bills: false });
+            const early = await Promise.all([1, 2].map(() =>
+                request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: month, payment_method: 'cash' })));
+            expect(early.map(res => res.status).sort()).toEqual([200, 400]);
+            expect((await monthBills()).map(row => row.payment_status)).toEqual(['paid']);
+
+            // 선납 동시 두 번: 달마다 청구 하나
+            await seed({ tuition: 300000, rate: 0, bills: false });
+            const months = [month, koreaMonth(3)];
+            await Promise.all([1, 2].map(() => request(app()).post('/paca/payments/prepaid-pay')
+                .send({ student_id: 1, months, prepaid_discount_rate: 5, payment_method: 'cash' })));
+            const [prepaid] = await pool.query('SELECT `year_month` AS ym, COUNT(*) AS n FROM student_payments GROUP BY `year_month` ORDER BY ym');
+            expect(prepaid.map(row => [row.ym, row.n])).toEqual(months.map(ym => [ym, 1]));
+        } finally {
+            await pool.query('DELETE FROM student_payments');
+            await admin.query('ALTER TABLE student_payments ADD UNIQUE KEY uq_student_month_type (student_id, `year_month`, payment_type)');
+        }
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,

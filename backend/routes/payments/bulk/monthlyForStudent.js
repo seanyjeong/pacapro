@@ -4,6 +4,7 @@ const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../
 const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
 const { deductMonthlyCredit } = require('../../../services/monthlyCreditDeduction');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../../services/nonSeasonProratedBilling');
+const { lockStudentForBilling } = require('../../../repositories/studentBillingLock');
 
 // 만든 청구와 학생 이름
 async function createdPayment(paymentId) {
@@ -68,6 +69,12 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
             if (candidate) {
                 const plan = planNonSeasonProrated(candidate, yearMonth);
                 const paymentId = await insertNonSeasonProrated(pool, req.user.academyId, candidate, plan, req.user.userId);
+                if (!paymentId) {
+                    return res.status(400).json({
+                        error: 'Validation Error',
+                        message: `${yearMonth} 월 납부건이 이미 존재합니다.`
+                    });
+                }
                 return res.status(201).json({
                     message: '비시즌 종강 일할 납부건이 생성되었습니다.',
                     payment: await createdPayment(paymentId),
@@ -110,12 +117,27 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         // Due date
         const dueDate = new Date(year, month - 1, dueDay);
 
-        // 크레딧 차감과 청구 저장을 한 트랜잭션으로, 크레딧 행은 잠근다(FOR UPDATE) — 두 번 눌러도 크레딧은 한 번만 빠지고,
-        // 같은 달 청구가 이미 생기면(학생·월·종류 유일 키) 차감까지 되돌린다
+        // 크레딧 차감과 청구 저장을 한 트랜잭션으로, 학생 → 청구 → 크레딧 순서로 잠근다(FOR UPDATE, repositories/studentBillingLock).
+        // 두 번 동시에 눌러도 뒤 요청은 앞 청구를 보고 400 — 운영 표에 유일 키가 없어도 청구 하나·크레딧 한 번.
+        // (유일 키가 있으면 ER_DUP_ENTRY 도 400 으로 처리한다)
         let paymentId;
         const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
+            await lockStudentForBilling(conn, student.id, req.user.academyId);
+            const [lockedExisting] = await conn.execute(
+                `SELECT id FROM student_payments
+                 WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
+                 FOR UPDATE`,
+                [student_id, yearMonth]
+            );
+            if (lockedExisting.length > 0) {
+                await conn.rollback();
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: `${yearMonth} 월 납부건이 이미 존재합니다.`
+                });
+            }
             // 휴식 이월·공결·수동 크레딧 차감(일괄 청구와 같은 함수)
             let carryoverAmount = 0;
             let restCreditId = null;

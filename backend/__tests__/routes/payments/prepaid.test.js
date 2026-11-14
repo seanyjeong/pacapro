@@ -10,6 +10,8 @@
  *   - validation 4xx: connection.release() 호출 (트랜잭션 시작 전)
  */
 
+// 학생 잠금(SELECT … FOR UPDATE)은 실제 MySQL 시험(integration/pending-bill-mysql)에서 확인 — 여기선 호출 순서만 본다
+jest.mock('../../../repositories/studentBillingLock', () => ({ lockStudentForBilling: jest.fn().mockResolvedValue({ id: 1 }) }));
 jest.mock('../../../config/database', () => {
     const conn = {
         execute: jest.fn(),

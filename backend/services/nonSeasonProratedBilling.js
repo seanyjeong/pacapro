@@ -6,6 +6,7 @@
  */
 const { calculateDueDate } = require('../utils/dueDateCalculator');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
+const { lockStudentForBilling } = require('../repositories/studentBillingLock');
 
 function classDaysOf(value) {
     if (!value) return [];
@@ -48,7 +49,30 @@ function planNonSeasonProrated(candidate, yearMonth) {
     };
 }
 
+// 학생 행을 먼저 잠그고(repositories/studentBillingLock) 그 달 월회비 청구가 아직 없을 때만 만든다 — 이미 있으면 null.
+// 유일 키가 없어도, 동시에 돌아도 같은 달 청구가 두 개 생기지 않는다.
+// db 가 pool 이면 여기서 트랜잭션을 열고, 트랜잭션 연결(AI 연결 월회비 청구)이면 그 트랜잭션 안에서 한다.
 async function insertNonSeasonProrated(db, academyId, candidate, plan, recordedBy = null) {
+    if (typeof db.getConnection === 'function') {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+            const id = await insertNonSeasonProrated(conn, academyId, candidate, plan, recordedBy);
+            await conn.commit();
+            return id;
+        } catch (error) {
+            await conn.rollback();
+            throw error;
+        } finally {
+            conn.release();
+        }
+    }
+    await lockStudentForBilling(db, candidate.student_id, academyId);
+    const [existing] = await db.query(
+        "SELECT id FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = 'monthly' FOR UPDATE",
+        [candidate.student_id, plan.yearMonth]
+    );
+    if (existing.length) return null;
     const [result] = await db.query(
         `INSERT INTO student_payments (
             student_id, academy_id, \`year_month\`, payment_type,

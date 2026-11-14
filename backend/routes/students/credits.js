@@ -54,6 +54,7 @@ const logger = require('../../utils/logger');
 const { truncateToThousands, countClassDaysInPeriod } = require('./_utils');
 const { floorRatio, billFinalAfterChange, billCreditRoom } = require('../../utils/monthlyBillAmounts');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 module.exports = function(router) {
 
@@ -489,11 +490,12 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
         });
     }
 
-    // 한 트랜잭션: 청구·크레딧 행을 잠그고(FOR UPDATE, 월 청구와 같은 순서 — 청구 먼저) 확인·차감·저장을 함께.
-    // 동시에 두 번 눌러도 크레딧은 한 번만 빠진다.
+    // 한 트랜잭션: 학생 → 청구 → 크레딧 순서로 잠그고(FOR UPDATE, 다른 청구 경로와 같은 순서 — repositories/studentBillingLock)
+    // 확인·차감·저장을 함께. 동시에 두 번 눌러도 크레딧은 한 번만 빠진다.
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
+        await lockStudentForBilling(conn, studentId, req.user.academyId);
 
         // 해당 월 학원비 조회 (year_month 는 MySQL 예약어 → 백틱)
         const [payments] = await conn.execute(

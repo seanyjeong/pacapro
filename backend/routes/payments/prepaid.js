@@ -42,6 +42,7 @@ const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../u
 const { verifyToken } = require('../../middleware/auth');
 const crypto = require('crypto');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 /**
  * 한 달 선납 금액 — 미리보기·실행이 같이 쓴다.
@@ -205,6 +206,9 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
         const payDate = payment_date || getKoreaDateText();
 
         await connection.beginTransaction();
+
+        // 학생 → 청구 순서로 잠근다 — 다른 청구 경로와 같은 순서, 유일 키가 없어도 같은 달 청구가 두 개 생기지 않는다
+        await lockStudentForBilling(connection, student_id, req.user.academyId);
 
         // 학생 조회
         const [students] = await connection.execute(

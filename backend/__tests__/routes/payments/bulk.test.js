@@ -12,6 +12,8 @@
  *   - lesson #206: 거대 endpoint 정상 케이스 = pool.execute.mockResolvedValue([[]]) default + 핵심 SQL 만 검증
  */
 
+// 학생 잠금(SELECT … FOR UPDATE)은 실제 MySQL 시험(integration/pending-bill-mysql)에서 확인 — 여기선 호출 순서만 본다
+jest.mock('../../../repositories/studentBillingLock', () => ({ lockStudentForBilling: jest.fn().mockResolvedValue({ id: 1 }) }));
 jest.mock('../../../config/database', () => ({
     execute: jest.fn(),
     query: jest.fn(),
@@ -292,6 +294,7 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
             ]])
             .mockResolvedValueOnce([[{ allowed: 1 }]])
             .mockResolvedValueOnce([[]])                  // existing
+            .mockResolvedValueOnce([[]])                  // 트랜잭션 안 existing (학생 잠근 뒤 다시 확인)
             .mockResolvedValueOnce([[]])                  // rest_credits SELECT (크레딧 없음)
             .mockResolvedValueOnce([{ insertId: 50 }])
             .mockResolvedValueOnce([[
@@ -304,6 +307,28 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
         expect(res.body.message).toBe('월 납부건이 생성되었습니다.');
         expect(res.body.payment.id).toBe(50);
         expect(res.body.nonSeasonProrated).toBeNull();
+        // 트랜잭션 처음에 학생을 잠그고, 그 뒤 청구 → 크레딧
+        const { lockStudentForBilling } = require('../../../repositories/studentBillingLock');
+        expect(lockStudentForBilling).toHaveBeenCalledWith(expect.anything(), 7, expect.anything());
+        const sqls = pool.execute.mock.calls.map(([sql]) => sql);
+        expect(sqls.findIndex(sql => /FROM student_payments[\s\S]*FOR UPDATE/.test(sql)))
+            .toBeLessThan(sqls.findIndex(sql => /FROM rest_credits/.test(sql)));
+    });
+
+    test('트랜잭션 안에서 같은 달 청구가 보이면(동시에 두 번 누름) 400, 크레딧은 건드리지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 10, payment_due_day: 5, tuition_due_day: 5 },
+            ]])
+            .mockResolvedValueOnce([[{ allowed: 1 }]])
+            .mockResolvedValueOnce([[]])                  // 트랜잭션 전 existing: 아직 없음
+            .mockResolvedValueOnce([[{ id: 49 }]]);       // 학생 잠근 뒤: 앞 요청이 만든 청구
+        const res = await request(makeApp())
+            .post('/paca/payments/generate-monthly-for-student')
+            .send({ student_id: 7, year: 2026, month: 5 });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('2026-05 월 납부건이 이미 존재합니다.');
+        expect(pool.execute.mock.calls.some(([sql]) => /rest_credits|INSERT INTO student_payments/.test(sql))).toBe(false);
     });
 
     test('409: 무료 수업 기간에는 개별 월 청구를 만들지 않는다', async () => {
