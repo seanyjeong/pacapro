@@ -19,9 +19,10 @@ import { BranchClassCard } from '@/features/branches/branch-class-card';
 
 export function SettingsPage() {
   const state = useSettingsPageState();
+  const isOwner = state.user?.role === 'owner';
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full max-w-6xl space-y-4">
       <SettingsHeader
         hasUnsavedChanges={state.hasUnsavedChanges}
         isLoading={state.isLoadingSettings}
@@ -29,8 +30,10 @@ export function SettingsPage() {
         onSave={state.saveSettings}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <main className="min-w-0 space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+        <SettingsOperationPanel isOwner={isOwner} />
+
+        <main className="min-w-0 space-y-4">
           <AcademyBasicCard settings={state.settings} updateSetting={state.updateSetting} />
           <ClassTimeCard
             settings={state.settings}
@@ -48,31 +51,23 @@ export function SettingsPage() {
             />
           ))}
           <SalarySettingsCard settings={state.settings} updateSetting={state.updateSetting} />
-          <BranchClassCard />
-          {state.user?.role === 'owner' && <GoogleIntegrationCard />}
-          <div className="flex justify-end border-t border-border/70 pt-4">
+          <div className="flex justify-end">
             <Button
               onClick={state.saveSettings}
               disabled={state.isLoadingSettings || state.isSaving || !state.hasUnsavedChanges}
-              variant={state.hasUnsavedChanges ? 'default' : 'secondary'}
+              variant={state.hasUnsavedChanges ? 'default' : 'outline'}
               size="lg"
+              className="w-full sm:w-auto"
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="h-5 w-5" />
               {state.isSaving ? '저장 중...' : state.hasUnsavedChanges ? '학원 설정 저장' : '저장됨'}
             </Button>
           </div>
-        </main>
-
-        <aside className="order-first space-y-5 xl:order-none xl:sticky xl:top-20 xl:self-start">
-          <SettingsOperationPanel
-            settings={state.settings}
-            hasUnsavedChanges={state.hasUnsavedChanges}
-            isSaving={state.isSaving}
-            canManageGoogle={state.user?.role === 'owner'}
-          />
+          <BranchClassCard />
+          {isOwner && <GoogleIntegrationCard />}
           <UserInfoCard user={state.user} loading={state.isLoadingSettings} />
           <SettingsSystemCard />
-          {state.user?.role === 'owner' ? (
+          {isOwner ? (
             <DangerResetCard
               resetConfirmation={state.resetConfirmation}
               isResetting={state.isResetting}
@@ -80,7 +75,7 @@ export function SettingsPage() {
               onReset={state.handleResetAllData}
             />
           ) : null}
-        </aside>
+        </main>
       </div>
 
       <SettingsResetConfirmDialog

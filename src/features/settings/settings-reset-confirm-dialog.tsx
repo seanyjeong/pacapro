@@ -27,7 +27,7 @@ export function SettingsResetConfirmDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {open ? (
-        <AlertDialogContent className="rounded-md sm:max-w-md">
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{SETTINGS_RESET_COPY.dialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -35,7 +35,7 @@ export function SettingsResetConfirmDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive">
+          <div className="rounded-xl bg-destructive-soft p-4 text-sm text-destructive">
             <p className="font-semibold">삭제되는 정보</p>
             <ul className="mt-2 space-y-1">
               {SETTINGS_RESET_TARGETS.map((target) => (

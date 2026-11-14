@@ -28,7 +28,7 @@ export function SalarySettingsCard({ settings, updateSetting }: SalarySettingsCa
           onValueChange={(value) => updateSetting('salary_payment_day', value)}
         />
         <div className="space-y-1.5">
-          <span className="block text-sm font-medium text-foreground">급여 정산 방식</span>
+          <span className="block text-sm font-semibold text-secondary-foreground">급여 정산 방식</span>
           <div className="grid gap-2 md:grid-cols-2">
             {SALARY_MONTH_TYPE_OPTIONS.map((option) => {
               const checked = settings.salary_month_type === option.value;
@@ -36,8 +36,8 @@ export function SalarySettingsCard({ settings, updateSetting }: SalarySettingsCa
                 <label
                   key={option.value}
                   className={cn(
-                    'flex min-h-20 cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors',
-                    checked ? 'border-foreground/40 bg-muted/45' : 'border-border bg-background hover:bg-muted/30'
+                    'flex min-h-20 cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-colors',
+                    checked ? 'border-primary bg-primary-soft' : 'border-transparent bg-muted hover:bg-muted/70'
                   )}
                 >
                   <input
@@ -46,11 +46,11 @@ export function SalarySettingsCard({ settings, updateSetting }: SalarySettingsCa
                     value={option.value}
                     checked={checked}
                     onChange={(event) => updateSetting('salary_month_type', event.target.value as SalaryMonthType)}
-                    className="mt-1 h-4 w-4"
+                    className="mt-0.5 h-4 w-4 accent-primary"
                   />
                   <span>
-                    <span className="block text-sm font-semibold text-foreground">{option.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">{option.detail}</span>
+                    <span className={cn('block text-[15px] font-bold', checked ? 'text-primary' : 'text-foreground')}>{option.label}</span>
+                    <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">{option.detail}</span>
                   </span>
                 </label>
               );

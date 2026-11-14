@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils/cn';
+import { SETTINGS_FIELD_CLASS } from './settings-constants';
 
 interface SettingsTextInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
@@ -22,22 +23,17 @@ export function SettingsTextInput({
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className="block text-sm font-medium text-foreground">
+      <label htmlFor={inputId} className="block text-sm font-semibold text-secondary-foreground">
         {label}
       </label>
       <input
         id={inputId}
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
-        className={cn(
-          'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground',
-          'outline-none transition-colors placeholder:text-muted-foreground/70',
-          'focus:border-foreground/30 focus:ring-2 focus:ring-ring/25',
-          className
-        )}
+        className={cn(SETTINGS_FIELD_CLASS, className)}
         {...props}
       />
-      {helperText ? <p className="text-xs text-muted-foreground">{helperText}</p> : null}
+      {helperText ? <p className="text-[13px] text-muted-foreground">{helperText}</p> : null}
     </div>
   );
 }
