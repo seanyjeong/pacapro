@@ -56,10 +56,9 @@ export default function ScheduleDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-4xl space-y-4">
         <SchedulePageHeader
-          description="수업 정보를 불러오는 중입니다."
-          eyebrow="Schedule Detail"
+          description="수업 정보를 불러오는 중이에요."
           onBack={() => router.push('/schedules')}
           title="수업 상세"
         />
@@ -70,10 +69,9 @@ export default function ScheduleDetailPage() {
 
   if (error || !schedule) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-4xl space-y-4">
         <SchedulePageHeader
-          description="수업 정보를 다시 불러올 수 있습니다."
-          eyebrow="Schedule Detail"
+          description="수업 정보를 다시 불러올 수 있어요."
           onBack={() => router.push('/schedules')}
           title="수업 상세"
         />
@@ -83,10 +81,9 @@ export default function ScheduleDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
+    <div className="mx-auto w-full max-w-4xl space-y-4">
       <SchedulePageHeader
-        description="수업 정보와 출석 처리 상태를 확인합니다."
-        eyebrow="Schedule Detail"
+        description="수업 정보와 출석 처리 상태를 확인해요."
         onBack={() => router.push('/schedules')}
         title="수업 상세"
       />

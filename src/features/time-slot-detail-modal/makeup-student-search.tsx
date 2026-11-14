@@ -23,14 +23,14 @@ export function MakeupStudentSearch({
   onClose,
 }: MakeupStudentSearchProps) {
   return (
-    <div className="mb-4 p-3 bg-primary-soft rounded-lg border border-primary/30">
+    <div className="mb-4 rounded-xl bg-primary-soft p-3">
       <div className="flex items-center gap-2 mb-2">
         <Search className="h-4 w-4 text-primary" />
         <span className="text-sm font-medium text-primary">보충 학생 검색</span>
         <Button
           size="sm"
           variant="ghost"
-          className="ml-auto h-6 w-6 p-0"
+          className="ml-auto h-8 w-8 p-0"
           onClick={onClose}
           aria-label="보충 학생 검색 닫기"
         >
@@ -38,10 +38,10 @@ export function MakeupStudentSearch({
         </Button>
       </div>
       <Input
-        placeholder="학생 이름 검색..."
+        placeholder="학생 이름 검색"
         value={query}
         onChange={(event) => onSearch(event.target.value)}
-        className="h-8 text-sm"
+        className="bg-card"
         autoFocus
       />
       {isSearching && (
@@ -50,14 +50,14 @@ export function MakeupStudentSearch({
         </div>
       )}
       {results.length > 0 && (
-        <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+        <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
           {results.map((student) => (
             <button
               key={student.id}
               type="button"
               onClick={() => onAddStudent(student.id, student.name)}
               disabled={isAddingStudent}
-              className="w-full flex items-center justify-between gap-3 p-2 text-left text-sm bg-card rounded-md hover:bg-primary-soft transition-colors"
+              className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl bg-card px-3 text-left text-[15px] font-medium transition-colors hover:bg-card/70"
             >
               <span className="truncate">{student.name}</span>
               <span className="text-xs text-muted-foreground shrink-0">{student.grade}</span>
@@ -66,7 +66,7 @@ export function MakeupStudentSearch({
         </div>
       )}
       {query.length > 0 && !isSearching && results.length === 0 && (
-        <p className="text-xs text-muted-foreground mt-2 text-center">검색 결과가 없습니다</p>
+        <p className="text-xs text-muted-foreground mt-2 text-center">검색 결과가 없어요</p>
       )}
     </div>
   );

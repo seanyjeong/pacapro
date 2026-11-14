@@ -17,7 +17,7 @@ export function InstructorScheduleFooter({
   onSave,
 }: Props) {
   return (
-    <div className="flex items-center justify-between border-t border-border pt-4">
+    <div className="flex items-center justify-between border-t border-border/60 pt-4">
       <div className="text-sm text-muted-foreground">
         <p>현재 {selectedCount}명</p>
         <p className="text-xs">총 {totalSelectedCount}명 배정</p>

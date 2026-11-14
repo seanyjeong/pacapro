@@ -48,48 +48,41 @@ export function StudentAttendanceCard({
   const isReasonInputOpen = reasonInput?.studentId === student.student_id;
 
   return (
-    <div className="group p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors space-y-2">
+    <div className="group space-y-3 rounded-xl bg-muted p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-muted-foreground/20 flex items-center justify-center shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card">
             <User className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <span className="font-medium text-foreground">{student.student_name}</span>
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="text-[16px] font-bold text-foreground">{student.student_name}</span>
             {student.grade && (
               <span className="text-xs text-muted-foreground">{student.grade}</span>
             )}
             {trialBadge && (
-              <Badge
-                className={cn(
-                  'text-xs flex items-center gap-1',
-                  trialBadge.completed
-                    ? 'bg-muted text-muted-foreground border-border'
-                    : 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800'
-                )}
-              >
+              <Badge variant={trialBadge.completed ? 'secondary' : 'default'}>
                 <Sparkles className="h-3 w-3" />
                 {trialBadge.text}
               </Badge>
             )}
             {student.season_type && (
-              <Badge className="bg-success-soft text-success border-success/30 text-xs">
+              <Badge variant="success">
                 시즌
               </Badge>
             )}
             {!!student.is_makeup && (
-              <Badge className="bg-warning-soft text-warning border-warning/30 text-xs">
+              <Badge variant="warning">
                 보충
               </Badge>
             )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Link
             className={cn(
-              buttonVariants({ variant: 'outline', size: 'sm' }),
-              'h-7 gap-1 px-2 text-xs font-medium'
+              buttonVariants({ variant: 'ghost', size: 'sm' }),
+              'h-8 gap-1 bg-card px-2.5 text-[13px]'
             )}
             href={`/students/${student.student_id}`}
           >
@@ -104,7 +97,7 @@ export function StudentAttendanceCard({
                 key={otherSlot}
                 size="sm"
                 variant="outline"
-                className={cn('h-7 px-2 gap-1 text-xs font-medium', otherInfo.color, 'border hover:shadow-sm')}
+                className={cn('h-8 gap-1 bg-card px-2.5 text-[13px]', otherInfo.color)}
                 disabled={isMoving}
                 onClick={() => onMove(student.student_id, otherSlot)}
                 title={`${otherInfo.label}으로 이동`}
@@ -117,7 +110,7 @@ export function StudentAttendanceCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 pl-0 sm:pl-11 flex-wrap">
+      <div className="grid grid-cols-4 items-center gap-1.5">
         {STUDENT_ATTENDANCE_STATUS.map((status) => {
           const isSelected = currentStatus === status.value;
           const StatusIcon = STUDENT_STATUS_ICONS[status.value];
@@ -129,10 +122,10 @@ export function StudentAttendanceCard({
               onClick={() => onAttendance(student.student_id, status.value)}
               disabled={isSaving}
               className={cn(
-                'flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border shadow-sm active:scale-95',
+                'flex h-12 items-center justify-center gap-1 rounded-xl text-[15px] font-bold transition-colors active:scale-[0.97]',
                 isSelected
-                  ? `${status.color} text-white border-transparent shadow-md`
-                  : 'bg-background text-foreground border-border hover:border-primary/50 hover:shadow'
+                  ? status.color
+                  : 'bg-card text-secondary-foreground hover:text-foreground'
               )}
             >
               <StatusIcon className="h-3.5 w-3.5 shrink-0" />
@@ -140,15 +133,18 @@ export function StudentAttendanceCard({
             </button>
           );
         })}
-        {isSaving && (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-1" />
-        )}
       </div>
+      {isSaving && (
+        <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          저장 중
+        </p>
+      )}
 
       {(currentStatus === 'absent' || currentStatus === 'excused') && currentNotes && (
         <div
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 ml-0 sm:ml-11 rounded-md text-xs',
+            'flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium',
             currentStatus === 'excused'
               ? 'bg-primary-soft text-primary'
               : 'bg-destructive-soft text-destructive'

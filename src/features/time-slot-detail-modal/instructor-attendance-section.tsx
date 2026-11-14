@@ -27,15 +27,15 @@ export function InstructorAttendanceSection({
 }: InstructorAttendanceSectionProps) {
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="mb-3 flex items-center gap-2">
         <UserCog className="h-4 w-4 text-muted-foreground" />
-        <h3 className="font-semibold text-foreground">강사 출결</h3>
+        <h3 className="text-[15px] font-bold text-foreground">강사 출결</h3>
       </div>
 
       {instructors.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">등록된 강사가 없습니다</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">등록된 강사가 없어요</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {instructors.map((instructor) => (
             <InstructorAttendanceCard
               key={instructor.id}

@@ -54,19 +54,18 @@ export function AttendanceChecker(props: AttendanceCheckerProps) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AttendanceStatsCard stats={editor.stats} />
 
-      {currentDate && timeSlot && (
-        <ClassRosterSelect
-          branches={branches}
-          classId={classId}
-          className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground sm:w-[240px]"
-          onChange={setClassId}
-        />
-      )}
-
       <AttendanceListCard
+        filter={currentDate && timeSlot ? (
+          <ClassRosterSelect
+            branches={branches}
+            classId={classId}
+            className="h-11 w-full min-w-0 rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10 sm:w-[280px]"
+            onChange={setClassId}
+          />
+        ) : undefined}
         attendances={shownAttendances}
         editedAttendances={editor.editedAttendances}
         isSubmitting={isSubmitting}

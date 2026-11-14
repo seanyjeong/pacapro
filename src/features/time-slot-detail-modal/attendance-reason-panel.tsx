@@ -24,10 +24,8 @@ export function AttendanceReasonPanel({
   return (
     <div
       className={cn(
-        'ml-0 sm:ml-11 mt-2 p-3 rounded-lg border space-y-2',
-        isExcused
-          ? 'bg-primary-soft border-primary/30'
-          : 'bg-destructive-soft border-destructive/30'
+        'space-y-3 rounded-xl p-3',
+        isExcused ? 'bg-primary-soft' : 'bg-destructive-soft'
       )}
     >
       <div className="flex items-center gap-2">
@@ -41,7 +39,7 @@ export function AttendanceReasonPanel({
           {isExcused ? '공결' : '결석'} 사유
         </span>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="grid grid-cols-3 gap-1.5">
         {reasons.map((option) => (
           <ReasonButton
             key={option.value}
@@ -64,18 +62,17 @@ export function AttendanceReasonPanel({
         <Textarea
           value={reasonInput.customReason}
           onChange={(event) => onChange({ ...reasonInput, customReason: event.target.value })}
-          placeholder="사유 입력..."
+          placeholder="사유 입력"
           rows={1}
-          className="text-sm resize-none"
+          className="resize-none bg-card"
         />
       )}
       <div className="flex gap-2 pt-1">
-        <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={onCancel}>
+        <Button variant="outline" className="flex-1 bg-card" onClick={onCancel}>
           취소
         </Button>
         <Button
-          size="sm"
-          className={cn('h-7 text-xs flex-1', isExcused ? 'bg-primary hover:bg-primary/90' : 'bg-destructive hover:bg-destructive/90')}
+          className={cn('flex-1', isExcused ? 'bg-primary hover:bg-primary/90' : 'bg-destructive hover:bg-destructive/90')}
           onClick={onConfirm}
           disabled={!reasonInput.reason || (reasonInput.reason === '기타' && !reasonInput.customReason.trim())}
         >
@@ -99,12 +96,12 @@ function ReasonButton({ selected, isExcused, onClick, children }: ReasonButtonPr
       type="button"
       onClick={onClick}
       className={cn(
-        'px-2.5 py-1 rounded-full text-xs font-medium transition-all border',
+        'h-11 rounded-xl px-2 text-sm font-semibold transition-colors',
         selected
           ? isExcused
-            ? 'bg-primary text-white border-primary'
-            : 'bg-destructive text-white border-destructive'
-          : 'bg-background border-border hover:border-muted-foreground/40'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-destructive text-destructive-foreground'
+          : 'bg-card text-secondary-foreground hover:text-foreground'
       )}
     >
       {children}
