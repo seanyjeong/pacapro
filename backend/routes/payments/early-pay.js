@@ -5,7 +5,7 @@
  */
 
 const { pool, decrypt, logger } = require('./_utils');
-const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
+const { floorPercent, billFinalAmount, billFinalAfterChange, isSeparatelyPricedBill } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
@@ -69,7 +69,8 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         }
 
         const [existing] = await connection.execute(
-            `SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount
+            `SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                    is_prorated, description
              FROM student_payments
              WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
              FOR UPDATE`,
@@ -88,12 +89,15 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         const baseAmount = parseFloat(student.monthly_tuition) || 0;
         const studentDiscountRate = parseFloat(student.discount_rate) || 0;
         const discountAmount = floorPercent(baseAmount, studentDiscountRate);
-        // 최종 금액: 월 청구와 같은 공통 식(천원 절삭). 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지키고,
-        // 휴원·복귀 등으로 최종 금액만 줄인 청구는 줄인 금액 기준(utils/monthlyBillAmounts billFinalAfterChange).
-        // 예전엔 학원비 − 할인으로 덮어써 추가 금액이 빠지고 이미 뺀 크레딧까지 다시 받았다.
+        // 최종 금액: 월 청구와 같은 공통 식(천원 절삭). 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지킨다.
+        // 일할·정산 등 금액을 따로 정한 청구(isSeparatelyPricedBill)는 학원비·할인 칸을 바꾸지 않고 그 청구 금액 그대로 받는다
+        // (예전엔 학원비 칸을 한 달 정액으로 바꿔 첫 달 일할·휴원 정산 청구를 정액으로 받았다).
+        const separatelyPriced = existing.length > 0 && isSeparatelyPricedBill(existing[0]);
+        const billBase = separatelyPriced ? existing[0].base_amount : baseAmount;
+        const billDiscount = separatelyPriced ? existing[0].discount_amount : discountAmount;
         const finalAmount = existing.length === 0
             ? billFinalAmount(baseAmount, discountAmount)
-            : billFinalAfterChange(existing[0], { base_amount: baseAmount, discount_amount: discountAmount });
+            : billFinalAfterChange(existing[0], { base_amount: billBase, discount_amount: billDiscount });
         // 일부 납부한 청구: 이번에 받는 돈은 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다)
         const alreadyPaid = existing.length ? parseFloat(existing[0].paid_amount) || 0 : 0;
         if (alreadyPaid > finalAmount) {
@@ -150,8 +154,8 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
                     updated_at = NOW()
                  WHERE id = ?`,
                 [
-                    baseAmount,
-                    discountAmount,
+                    billBase,
+                    billDiscount,
                     finalAmount,
                     finalAmount,
                     payDate,

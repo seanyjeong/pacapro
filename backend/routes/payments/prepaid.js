@@ -39,26 +39,36 @@
  */
 
 const { pool, decrypt, logger } = require('./_utils');
-const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
+const { floorPercent, billFinalAmount, billFinalAfterChange, billTuitionCharge, isSeparatelyPricedBill, addWon } = require('../../utils/monthlyBillAmounts');
 const { verifyToken } = require('../../middleware/auth');
 const crypto = require('crypto');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 /**
- * 한 달 선납 금액 — 미리보기·실행이 같이 쓴다.
- * 학생 할인 + 선납 할인(정해진 할인 그대로)을 할인액으로 두고 최종 금액은 월 청구와 같은 공통 식(천원 절삭).
- * 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지키고, 휴원·복귀 등으로 최종 금액만 줄인 청구는 줄인 금액 기준.
- * (예전엔 학원비 − 할인으로 덮어써 추가 금액이 빠지고 이미 뺀 크레딧까지 다시 받았다)
+ * 한 달 선납 금액 — 미리보기·실행이 같이 쓴다. 선납 할인 = 할인 전 청구 금액(학생 할인 뒤) × 선납 할인율, 천원 절삭.
+ * - 새 청구·보통 미납 청구: 학원비 = 학생 월 학원비, 할인액 = 학생 할인 + 선납 할인, 최종은 월 청구와 같은 공통 식.
+ *   이미 있는 청구의 추가 금액·이미 적용된 크레딧은 지킨다.
+ * - 일할·정산 등 금액을 따로 정한 미납 청구(isSeparatelyPricedBill — 첫 달·복귀·비시즌 일할, 휴원·퇴원 정산):
+ *   학원비 칸은 그대로 두고 그 청구의 학원비 몫(billTuitionCharge) × 선납 할인율을 할인액에 더한다. 최종은 그 청구 금액 − 선납 할인.
+ *   (예전엔 학원비 칸을 한 달 정액으로 바꿔 첫 달 일할 60,000원 청구가 428,000원이 되고, 줄인 청구 할인도 정액 기준이었다)
+ * baseAmount·totalDiscountAmount: 저장할 학원비·할인액 칸, listAmount: 선납 할인 전 금액(미리보기 정상가)
  */
-function prepaidMonthAmounts(baseAmount, studentDiscountRate, prepaidRate, existingBill) {
-    const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
-    const prepaidDiscount = floorPercent(baseAmount - studentDiscount, prepaidRate);
+function prepaidMonthAmounts(tuition, studentDiscountRate, prepaidRate, existingBill) {
+    if (existingBill && isSeparatelyPricedBill(existingBill)) {
+        const listAmount = Number(billTuitionCharge(existingBill));
+        const prepaidDiscount = floorPercent(billTuitionCharge(existingBill), prepaidRate);
+        const totalDiscountAmount = addWon(existingBill.discount_amount, prepaidDiscount);
+        return { baseAmount: existingBill.base_amount, studentDiscount: 0, listAmount, prepaidDiscount, totalDiscountAmount,
+            finalAmount: billFinalAfterChange(existingBill, { discount_amount: totalDiscountAmount }) };
+    }
+    const studentDiscount = floorPercent(tuition, studentDiscountRate);
+    const prepaidDiscount = floorPercent(tuition - studentDiscount, prepaidRate);
     const totalDiscountAmount = studentDiscount + prepaidDiscount;
     const finalAmount = existingBill
-        ? billFinalAfterChange(existingBill, { base_amount: baseAmount, discount_amount: totalDiscountAmount })
-        : billFinalAmount(baseAmount, totalDiscountAmount);
-    return { studentDiscount, prepaidDiscount, totalDiscountAmount, finalAmount };
+        ? billFinalAfterChange(existingBill, { base_amount: tuition, discount_amount: totalDiscountAmount })
+        : billFinalAmount(tuition, totalDiscountAmount);
+    return { baseAmount: tuition, studentDiscount, listAmount: tuition - studentDiscount, prepaidDiscount, totalDiscountAmount, finalAmount };
 }
 
 module.exports = function(router) {
@@ -115,7 +125,7 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 결제 레코드 확인
             const [existing] = await pool.execute(
-                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ?',
+                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, is_prorated, description FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ?',
                 [student_id, yearMonth, 'monthly']
             );
 
@@ -129,14 +139,15 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
                 }
             }
 
-            const { studentDiscount, prepaidDiscount, finalAmount } =
+            const { studentDiscount, listAmount, prepaidDiscount, finalAmount } =
                 prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, status === 'existing_unpaid' ? existing[0] : null);
 
             // 일부 납부한 청구는 이미 낸 금액을 빼고 받는다(실행과 같음) — total_final 은 이번에 받을 금액 합계
             const paidAmount = status === 'existing_unpaid' ? parseFloat(existing[0].paid_amount) || 0 : 0;
             const detail = {
                 year_month: yearMonth,
-                base_amount: baseAmount,
+                // 정상가(화면: 기본 − 학생 할인): 일할·정산 청구는 그 청구 금액
+                base_amount: status === 'already_paid' ? baseAmount : listAmount + studentDiscount,
                 student_discount: studentDiscount,
                 prepaid_discount: status === 'already_paid' ? 0 : prepaidDiscount,
                 final_amount: status === 'already_paid' ? 0 : finalAmount,
@@ -250,7 +261,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 레코드 SELECT FOR UPDATE
             const [existing] = await connection.execute(
-                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ? FOR UPDATE',
+                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, is_prorated, description FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ? FOR UPDATE',
                 [student_id, yearMonth, 'monthly']
             );
 
@@ -261,7 +272,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
             }
 
             // 금액 계산 (미리보기와 같은 함수)
-            const { prepaidDiscount, totalDiscountAmount, finalAmount } =
+            const { baseAmount: billBase, prepaidDiscount, totalDiscountAmount, finalAmount } =
                 prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, existing[0] || null);
 
             // 일부 납부한 청구: 이번에 받는 돈은 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다).
@@ -322,7 +333,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
                         updated_at = NOW()
                      WHERE id = ?`,
                     [
-                        baseAmount,
+                        billBase,
                         totalDiscountAmount,
                         finalAmount,
                         finalAmount,

@@ -144,6 +144,16 @@ function billFinalAfterChange(bill, changes = {}) {
     return floorSum([...chargeTerms(bill), ...difference, [bill.carryover_amount, -1]], 1000);
 }
 
+/**
+ * 청구 대상 금액 중 학원비 몫(학생 할인 뒤, 추가 금액·크레딧 빼기 전) — 선납 할인의 바탕.
+ * 보통 청구: 학원비 − 할인액, 따로 정한 청구: 지금 최종 금액 + 크레딧 − 추가 금액. 정확한 10진 문자열.
+ */
+function billTuitionCharge(bill) {
+    const { n, scale } = decimalSum([...chargeTerms(bill), [bill.additional_amount, -1]]);
+    const negative = n < 0n, digits = (negative ? -n : n).toString().padStart(scale + 1, '0');
+    return `${negative ? '-' : ''}${scale ? `${digits.slice(0, -scale)}.${digits.slice(-scale)}` : digits}`;
+}
+
 // 크레딧 수동 적용 한도: 이 청구에서 더 뺄 수 있는 금액(청구 대상 금액 − 이미 적용된 크레딧, 원 단위 내림)
 function billCreditRoom(bill) {
     return floorSum([...chargeTerms(bill), [bill.carryover_amount, -1]], 1);
@@ -155,6 +165,6 @@ function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, hasSeparateFinal, isSeparatelyPricedBill,
+    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, billTuitionCharge, hasSeparateFinal, isSeparatelyPricedBill, addWon,
     floorRatio, floorPercent, sameDecimal
 };

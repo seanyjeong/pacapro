@@ -593,6 +593,66 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect([normalPreview, await final()]).toEqual([293000, 293000]);
     });
 
+    test('첫 달·비시즌·복귀 일할, 휴원 정산 청구가 있는 달에 선납·미리 납부 → 그 청구 금액 기준(학원비 칸 그대로), 보통 청구는 전과 같음', async () => {
+        const [m1, m2] = [koreaMonth(2), koreaMonth(3)];
+        const days = new Date(Date.UTC(Number(m1.slice(0, 4)), Number(m1.slice(5)), 0)).getUTCDate();
+        const transaction = async work => {
+            const conn = await pool.getConnection();
+            try { await conn.beginTransaction(); const out = await work(conn); await conn.commit(); return out; }
+            catch (error) { await conn.rollback(); throw error; } finally { conn.release(); }
+        };
+        const { pause } = require('../../services/studentLifecycleBillingService');
+        const { processResumePayment } = require('../../services/resumePaymentService');
+        const { floorPercent } = require('../../utils/monthlyBillAmounts');
+        const insertBill = (base, final, prorated, description) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id,
+            \`year_month\`, payment_type, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated,
+            due_date, payment_status, description) VALUES (1, 1, 1, ?, 'monthly', ?, 0, 0, 0, ?, 0, ?, ?, 'pending', ?)`,
+        [m1, base, final, prorated, `${m1}-05`, description]);
+        const kinds = {
+            '첫 달 일할': () => insertBill(60000, 60000, 1, `${Number(m1.slice(5))}월 학원비 (20일 등록, 일할계산)`),
+            '비시즌 종강 일할': () => insertBill(120000, 120000, 0, `${Number(m1.slice(5))}월 학원비 (비시즌 종강 일할)`),
+            '휴원 정산': async () => {
+                await insertBill(450000, 450000, 0, '학원비');
+                await transaction(conn => pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${m1}-16`, creditType: 'none' }));
+            },
+            '휴원 복귀': async () => {
+                await insertBill(450000, 450000, 0, '학원비');
+                await transaction(conn => pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${m1}-16`, creditType: 'none' }));
+                const [[student]] = await pool.query('SELECT * FROM students WHERE id = 1');
+                await transaction(connection => processResumePayment({ connection, student: { ...student, rest_start_date: `${m1}-16` },
+                    resumeDate: `${m1}-21`, classDays: [1, 3, 5], creditRecalculation: null, recordedBy: 1 }));
+            },
+            '보통 청구': () => insertBill(450000, 450000, 0, '학원비'),
+        };
+        const expected = { '첫 달 일할': 60000, '비시즌 종강 일할': 120000, '휴원 정산': floorRatio(450000, 15, days),
+            '휴원 복귀': floorRatio(450000, 15 + days - 20, days), '보통 청구': 450000 };
+        const row = async () => (await pool.query('SELECT base_amount, discount_amount, final_amount, paid_amount, payment_status FROM student_payments WHERE id = 1'))[0][0];
+        for (const [kind, make] of Object.entries(kinds)) {
+            const amount = expected[kind];
+            // 선납 2개월 5%: 이 청구는 그 청구 금액 − 그 금액 × 5%(천원 절삭), 다음 달 새 청구는 450,000 − 22,000
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            await make();
+            expect([kind, Number((await row()).final_amount)]).toEqual([kind, amount]);
+            const body = { student_id: 1, months: [m1, m2], prepaid_discount_rate: 5, payment_method: 'cash' };
+            const want = kind === '보통 청구' ? 428000 : amount - floorPercent(amount, 5);
+            const preview = await request(app()).post('/paca/payments/prepaid-preview').send(body);
+            expect([kind, preview.body.months[0].final_amount, preview.body.months[0].prepaid_discount]).toEqual([kind, want, amount - want]);
+            const paid = await request(app()).post('/paca/payments/prepaid-pay').send(body);
+            expect([kind, paid.status, paid.body.total_amount]).toEqual([kind, 200, want + 428000]);
+            const after = await row();
+            expect([kind, Number(after.base_amount), Number(after.discount_amount), Number(after.final_amount), Number(after.paid_amount), after.payment_status])
+                .toEqual([kind, kind === '보통 청구' ? 450000 : (kind === '첫 달 일할' ? 60000 : kind === '비시즌 종강 일할' ? 120000 : 450000), amount - want, want, want, 'paid']);
+
+            // 미리 납부: 그 청구 금액 그대로(보통 청구는 학생 월 학원비)
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            await make();
+            const early = await request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: m1, payment_method: 'cash' });
+            expect([kind, early.body.final_amount]).toEqual([kind, amount]);
+            const afterEarly = await row();
+            expect([kind, Number(afterEarly.final_amount), Number(afterEarly.paid_amount), afterEarly.payment_status]).toEqual([kind, amount, amount, 'paid']);
+        }
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,

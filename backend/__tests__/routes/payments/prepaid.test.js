@@ -270,6 +270,30 @@ describe('POST /paca/payments/prepaid-pay', () => {
         expect(res.body.total_amount).toBe(45000 + 95000);
     });
 
+    test('200: 첫 달 일할 청구(60,000원)는 학원비 칸을 정액으로 바꾸지 않고 그 금액 × 5% 선납 할인(예전 428,000원)', async () => {
+        conn.execute
+            .mockResolvedValueOnce([[
+                { id: 7, name: 'enc_홍', monthly_tuition: 450000, discount_rate: 0, payment_due_day: 5, status: 'active', academy_id: 5, tuition_due_day: 5 },
+            ]])
+            .mockResolvedValueOnce([[
+                { id: 11, payment_status: 'pending', paid_amount: '0.00', base_amount: '60000.00', discount_amount: '0.00', additional_amount: '0.00',
+                    carryover_amount: 0, final_amount: '60000.00', is_prorated: 1, description: '9월 학원비 (20일 등록, 일할계산)' },
+            ]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE
+            .mockResolvedValueOnce([{ affectedRows: 1 }]) // revenues
+            .mockResolvedValueOnce([[]])                  // 다음 달 = new
+            .mockResolvedValueOnce([{ insertId: 12 }])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+        const res = await request(makeApp())
+            .post('/paca/payments/prepaid-pay')
+            .send({ student_id: 7, months: ['2027-09', '2027-11'], prepaid_discount_rate: 5, payment_method: 'cash' });
+        expect(res.status).toBe(200);
+        const update = conn.execute.mock.calls.find(([sql]) => /UPDATE student_payments SET/.test(sql));
+        // [학원비, 할인액, 최종, 낸 금액] — 60,000 × 5% = 3,000
+        expect(update[1].slice(0, 4)).toEqual(['60000.00', 3000, 57000, 57000]);
+        expect(res.body.total_amount).toBe(57000 + 428000);
+    });
+
     test('400: 선납 할인으로 최종 금액이 이미 낸 금액보다 작아지면 선납 전체를 막고 되돌린다', async () => {
         conn.execute
             .mockResolvedValueOnce([[
