@@ -11,8 +11,8 @@ import { ExpenseLoadingState } from './expense-loading-state';
 import { ExpenseSummaryStrip } from './expense-summary-strip';
 import { ExpensesError } from './expenses-error';
 import { ExpensesEmptyState } from './expenses-empty-state';
+import { ExpensesFilterBar } from './expenses-filter-bar';
 import { ExpensesHeader } from './expenses-header';
-import { ExpensesOperationsBoard } from './expenses-operations-board';
 import { ExpensesTable } from './expenses-table';
 import { useExpensesPageState } from './use-expenses-page-state';
 
@@ -45,77 +45,62 @@ export function ExpensesPage() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-4">
       <ExpensesHeader
-        viewMode={state.viewMode}
-        selectedMonth={state.selectedMonth}
-        searchQuery={state.searchQuery}
         exporting={state.exporting}
         showForm={state.showForm}
         editingId={state.editingId}
         canEdit={canEditExpenses}
-        onViewModeChange={state.setViewMode}
-        onMonthChange={state.setSelectedMonth}
-        onSearchChange={state.setSearchQuery}
         onExport={state.exportExpenses}
         onCreateClick={state.openCreateForm}
       />
 
       <ExpenseSummaryStrip summary={state.summary} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-        <main className="order-2 min-w-0 space-y-5 xl:order-1">
-          {state.showForm && canEditExpenses ? (
-            <ExpenseForm
-              formData={state.formData}
-              editingId={state.editingId}
-              saving={state.saving}
-              onUpdate={state.updateForm}
-              onSubmit={state.submitForm}
-              onCancel={state.resetForm}
-            />
-          ) : null}
+      {state.showForm && canEditExpenses ? (
+        <ExpenseForm
+          formData={state.formData}
+          editingId={state.editingId}
+          saving={state.saving}
+          onUpdate={state.updateForm}
+          onSubmit={state.submitForm}
+          onCancel={state.resetForm}
+        />
+      ) : null}
 
-          {state.viewMode === 'calendar' ? (
-            <ExpenseCalendar
-              expenses={state.expenses}
-              onMonthChange={state.setSelectedMonth}
-              initialYearMonth={state.selectedMonth}
-            />
-          ) : (
-            <div className="space-y-4">
-              {state.filteredExpenses.length > 0 ? (
-                <ExpensesTable
-                  expenses={state.filteredExpenses}
-                  canEdit={canEditExpenses}
-                  onSelect={state.setSelectedExpense}
-                  onEdit={state.editExpense}
-                  onDelete={openDeleteDialog}
-                  onCompleteRefund={openRefundDialog}
-                />
-              ) : null}
-              {state.filteredExpenses.length === 0 && !state.showForm ? <ExpensesEmptyState hasSearch={hasSearch} /> : null}
-            </div>
-          )}
-        </main>
-        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
-          <ExpensesOperationsBoard
-            canEdit={canEditExpenses}
-            editingId={state.editingId}
-            exporting={state.exporting}
+      <section className="min-w-0 rounded-2xl bg-card">
+        <div className="border-b border-border/60 p-4 sm:px-6 sm:py-5">
+          <ExpensesFilterBar
             searchQuery={state.searchQuery}
             selectedMonth={state.selectedMonth}
-            showForm={state.showForm}
-            summary={state.summary}
             viewMode={state.viewMode}
-            onCreateClick={state.openCreateForm}
-            onExport={state.exportExpenses}
             onMonthChange={state.setSelectedMonth}
             onSearchChange={state.setSearchQuery}
             onViewModeChange={state.setViewMode}
           />
         </div>
-      </div>
+
+        {state.viewMode === 'calendar' ? (
+          <div className="p-4 sm:p-6">
+            <ExpenseCalendar
+              expenses={state.expenses}
+              onMonthChange={state.setSelectedMonth}
+              initialYearMonth={state.selectedMonth}
+            />
+          </div>
+        ) : state.filteredExpenses.length > 0 ? (
+          <ExpensesTable
+            expenses={state.filteredExpenses}
+            canEdit={canEditExpenses}
+            onSelect={state.setSelectedExpense}
+            onEdit={state.editExpense}
+            onDelete={openDeleteDialog}
+            onCompleteRefund={openRefundDialog}
+          />
+        ) : !state.showForm ? (
+          <ExpensesEmptyState hasSearch={hasSearch} />
+        ) : null}
+      </section>
 
       <ExpenseDetailDialog
         expense={state.selectedExpense}

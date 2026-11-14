@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { CheckCircle, FileText, Pencil, Trash2, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PAYMENT_METHOD_LABELS } from './expenses-constants';
 import { ExpenseCategoryBadge } from './expense-category-badge';
@@ -28,7 +28,7 @@ export function ExpenseDetailDialog({
   return (
     <Dialog open={Boolean(expense)} onOpenChange={(open) => !open && onClose()}>
       {expense ? (
-        <DialogContent className="rounded-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>지출 상세</DialogTitle>
           </DialogHeader>
@@ -45,13 +45,13 @@ export function ExpenseDetailDialog({
             {expense.description ? <ExpenseDetailItem label="설명" value={expense.description} wide /> : null}
             {expense.notes ? <ExpenseDetailItem label="메모" value={expense.notes} wide /> : null}
             {expense.salary_id || expense.instructor_id ? (
-              <div className="rounded-md border border-border bg-muted/25 p-3 sm:col-span-2">
-                <p className="text-sm font-medium text-foreground">관련 작업</p>
+              <div className="rounded-xl bg-muted p-4 sm:col-span-2">
+                <p className="text-sm font-semibold text-foreground">관련 작업</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {expense.salary_id ? (
                     <Link
                       aria-label={`${expense.description || '선택한 지출'} 급여 명세서 보기`}
-                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
                       href={`/salaries/${expense.salary_id}`}
                     >
                       <FileText className="h-3.5 w-3.5" />
@@ -61,7 +61,7 @@ export function ExpenseDetailDialog({
                   {expense.instructor_id ? (
                     <Link
                       aria-label={`${expense.instructor_name || expense.description || '강사'} 강사 상세 보기`}
-                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
                       href={`/instructors/${expense.instructor_id}`}
                     >
                       <UserRound className="h-3.5 w-3.5" />
@@ -72,7 +72,7 @@ export function ExpenseDetailDialog({
               </div>
             ) : null}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex-row">
             {canEdit && isRefundPendingExpense(expense) ? (
               <Button
                 type="button"
@@ -81,7 +81,7 @@ export function ExpenseDetailDialog({
                   onClose();
                   onCompleteRefund(expense.id);
                 }}
-                className="bg-success text-white hover:bg-success/90"
+                className="w-full bg-success text-success-foreground hover:bg-success/90 sm:w-auto"
               >
                 <CheckCircle className="mr-1.5 h-4 w-4" />
                 환불 완료
@@ -93,6 +93,7 @@ export function ExpenseDetailDialog({
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     onEdit(expense);
                     onClose();
@@ -105,6 +106,7 @@ export function ExpenseDetailDialog({
                   type="button"
                   variant="destructive"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     onClose();
                     onDelete(expense.id);
@@ -115,7 +117,7 @@ export function ExpenseDetailDialog({
                 </Button>
               </>
             ) : null}
-            <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+            <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={onClose}>
               닫기
             </Button>
           </DialogFooter>

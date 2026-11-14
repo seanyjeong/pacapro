@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { CheckCircle, Eye, FileText, Pencil, Trash2, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import type { Expense } from './expenses-types';
 import { isEditableExpense, isRefundPendingExpense } from './expenses-utils';
 
@@ -13,8 +13,7 @@ interface ExpenseRowActionsProps {
   onCompleteRefund: (id: number, paymentMethod?: string) => void;
 }
 
-const actionClassName =
-  'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30';
+const actionClassName = buttonVariants({ variant: 'outline', size: 'sm' });
 
 export function ExpenseRowActions({
   expense,
@@ -29,14 +28,14 @@ export function ExpenseRowActions({
   const isEditable = isEditableExpense(expense);
 
   return (
-    <div className="flex flex-wrap justify-end gap-1.5" onClick={(event) => event.stopPropagation()}>
+    <div className="flex flex-wrap items-center gap-1.5 lg:justify-end" onClick={(event) => event.stopPropagation()}>
       <button
         type="button"
         aria-label={`${description} 지출 상세 보기`}
         onClick={() => onSelect(expense)}
         className={actionClassName}
       >
-        <Eye className="h-3.5 w-3.5" />
+        <Eye className="h-4 w-4" />
         상세
       </button>
 
@@ -46,7 +45,7 @@ export function ExpenseRowActions({
           className={actionClassName}
           href={`/salaries/${expense.salary_id}`}
         >
-          <FileText className="h-3.5 w-3.5" />
+          <FileText className="h-4 w-4" />
           명세서
         </Link>
       ) : null}
@@ -57,7 +56,7 @@ export function ExpenseRowActions({
           className={actionClassName}
           href={`/instructors/${expense.instructor_id}`}
         >
-          <UserRound className="h-3.5 w-3.5" />
+          <UserRound className="h-4 w-4" />
           강사
         </Link>
       ) : null}
@@ -68,31 +67,34 @@ export function ExpenseRowActions({
           size="sm"
           variant="outline"
           onClick={() => onCompleteRefund(expense.id)}
-          className="border-success text-success hover:bg-success-soft"
+          className="bg-success-soft text-success hover:bg-success-soft/70 hover:text-success"
         >
-          <CheckCircle className="mr-1.5 h-4 w-4" />
+          <CheckCircle className="h-4 w-4" />
           환불 완료
         </Button>
       ) : null}
 
       {canEdit && isEditable ? (
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             aria-label="지출 수정"
             onClick={() => onEdit(expense)}
-            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
             <Pencil className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             aria-label="지출 삭제"
             onClick={() => onDelete(expense.id)}
-            className="rounded-md p-2 text-destructive hover:bg-destructive-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+            className="text-destructive hover:bg-destructive-soft hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
-          </button>
+          </Button>
         </>
       ) : null}
     </div>

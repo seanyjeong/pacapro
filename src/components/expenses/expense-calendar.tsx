@@ -6,7 +6,6 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -169,39 +168,37 @@ export function ExpenseCalendar({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
-                {currentYear}년 {currentMonth + 1}월 지출
-              </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                월간 총 지출: <span className="font-semibold text-destructive">{monthlyTotal.toLocaleString()}원</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-2 self-end lg:self-auto">
-              <Button variant="outline" size="sm" onClick={handleToday}>
-                오늘
-              </Button>
-              <Button variant="outline" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-foreground">
+              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+              {currentYear}년 {currentMonth + 1}월 지출
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              월간 총 지출 <span className="font-bold tabular-nums text-destructive">{monthlyTotal.toLocaleString()}원</span>
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Button variant="outline" size="sm" onClick={handleToday}>
+              오늘
+            </Button>
+            <Button variant="outline" size="icon-sm" onClick={handlePrevMonth} aria-label="이전 달">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon-sm" onClick={handleNextMonth} aria-label="다음 달">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <div>
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {/* 요일 헤더 */}
             {weekdays.map((day, index) => (
               <div
                 key={day}
                 className={cn(
-                  'text-center text-sm font-semibold py-2',
+                  'py-2 text-center text-[13px] font-semibold text-muted-foreground',
                   index === 0 && 'text-destructive',
                   index === 6 && 'text-primary'
                 )}
@@ -224,17 +221,17 @@ export function ExpenseCalendar({
                   onClick={() => handleDateClick(dateStr, inMonth)}
                   disabled={!inMonth || !hasExpense}
                   className={cn(
-                    'min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 rounded-lg border text-left transition-colors',
-                    inMonth && hasExpense && 'hover:bg-accent hover:border-accent-foreground cursor-pointer',
-                    !inMonth && 'bg-muted/50 text-muted-foreground',
-                    todayFlag && 'bg-primary/10 border-primary',
+                    'min-h-[72px] min-w-0 rounded-xl bg-muted/60 p-1 text-left transition-colors sm:min-h-[96px] sm:p-2',
+                    inMonth && hasExpense && 'cursor-pointer bg-destructive-soft/60 hover:bg-destructive-soft',
+                    !inMonth && 'bg-transparent text-muted-foreground opacity-50',
+                    todayFlag && 'bg-primary-soft ring-2 ring-inset ring-primary',
                     !hasExpense && inMonth && 'cursor-default'
                   )}
                 >
                   <div className="flex flex-col h-full">
                     <div
                       className={cn(
-                        'text-sm font-medium mb-1',
+                        'mb-1 text-sm font-semibold tabular-nums',
                         index % 7 === 0 && 'text-destructive',
                         index % 7 === 6 && 'text-primary',
                         !inMonth && 'text-muted-foreground'
@@ -246,10 +243,10 @@ export function ExpenseCalendar({
                     {/* 지출 표시 */}
                     {hasExpense && inMonth && (
                       <div className="flex-1 space-y-0.5">
-                        <Badge variant="secondary" className="text-xs px-1 py-0">
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
                           {daySummary.count}건
                         </Badge>
-                        <div className="text-xs sm:text-sm font-medium text-destructive">
+                        <div className="truncate text-[11px] font-bold tabular-nums text-destructive sm:text-sm">
                           -{formatAmount(daySummary.totalAmount)}원
                         </div>
                       </div>
@@ -259,8 +256,8 @@ export function ExpenseCalendar({
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 상세 다이얼로그 */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -280,10 +277,10 @@ export function ExpenseCalendar({
           <div className="py-6 px-6 space-y-4">
             {/* 일일 총계 */}
             {selectedSummary && (
-              <div className="p-3 bg-destructive-soft rounded-lg">
+              <div className="rounded-xl bg-destructive-soft p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">총 {selectedSummary.count}건</span>
-                  <span className="text-lg font-bold text-destructive">
+                  <span className="text-lg font-extrabold tabular-nums text-destructive">
                     -{selectedSummary.totalAmount.toLocaleString()}원
                   </span>
                 </div>
@@ -294,8 +291,8 @@ export function ExpenseCalendar({
             {selectedSummary && (
               <div className="space-y-2">
                 {selectedSummary.expenses.map((expense) => (
-                  <div key={expense.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start">
+                  <div key={expense.id} className="rounded-xl bg-muted p-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="font-medium flex items-center gap-2">
                           <Badge variant="secondary">
@@ -308,7 +305,7 @@ export function ExpenseCalendar({
                           {expense.instructor_name && ` · ${expense.instructor_name}`}
                         </div>
                       </div>
-                      <div className="font-semibold text-destructive">
+                      <div className="shrink-0 font-bold tabular-nums text-destructive">
                         -{Math.floor(parseFloat(String(expense.amount))).toLocaleString()}원
                       </div>
                     </div>
