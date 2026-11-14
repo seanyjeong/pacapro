@@ -1,5 +1,6 @@
-import { CreditCard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CreditCard, SearchX } from 'lucide-react';
+import { EmptyState } from '@/components/ui/page';
+import { MobileErrorCard, MobileSkeleton } from '../mobile-home/mobile-screen';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { MobileUnpaidCard } from './mobile-unpaid-card';
 import { formatYearMonthLabel } from './mobile-unpaid-month.mjs';
@@ -39,48 +40,31 @@ export function MobileUnpaidList({
   onRetry,
 }: MobileUnpaidListProps) {
   if (loading) {
-    return (
-      <div className="space-y-3" data-testid="mobile-unpaid-loading">
-        {[0, 1, 2].map((key) => (
-          <div key={key} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
-        ))}
-      </div>
-    );
+    return <MobileSkeleton className="h-36" testId="mobile-unpaid-loading" />;
   }
 
   if (error) {
-    return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive-soft p-4 text-destructive">
-        <p className="text-sm font-medium">{error}</p>
-        <Button variant="outline" className="mt-3 w-full border-destructive/30 bg-card" onClick={onRetry}>
-          다시 불러오기
-        </Button>
-      </div>
-    );
+    return <MobileErrorCard message={error} onRetry={onRetry} />;
   }
 
   if (totalCount === 0) {
     const emptyMessage = scope === 'month'
-      ? `${formatYearMonthLabel(selectedMonth)} 전체 미납자가 없습니다.`
+      ? `${formatYearMonthLabel(selectedMonth)} 전체 미납자가 없어요.`
       : dayName
-        ? `오늘(${dayName}요일) 수업 학생 중 미납자가 없습니다.`
-        : '오늘 수업 미납자가 없습니다.';
+        ? `오늘(${dayName}요일) 수업 학생 중 미납자가 없어요.`
+        : '오늘 수업 미납자가 없어요.';
 
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-12 text-center">
-        <CreditCard className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">
-          {emptyMessage}
-        </p>
+      <div className="rounded-2xl bg-card">
+        <EmptyState icon={CreditCard} title={emptyMessage} />
       </div>
     );
   }
 
   if (payments.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center">
-        <p className="text-sm font-medium text-secondary-foreground">검색 결과가 없습니다.</p>
-        <p className="mt-1 text-xs text-muted-foreground">학생명, 연락처, 수납 월을 다시 확인해주세요.</p>
+      <div className="rounded-2xl bg-card">
+        <EmptyState icon={SearchX} title="검색 결과가 없어요" description="학생명, 연락처, 수납 월을 다시 확인해 주세요." />
       </div>
     );
   }

@@ -11,9 +11,9 @@ interface TabletPaymentsErrorProps {
 export function TabletPaymentsError({ detail, message, onRetry }: TabletPaymentsErrorProps) {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
-      <section className="rounded-md border border-border bg-background px-6 py-10 text-center shadow-none">
-        <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
-        <h1 className="mt-4 text-xl font-semibold text-foreground">{message}</h1>
+      <section className="rounded-2xl bg-card px-6 py-10 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive-soft text-destructive"><AlertCircle className="h-6 w-6" /></span>
+        <h1 className="mt-4 text-xl font-bold text-foreground">{message}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           <Button onClick={onRetry} className="gap-2">

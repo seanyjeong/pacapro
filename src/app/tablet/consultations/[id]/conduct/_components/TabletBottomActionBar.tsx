@@ -30,10 +30,11 @@ export function TabletBottomActionBar({
 }: TabletBottomActionBarProps) {
   const checkedCount = checklist.filter(c => c.checked).length;
   const orientation = useOrientation();
-  const positionClass = orientation === 'landscape' ? 'bottom-0 left-20' : 'bottom-24 left-0';
+  // 태블릿 레이아웃: 가로는 왼쪽 메뉴(88px), 세로는 아래 탭(약 80px) 위에 놓는다.
+  const positionClass = orientation === 'landscape' ? 'bottom-0 left-[88px]' : 'bottom-20 left-0';
 
   return (
-    <div className={`fixed right-0 z-50 border-t border-border bg-card/95 shadow-lg backdrop-blur ${positionClass}`}>
+    <div className={`fixed right-0 z-50 border-t border-border/60 bg-card/95 backdrop-blur ${positionClass}`}>
       <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
         {consultation.consultation_type === 'learning' ? (
           <>
@@ -42,11 +43,11 @@ export function TabletBottomActionBar({
               <span className="ml-1">({consultation.student_grade}) 재원생 상담 기록</span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-              <Button variant="outline" size="lg" className="h-12 gap-2 px-6 text-base" onClick={onBack}>
+              <Button variant="outline" className="h-12 px-6 text-base" onClick={onBack}>
                 <ArrowLeft className="h-5 w-5" />
                 돌아가기
               </Button>
-              <Button size="lg" onClick={onSave} disabled={saving} className="h-12 gap-2 bg-success px-6 text-base hover:bg-success/90">
+              <Button onClick={onSave} disabled={saving} className="h-12 bg-success px-6 text-base text-success-foreground hover:bg-success/90">
                 {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                 상담 기록 저장
               </Button>
@@ -54,18 +55,17 @@ export function TabletBottomActionBar({
           </>
         ) : (
           <>
-            <div className="text-base font-medium text-muted-foreground">
-              체크리스트 <span className="font-bold text-primary">{checkedCount}</span>/{checklist.length}
+            <div className="text-base font-semibold text-muted-foreground">
+              체크리스트 <span className="font-extrabold text-primary tabular-nums">{checkedCount}</span>/{checklist.length}
             </div>
             <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
-              <Button size="lg" onClick={onSave} disabled={saving} className="h-12 gap-2 px-5 text-base">
+              <Button onClick={onSave} disabled={saving} className="h-12 px-5 text-base">
                 {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                 상담 완료 저장
               </Button>
               <Button
-                size="lg"
                 variant="outline"
-                className="h-12 gap-2 border-warning/30 px-5 text-base text-warning hover:bg-warning-soft"
+                className="h-12 bg-warning-soft px-5 text-base text-warning hover:bg-warning-soft/70 hover:text-warning"
                 onClick={onOpenPending}
                 disabled={!!consultation?.linked_student_id}
               >
@@ -73,9 +73,8 @@ export function TabletBottomActionBar({
                 {consultation?.linked_student_id ? '등록 완료' : '미등록관리'}
               </Button>
               <Button
-                size="lg"
                 variant="default"
-                className="h-12 gap-2 bg-success px-5 text-base hover:bg-success/90"
+                className="h-12 bg-success px-5 text-base text-success-foreground hover:bg-success/90"
                 onClick={onOpenTrial}
                 disabled={!!consultation?.linked_student_id}
               >

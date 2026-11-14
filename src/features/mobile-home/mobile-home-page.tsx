@@ -8,22 +8,19 @@ import { MobileHomeHeader } from './mobile-home-header';
 import { MobileHomeMenu } from './mobile-home-menu';
 import { MobileHomeOperationsPanel } from './mobile-home-operations-panel';
 import { MobileHomePushPanel } from './mobile-home-push-panel';
+import { MobileLoading } from './mobile-screen';
 import { useMobileHomeState } from './use-mobile-home-state';
 
 export function MobileHomePage() {
   const state = useMobileHomeState();
 
   if (state.hasPermission === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted">
-        <div className="text-sm text-muted-foreground">로딩 중...</div>
-      </div>
-    );
+    return <MobileLoading />;
   }
 
   return (
-    <div className="min-h-screen bg-muted px-4 py-4 text-foreground" data-testid="mobile-home-workspace">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-5">
+    <div className="-mx-4 -my-6 min-h-screen bg-background px-4 pb-6 pt-3 text-foreground sm:-my-8" data-testid="mobile-home-workspace">
+      <div className="space-y-4">
         <MobileHomeHeader
           academyName={state.academyName}
           userName={state.userName}
@@ -39,7 +36,7 @@ export function MobileHomePage() {
         <MobileHomeMenu items={state.menuItems} />
 
         {!state.hasPermission && (
-          <Button variant="outline" onClick={state.refreshPermissions} disabled={state.permissionRefreshing}>
+          <Button variant="outline" className="h-12 w-full" onClick={state.refreshPermissions} disabled={state.permissionRefreshing}>
             {state.permissionRefreshing ? '확인 중...' : '업무 권한 다시 확인'}
           </Button>
         )}

@@ -25,7 +25,7 @@ export function TabletSettingsPage() {
     <div className="mx-auto w-full max-w-6xl space-y-4">
       <TabletSettingsHeader loading={state.loading} onRefresh={state.reload} />
       <TabletSettingsNotice notice={state.notice} />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="min-w-0 space-y-4">
           <TabletSettingsOperationLinks />
           <TabletSettingsPushCard
@@ -38,7 +38,7 @@ export function TabletSettingsPage() {
             onToggleNotification={state.toggleNotification}
           />
         </main>
-        <aside className="order-first space-y-4 xl:order-none">
+        <aside className="order-first space-y-4 lg:order-none">
           <TabletSettingsAccountCard user={state.user} />
           <TabletSettingsSystemCard loggingOut={state.loggingOut} onLogout={state.logout} />
         </aside>

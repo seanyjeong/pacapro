@@ -1,17 +1,19 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, RefreshCw, Send } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
+import { PageHeader } from '@/components/ui/page';
+import { cn } from '@/lib/utils/cn';
 import type { TimeSlot } from '@/lib/types/schedule';
+import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
 import { TABLET_TIME_SLOTS } from './tablet-attendance-constants';
-import type { TabletAttendanceStats } from './tablet-attendance-types';
 
 interface TabletAttendanceHeaderProps {
   dateLabel: string;
   isToday: boolean;
   loading: boolean;
-  stats: TabletAttendanceStats;
   timeSlot: TimeSlot;
+  roster: React.ReactNode;
   onNextDate: () => void;
   onPreviousDate: () => void;
   onRefresh: () => void;
@@ -22,58 +24,62 @@ export function TabletAttendanceHeader({
   dateLabel,
   isToday,
   loading,
-  stats,
   timeSlot,
+  roster,
   onNextDate,
   onPreviousDate,
   onRefresh,
   onTimeSlotChange,
 }: TabletAttendanceHeaderProps) {
   return (
-    <header className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="icon" onClick={onPreviousDate} aria-label="이전 날짜">
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <div className="min-w-0 flex-1 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground">출석체크</h1>
-            {isToday && <span className="rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-medium text-success">오늘</span>}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">{dateLabel} · {stats.present}/{stats.total} 출석</p>
-        </div>
-        <Button variant="outline" size="icon" onClick={onNextDate} aria-label="다음 날짜">
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={onRefresh} aria-label="출석 새로고침" disabled={loading}>
-          <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
-        <Link
-          className={buttonVariants({ variant: 'outline', className: 'h-10 gap-2 px-3' })}
-          href={ATTENDANCE_TEST_NOTIFICATION_HREF}
-        >
-          <Send className="h-4 w-4" />
-          출결 테스트발송
-        </Link>
-      </div>
+    <>
+      <PageHeader
+        title={(
+          <span className="flex items-center gap-2">
+            출석체크
+            {isToday && <Badge variant="success" className="text-[13px]">오늘</Badge>}
+          </span>
+        )}
+        description={dateLabel}
+        actions={(
+          <>
+            <Button variant="outline" size="icon" onClick={onPreviousDate} aria-label="이전 날짜">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={onNextDate} aria-label="다음 날짜">
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={onRefresh} aria-label="출석 새로고침" disabled={loading}>
+              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Link className={buttonVariants({ variant: 'outline' })} href={ATTENDANCE_TEST_NOTIFICATION_HREF}>
+              <Send className="h-4 w-4" />
+              출결 테스트발송
+            </Link>
+          </>
+        )}
+      />
 
-      <div className="mt-4 grid grid-cols-3 gap-2" role="tablist" aria-label="수업 시간대">
-        {TABLET_TIME_SLOTS.map((slot) => (
-          <button
-            type="button"
-            key={slot.value}
-            role="tab"
-            aria-selected={timeSlot === slot.value}
-            onClick={() => onTimeSlotChange(slot.value)}
-            className={`rounded-lg border px-4 py-3 text-base font-medium transition
-              ${timeSlot === slot.value
-                ? 'border-muted-foreground/40 bg-foreground text-white'
-                : 'border-border bg-muted text-secondary-foreground'}`}
-          >
-            {slot.label}
-          </button>
-        ))}
-      </div>
-    </header>
+      <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 lg:flex-row lg:items-center" aria-label="수업 고르기">
+        <div className="grid flex-1 grid-cols-3 gap-1 rounded-xl bg-muted p-1" role="tablist" aria-label="수업 시간대">
+          {TABLET_TIME_SLOTS.map((slot) => (
+            <button
+              type="button"
+              key={slot.value}
+              role="tab"
+              aria-selected={timeSlot === slot.value}
+              onClick={() => onTimeSlotChange(slot.value)}
+              className={cn(
+                'h-11 rounded-lg text-base font-semibold transition-colors',
+                timeSlot === slot.value ? 'bg-card text-foreground' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {slot.label}
+            </button>
+          ))}
+        </div>
+        {roster && <div className="lg:w-80">{roster}</div>}
+      </section>
+    </>
   );
 }

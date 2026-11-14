@@ -15,7 +15,7 @@ export function TabletSmsPage() {
   const orientation = useOrientation();
 
   return (
-    <main className="space-y-5 pb-20">
+    <main className="space-y-4 pb-20">
       <TabletSmsHeader
         messageType={sms.messageType}
         recipientCount={sms.recipientCount}
@@ -25,7 +25,7 @@ export function TabletSmsPage() {
       />
 
       {sms.loadErrors.length > 0 ? (
-        <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning">
+        <section className="rounded-2xl bg-warning-soft p-4 text-warning" role="note">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
@@ -42,14 +42,14 @@ export function TabletSmsPage() {
 
       <div
         className={cn(
-          'grid gap-5',
+          'grid gap-4',
           orientation === 'landscape' && 'lg:grid-cols-12'
         )}
       >
         <div className={cn(orientation === 'landscape' && 'lg:col-span-8')}>
           <SmsComposeCard sms={sms} />
         </div>
-        <aside className={cn('space-y-5', orientation === 'landscape' && 'lg:col-span-4')}>
+        <aside className={cn('space-y-4', orientation === 'landscape' && 'lg:col-span-4')}>
           <SmsInfoPanel senderCount={sms.senderNumbers.length} selectedSenderId={sms.selectedSenderId} />
           <SmsLogsCard logs={sms.logs} isLoading={sms.logsLoading} errorMessage={sms.logsError} />
         </aside>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { getAcademyEvents } from '@/lib/api/academyEvents';
 import type { APIRequestConfig } from '@/lib/api/client';
 import { EVENT_TYPE_LABELS } from '@/lib/types/academyEvent';
@@ -24,23 +25,25 @@ export function MobileAcademyEventsPage() {
       errorMessage="학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요." onRetry={state.reload}>
       <MobileMonthCalendar {...state} entries={entries} onDateSelect={state.setSelectedDate} />
       {!state.loading && !state.error && (
-        <section aria-label="선택한 날짜의 학원 일정" className="space-y-3">
-          <h2 className="text-base font-semibold">{dateLabel(state.selectedDate)}</h2>
-          {!events.length && <p className="text-sm text-muted-foreground">이번 달에 등록된 학원 일정이 없습니다.</p>}
-          {events.length > 0 && !selectedEvents.length && <p className="text-sm text-muted-foreground">이 날짜에 등록된 일정이 없습니다.</p>}
-          <ul className="divide-y divide-border">
-            {selectedEvents.map(event => (
-              <li key={event.id} className="space-y-2 py-3">
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span>{EVENT_TYPE_LABELS[event.event_type]}</span>
-                  <span>{event.is_all_day ? '종일' : [event.start_time?.slice(0, 5), event.end_time?.slice(0, 5)].filter(Boolean).join(' ~ ') || '시간 미정'}</span>
-                  {event.is_holiday && <span>휴일</span>}
-                </div>
-                <h3 className="break-words text-sm font-semibold">{event.title}</h3>
-                {event.description && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{event.description}</p>}
-              </li>
-            ))}
-          </ul>
+        <section aria-label="선택한 날짜의 학원 일정" className="rounded-2xl bg-card p-5">
+          <h2 className="text-[17px] font-bold">{dateLabel(state.selectedDate)}</h2>
+          {!events.length && <p className="mt-2 text-sm text-muted-foreground">이번 달에 등록된 학원 일정이 없습니다.</p>}
+          {events.length > 0 && !selectedEvents.length && <p className="mt-2 text-sm text-muted-foreground">이 날짜에 등록된 일정이 없습니다.</p>}
+          {selectedEvents.length > 0 && (
+            <ul className="mt-2 divide-y divide-border/60">
+              {selectedEvents.map(event => (
+                <li key={event.id} className="space-y-1.5 py-3.5">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
+                    <Badge variant="default">{EVENT_TYPE_LABELS[event.event_type]}</Badge>
+                    <span>{event.is_all_day ? '종일' : [event.start_time?.slice(0, 5), event.end_time?.slice(0, 5)].filter(Boolean).join(' ~ ') || '시간 미정'}</span>
+                    {event.is_holiday && <Badge variant="destructive">휴일</Badge>}
+                  </div>
+                  <h3 className="break-words text-[15px] font-semibold">{event.title}</h3>
+                  {event.description && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{event.description}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </MobileCalendarShell>

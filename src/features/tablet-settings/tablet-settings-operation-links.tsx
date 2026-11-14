@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Bell, CalendarClock, CalendarCog, MonitorCog, Settings, UsersRound } from 'lucide-react';
+import { Bell, CalendarClock, CalendarCog, ChevronRight, MonitorCog, Settings, UsersRound } from 'lucide-react';
+import { SectionCard } from '@/components/ui/page';
 
 const links = [
   { href: '/consultations/settings', label: '상담예약 설정', description: '예약 시간, 차단 시간, 신규상담 링크', icon: CalendarClock },
@@ -12,33 +13,28 @@ const links = [
 
 export function TabletSettingsOperationLinks() {
   return (
-    <section className="rounded-md border border-border bg-background p-4" aria-label="운영 바로가기">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">운영 바로가기</h2>
-        <p className="mt-1 text-sm text-muted-foreground">지점 설정과 학생 운영에 자주 쓰는 화면을 모았습니다.</p>
-      </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+    <SectionCard title="운영 바로가기" description="지점 설정과 학생 운영에 자주 쓰는 화면을 모았어요.">
+      <nav className="grid gap-2 pt-1 md:grid-cols-2" aria-label="운영 바로가기">
         {links.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="group rounded-md border border-border bg-muted/20 px-3 py-3 transition-colors hover:bg-muted/45 focus:outline-none focus:ring-2 focus:ring-ring/30"
+              className="group flex min-h-[64px] items-center gap-3 rounded-xl bg-muted px-4 py-3 transition-colors hover:bg-primary-soft focus:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
             >
-              <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground group-hover:text-foreground">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">{item.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.description}</span>
-                </span>
-              </div>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card text-primary">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-bold text-foreground">{item.label}</span>
+                <span className="mt-0.5 block text-[13px] leading-5 text-muted-foreground">{item.description}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" />
             </Link>
           );
         })}
-      </div>
-    </section>
+      </nav>
+    </SectionCard>
   );
 }

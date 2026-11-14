@@ -39,7 +39,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: CalendarDays,
       label: '학원일정',
       description: '행사와 휴일을 월간 달력으로 확인',
-      tone: 'blue',
+      tone: 'primary',
       permission: true,
     },
     {
@@ -47,7 +47,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: CalendarClock,
       label: '강사 근무달력',
       description: '날짜별 출근 예정 강사 확인',
-      tone: 'violet',
+      tone: 'neutral',
       permission: true,
     },
     {
@@ -55,7 +55,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: UserCheck,
       label: '학생 출석체크',
       description: '날짜와 시간대별 출석 관리',
-      tone: 'blue',
+      tone: 'primary',
       permission: permissions.schedules,
     },
     {
@@ -63,7 +63,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: Users,
       label: '강사 출근체크',
       description: '강사 출퇴근 기록',
-      tone: 'violet',
+      tone: 'neutral',
       permission: permissions.schedules,
     },
     {
@@ -71,7 +71,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: CreditCard,
       label: '미납자 확인',
       description: '오늘 수업 미납 학생 확인',
-      tone: 'amber',
+      tone: 'warning',
       permission: permissions.payments,
     },
     {
@@ -79,7 +79,7 @@ export function makeMobileHomeMenu(permissions: {
       icon: MessageSquare,
       label: '오늘 상담',
       description: '오늘 예정된 상담 목록',
-      tone: 'emerald',
+      tone: 'success',
       permission: permissions.consultations,
     },
   ];

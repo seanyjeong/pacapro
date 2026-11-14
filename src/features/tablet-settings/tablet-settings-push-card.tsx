@@ -1,5 +1,6 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
 import type { NotificationSettings } from '@/lib/api/notificationSettings';
 import { getActiveNotificationCount } from './tablet-settings-utils';
 import type { NotificationSettingKey } from './tablet-settings-types';
@@ -33,52 +34,54 @@ export function TabletSettingsPushCard({
   const activeCount = getActiveNotificationCount(notificationSettings);
 
   return (
-    <section className="rounded-md border border-border bg-background p-4" aria-label="푸시 알림">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            {pushSubscribed ? <Bell className="h-5 w-5 text-success" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
-            <h2 className="text-base font-semibold text-foreground">푸시 알림</h2>
+    <section className="rounded-2xl bg-card p-5" aria-label="푸시 알림">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-full', pushSubscribed ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground')}>
+            {pushSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-[17px] font-bold text-foreground">푸시 알림</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {pushSupported
+                ? pushSubscribed ? `이 태블릿에서 받는 중, ${activeCount}개 알림 켜짐` : `${activeCount}개 알림이 켜져 있어요. 기기 수신은 꺼져 있어요.`
+                : '이 브라우저에서는 푸시 알림을 쓸 수 없어요.'}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {pushSupported
-              ? pushSubscribed ? `이 태블릿에서 수신 중, ${activeCount}개 알림 활성화` : `${activeCount}개 알림이 켜져 있습니다. 기기 수신은 꺼져 있습니다.`
-              : '이 브라우저에서는 푸시 알림을 사용할 수 없습니다.'}
-          </p>
         </div>
-        <Button type="button" variant={pushSubscribed ? 'outline' : 'default'} onClick={onPushToggle} disabled={pushLoading} className="gap-2">
+        <Button type="button" variant={pushSubscribed ? 'outline' : 'default'} onClick={onPushToggle} disabled={pushLoading} className="shrink-0">
           {pushLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : pushSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
           {pushSubscribed ? '기기 알림 끄기' : '기기 알림 켜기'}
         </Button>
       </div>
 
-      <div className="mt-4 grid gap-2 md:grid-cols-2">
+      <ul className="mt-4 grid gap-x-6 border-t border-border/60 pt-2 md:grid-cols-2">
         {notificationItems.map((item) => {
           const enabled = notificationSettings[item.key];
           const saving = notificationSavingKey === item.key;
           return (
-            <div key={item.key} className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/20 px-3 py-3">
+            <li key={item.key} className="flex min-h-[64px] items-center justify-between gap-3 py-2">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">{item.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+                <p className="text-[15px] font-semibold text-foreground">{item.label}</p>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">{item.description}</p>
               </div>
               <button
                 type="button"
                 onClick={() => onToggleNotification(item.key)}
                 disabled={!!notificationSavingKey}
                 aria-label={`${item.label} ${enabled ? '끄기' : '켜기'}`}
-                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-muted-foreground/30'} disabled:opacity-60`}
+                className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60', enabled ? 'bg-primary' : 'bg-border')}
               >
                 {saving ? (
-                  <Loader2 className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-spin text-white" />
+                  <Loader2 className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-spin text-primary-foreground" />
                 ) : (
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-card transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={cn('absolute left-0 top-0.5 h-6 w-6 rounded-full bg-card transition-transform', enabled ? 'translate-x-[22px]' : 'translate-x-0.5')} />
                 )}
               </button>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </section>
   );
 }

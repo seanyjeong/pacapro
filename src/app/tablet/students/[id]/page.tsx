@@ -30,8 +30,11 @@ export default function TabletStudentDetailPage() {
 
   return (
     <div className="space-y-4">
-      <TabletStudentDetailHeader student={state.student} onBack={() => router.back()} />
-      <TabletStudentActions student={state.student} />
+      <TabletStudentDetailHeader
+        student={state.student}
+        onBack={() => router.back()}
+        actions={<TabletStudentActions student={state.student} />}
+      />
       <TabletStudentSummary student={state.student} attendanceSummary={state.attendanceSummary} />
       <TabletStudentContactCard student={state.student} />
       <TabletStudentMemoCard memo={state.student.memo} />

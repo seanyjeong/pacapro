@@ -20,14 +20,14 @@ export function getTabletRoleLabel(role?: string): string {
   return role ? labels[role] || role : '권한 미확인';
 }
 
-export function getTabletRoleTone(role?: string): string {
-  const tones: Record<string, string> = {
-    admin: 'border-sky-200 bg-sky-50 text-sky-800',
-    instructor: 'border-warning/30 bg-warning-soft text-warning',
-    owner: 'border-violet-200 bg-violet-50 text-violet-800',
-    staff: 'border-success/30 bg-success-soft text-success',
+export function getTabletRoleTone(role?: string): 'default' | 'warning' | 'success' | 'secondary' {
+  const tones: Record<string, 'default' | 'warning' | 'success' | 'secondary'> = {
+    admin: 'default',
+    instructor: 'warning',
+    owner: 'default',
+    staff: 'success',
   };
-  return role ? tones[role] || 'border-border bg-muted text-foreground' : 'border-border bg-muted text-foreground';
+  return role ? tones[role] || 'secondary' : 'secondary';
 }
 
 export function getTabletDeviceName(): string {

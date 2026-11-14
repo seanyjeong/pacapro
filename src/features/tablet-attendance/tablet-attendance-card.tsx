@@ -1,4 +1,5 @@
-import { UserRound } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils/cn';
 import type { AttendanceStatus } from '@/lib/types/schedule';
 import { TABLET_MARKS, TABLET_STATUS_META } from './tablet-attendance-constants';
 import type { TabletAttendanceMark, TabletAttendanceStudent } from './tablet-attendance-types';
@@ -16,30 +17,28 @@ export function TabletAttendanceCard({ saving, student, onChange }: TabletAttend
     : null;
 
   return (
-    <article className="rounded-lg border border-border bg-card p-3 shadow-sm" data-testid="tablet-attendance-card">
-      <div className="flex items-start gap-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
-          <UserRound className="h-5 w-5" />
+    <article className="rounded-2xl bg-card p-4" data-testid="tablet-attendance-card">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-secondary-foreground">
+          {student.student_name.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <h2 className="truncate text-sm font-semibold text-foreground">{student.student_name}</h2>
-            {activeMeta && <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[11px] font-medium ${activeMeta.badgeClassName}`}>{activeMeta.label}</span>}
+            <h2 className="truncate text-[15px] font-bold text-foreground">{student.student_name}</h2>
+            {activeMeta && <Badge variant={activeMeta.badgeVariant} className="shrink-0 px-2">{activeMeta.label}</Badge>}
           </div>
-          <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
             {student.grade && student.grade !== '0' && student.grade !== '00' && <span>{student.grade}</span>}
-            {student.season_type && <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-warning">시즌</span>}
-            {student.is_trial && <span className="rounded-full bg-pink-50 px-1.5 py-0.5 text-pink-700">체험 {student.trial_remaining ?? 0}회</span>}
-            {student.is_makeup && <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-violet-700">보충</span>}
-            {student.assigned === false && <span className="rounded-full bg-muted px-1.5 py-0.5 text-secondary-foreground">오늘 수업 아님</span>}
+            {!!student.season_type && <Badge variant="warning" className="px-2">시즌</Badge>}
+            {!!student.is_trial && <Badge variant="success" className="px-2">체험 {student.trial_remaining ?? 0}회</Badge>}
+            {!!student.is_makeup && <Badge variant="default" className="px-2">보충</Badge>}
+            {student.assigned === false && <Badge variant="secondary" className="px-2">오늘 수업 아님</Badge>}
           </div>
         </div>
       </div>
 
       {student.notes && (
-        <div className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-secondary-foreground">
-          {student.notes}
-        </div>
+        <p className="mt-2 rounded-lg bg-muted px-2.5 py-1.5 text-xs text-secondary-foreground">{student.notes}</p>
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-1.5">
@@ -51,8 +50,12 @@ export function TabletAttendanceCard({ saving, student, onChange }: TabletAttend
               type="button"
               key={status}
               disabled={saving}
+              aria-pressed={active}
               onClick={() => onChange(student, status)}
-              className={`rounded-lg border px-2 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 ${active ? meta.activeClassName : meta.buttonClassName}`}
+              className={cn(
+                'h-11 rounded-xl text-[15px] font-bold transition active:scale-[0.98] disabled:opacity-50',
+                active ? meta.activeClassName : meta.buttonClassName
+              )}
             >
               {meta.label}
             </button>

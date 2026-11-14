@@ -11,13 +11,13 @@ export function TabletSettingsNotice({ notice }: TabletSettingsNoticeProps) {
 
   const Icon = notice.tone === 'success' ? CheckCircle2 : notice.tone === 'error' ? AlertCircle : Info;
   const className = notice.tone === 'success'
-    ? 'border-success/30 bg-success-soft text-success'
+    ? 'bg-success-soft text-success'
     : notice.tone === 'error'
-      ? 'border-destructive/30 bg-destructive-soft text-destructive'
-      : 'border-sky-200 bg-sky-50 text-sky-900';
+      ? 'bg-destructive-soft text-destructive'
+      : 'bg-primary-soft text-primary';
 
   return (
-    <div className={cn('flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium', className)}>
+    <div className={cn('flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold', className)}>
       <Icon className="h-4 w-4 shrink-0" />
       {notice.message}
     </div>

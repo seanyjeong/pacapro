@@ -21,33 +21,13 @@ export const CONSULTATION_STATUS_ORDER: ConsultationStatus[] = [
 
 export const CONSULTATION_STATUS_META: Record<
   ConsultationStatus,
-  { label: string; className: string; dotClassName: string }
+  { label: string; badgeVariant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive'; dotClassName: string }
 > = {
-  pending: {
-    label: '대기',
-    className: 'border-warning/30 bg-warning-soft text-warning',
-    dotClassName: 'bg-warning',
-  },
-  confirmed: {
-    label: '확정',
-    className: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300',
-    dotClassName: 'bg-sky-500',
-  },
-  completed: {
-    label: '완료',
-    className: 'border-border bg-muted text-secondary-foreground',
-    dotClassName: 'bg-muted-foreground/40',
-  },
-  cancelled: {
-    label: '취소',
-    className: 'border-border bg-muted text-secondary-foreground',
-    dotClassName: 'bg-muted-foreground/40',
-  },
-  no_show: {
-    label: '노쇼',
-    className: 'border-destructive/30 bg-destructive-soft text-destructive',
-    dotClassName: 'bg-destructive',
-  },
+  pending: { label: '대기', badgeVariant: 'warning', dotClassName: 'bg-warning' },
+  confirmed: { label: '확정', badgeVariant: 'default', dotClassName: 'bg-primary' },
+  completed: { label: '완료', badgeVariant: 'secondary', dotClassName: 'bg-muted-foreground/40' },
+  cancelled: { label: '취소', badgeVariant: 'secondary', dotClassName: 'bg-muted-foreground/40' },
+  no_show: { label: '노쇼', badgeVariant: 'destructive', dotClassName: 'bg-destructive' },
 };
 
 export function generateTimeSlots() {

@@ -1,6 +1,10 @@
+import type { Student } from '@/lib/types/student';
 import type { StudentParentPhones } from '@/lib/types/student-parent-phones';
 
-export interface TabletStudentDetail extends StudentParentPhones {
+/** 사진 칸(`StudentAvatar`)에 쓰는 값. PC 학생 상세와 같은 `/students/:id` 응답에 들어 있다. */
+type TabletStudentPhoto = Partial<Pick<Student, 'profile_image_url' | 'profile_image_key' | 'profile_thumb_key' | 'profile_image_updated_at'>>;
+
+export interface TabletStudentDetail extends StudentParentPhones, TabletStudentPhoto {
   address: string | null;
   class_days: unknown;
   discount_rate: number | string;

@@ -1,65 +1,15 @@
-import { ArrowLeft, RefreshCw, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { formatYearMonthLabel } from './mobile-unpaid-month.mjs';
 import type { MobileUnpaidScope } from './mobile-unpaid-types';
 
-interface MobileUnpaidHeaderProps {
-  dayName: string;
-  loading: boolean;
-  query: string;
-  scope: MobileUnpaidScope;
-  selectedMonth: string;
-  onBack: () => void;
-  onQueryChange: (query: string) => void;
-  onRefresh: () => void;
-}
-
-export function MobileUnpaidHeader({
-  dayName,
-  loading,
-  query,
-  scope,
-  selectedMonth,
-  onBack,
-  onQueryChange,
-  onRefresh,
-}: MobileUnpaidHeaderProps) {
+/** 화면 제목·설명 문구(범위에 따라 바뀜) */
+export function getMobileUnpaidHeading(scope: MobileUnpaidScope, selectedMonth: string, dayName: string) {
   const isMonthlyScope = scope === 'month';
-  const monthLabel = formatYearMonthLabel(selectedMonth);
-
-  return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 py-3 backdrop-blur">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onBack} aria-label="모바일 홈으로 이동" className="-ml-2 shrink-0">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold tracking-normal text-foreground" aria-live="polite">
-            {isMonthlyScope ? `${monthLabel} 전체 미납자` : '오늘 출석 미납자'}
-          </h1>
-          <p className="truncate text-sm text-muted-foreground">
-            {isMonthlyScope
-              ? '학원 전체 학생의 청구 기준'
-              : dayName
-                ? `${dayName}요일 수업 학생 중`
-                : '오늘 수업 학생 중'}
-          </p>
-        </div>
-        <Button variant="outline" size="icon" onClick={onRefresh} aria-label="미납 목록 새로고침" disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
-
-      <div className="relative mt-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-3 text-sm text-foreground focus:ring-2 focus:ring-muted-foreground/40"
-          placeholder="학생명, 연락처, 월 검색"
-          aria-label="미납 학생 검색"
-        />
-      </div>
-    </header>
-  );
+  return {
+    title: isMonthlyScope ? `${formatYearMonthLabel(selectedMonth)} 전체 미납자` : '오늘 출석 미납자',
+    description: isMonthlyScope
+      ? '학원 전체 학생의 청구 기준'
+      : dayName
+        ? `${dayName}요일 수업 학생 중`
+        : '오늘 수업 학생 중',
+  };
 }

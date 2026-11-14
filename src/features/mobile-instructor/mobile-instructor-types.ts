@@ -30,5 +30,5 @@ export interface StatusOption {
   label: string;
   activeClassName: string;
   buttonClassName: string;
-  badgeClassName: string;
+  badgeVariant: 'success' | 'warning' | 'default' | 'destructive';
 }

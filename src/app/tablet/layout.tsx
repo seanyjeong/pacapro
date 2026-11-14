@@ -134,19 +134,22 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
   const isOwner = user?.role === 'owner';
-  const currentPage = navigation.find(n =>
-    pathname === n.href || (n.href !== '/tablet' && pathname.startsWith(n.href + '/'))
-  );
+
+  const visibleNavigation = navigation.filter(item => (!item.adminOnly || isAdmin) && (!item.ownerOnly || isOwner));
+  const isActiveHref = (href: string) => pathname === href || (href !== '/tablet' && pathname.startsWith(href + '/'));
+  const openPcMode = () => {
+    document.cookie = 'force_pc_mode=true; path=/; max-age=86400';
+    window.location.href = '/';
+  };
 
   // 가로 모드 레이아웃
   if (orientation === 'landscape') {
     return (
       <OrientationContext.Provider value={orientation}>
-        <div className="min-h-screen flex bg-muted dark:bg-background">
-          {/* 축소형 사이드바 - PC 스타일 */}
-          <aside className="w-20 bg-card border-r border-border flex flex-col fixed h-screen z-20">
-            {/* 로고 */}
-            <div className="h-14 flex items-center justify-center border-b border-border shrink-0">
+        <div className="flex min-h-screen bg-background">
+          {/* 사이드 메뉴 - 좁은 아이콘 줄(표가 넓게 보이도록), PC 사이드바와 같은 색·모양 */}
+          <aside className="fixed inset-y-0 left-0 z-20 flex w-[88px] flex-col bg-card">
+            <div className="flex h-16 shrink-0 items-center justify-center">
               <Image
                 src="/icons/icon-96x96.png"
                 alt="P-ACA"
@@ -156,96 +159,75 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               />
             </div>
 
-            {/* 네비게이션 */}
-            <nav className="flex-1 py-2 overflow-y-auto min-h-0">
-              <div className="space-y-0.5 px-1.5">
-                {navigation
-                  .filter(item => (!item.adminOnly || isAdmin) && (!item.ownerOnly || isOwner))
-                  .map((item) => {
-                    const isActive = pathname === item.href ||
-                      (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
+            <nav aria-label="태블릿 메뉴" className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+              <ul className="space-y-1">
+                {visibleNavigation.map((item) => {
+                  const isActive = isActiveHref(item.href);
+                  const className = `flex min-h-[54px] w-full flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] leading-tight transition-colors ${
+                    isActive ? 'bg-muted font-bold text-foreground' : 'font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                  }`;
+                  const icon = <item.icon className={`h-[22px] w-[22px] ${isActive ? 'text-primary' : ''}`} />;
 
-                    // PC버전은 쿠키 설정 후 이동
-                    if (item.name === 'PC버전') {
-                      return (
-                        <button
-                          key={item.name}
-                          onClick={() => {
-                            document.cookie = 'force_pc_mode=true; path=/; max-age=86400';
-                            window.location.href = '/';
-                          }}
-                          className="w-full flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          title={item.name}
-                        >
-                          <item.icon size={20} />
-                          <span className="text-[9px] mt-0.5 text-center leading-tight">{item.name}</span>
-                        </button>
-                      );
-                    }
-
+                  // PC버전은 쿠키 설정 후 이동
+                  if (item.name === 'PC버전') {
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        }`}
-                        title={item.name}
-                      >
-                        <item.icon size={20} />
-                        <span className="text-[9px] mt-0.5 text-center leading-tight">{item.name}</span>
-                      </Link>
+                      <li key={item.name}>
+                        <button type="button" onClick={openPcMode} className={className} title={item.name}>
+                          {icon}
+                          <span className="text-center">{item.name}</span>
+                        </button>
+                      </li>
                     );
-                  })}
-              </div>
+                  }
+
+                  return (
+                    <li key={item.name}>
+                      <Link href={item.href} aria-current={isActive ? 'page' : undefined} className={className} title={item.name}>
+                        {icon}
+                        <span className="text-center">{item.name}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             </nav>
 
-            {/* P-EAK & 로그아웃 */}
-            <div className="border-t border-border p-1.5 shrink-0 pb-4 space-y-1">
-	              <button
-	                onClick={() => { void openPeakSso(); }}
-                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-warning hover:text-warning hover:bg-warning/10 transition"
+            {/* P-EAK · 사용자 · 로그아웃 */}
+            <div className="shrink-0 space-y-1 border-t border-border/60 px-2 pb-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { void openPeakSso(); }}
+                className="flex min-h-[50px] w-full flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold text-warning transition-colors hover:bg-warning-soft"
                 title="P-EAK 실기관리"
               >
-                <Mountain size={18} />
-                <span className="text-[9px] mt-0.5">P-EAK</span>
+                <Mountain className="h-5 w-5" />
+                P-EAK
               </button>
+              {user && (
+                <div
+                  className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary"
+                  title={`${user.name} · ${getRoleDisplayName(user.role, user.position)}`}
+                  aria-label={`${user.name} ${getRoleDisplayName(user.role, user.position)}`}
+                >
+                  {user.name.charAt(0)}
+                </div>
+              )}
               <button
+                type="button"
                 onClick={handleLogout}
-                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition"
+                className="flex min-h-[50px] w-full flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 title="로그아웃"
               >
-                <LogOut size={18} />
-                <span className="text-[9px] mt-0.5">로그아웃</span>
+                <LogOut className="h-5 w-5" />
+                로그아웃
               </button>
-              <p className="text-[8px] text-muted-foreground text-center mt-1">{APP_VERSION}</p>
+              <p className="text-center text-[10px] text-muted-foreground/80">{APP_VERSION}</p>
             </div>
           </aside>
 
           {/* 메인 콘텐츠 */}
-          <main className="flex-1 ml-20">
-            {/* 헤더 */}
-            <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
-              <h1 className="text-lg font-bold text-foreground">
-                {currentPage?.name || 'P-ACA 태블릿'}
-              </h1>
-              {user && (
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{getRoleDisplayName(user.role, user.position)}</p>
-                  </div>
-                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
-                    {user.name.charAt(0)}
-                  </div>
-                </div>
-              )}
-            </header>
-
-            {/* 페이지 콘텐츠 */}
-            <div className="p-6 pb-12 min-h-[calc(100vh-56px)]">
+          <main className="ml-[88px] min-w-0 flex-1">
+            <div className="mx-auto min-h-screen w-full max-w-[1280px] px-6 pb-12 pt-5">
               {children}
             </div>
           </main>
@@ -257,29 +239,29 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   // 세로 모드 레이아웃
   return (
     <OrientationContext.Provider value={orientation}>
-      <div className="min-h-screen flex flex-col bg-muted dark:bg-background">
-        {/* 헤더 - PC 스타일 */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sticky top-0 z-20">
-          <div className="flex items-center gap-3">
+      <div className="flex min-h-screen flex-col bg-background">
+        {/* 위 줄 */}
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-background/95 px-5 backdrop-blur">
+          <div className="flex items-center gap-2.5">
             <Image
               src="/icons/icon-96x96.png"
               alt="P-ACA"
-              width={40}
-              height={40}
+              width={36}
+              height={36}
               className="rounded-xl"
             />
             <div>
-              <h1 className="text-foreground font-bold">P-ACA</h1>
-              <p className="text-[10px] text-muted-foreground">{APP_VERSION}</p>
+              <h1 className="text-[17px] font-extrabold leading-tight tracking-tight text-foreground">P-ACA</h1>
+              <p className="text-[11px] text-muted-foreground">{APP_VERSION}</p>
             </div>
           </div>
           {user && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <div className="text-right">
-                <p className="text-sm font-medium text-foreground">{user.name}</p>
-                <p className="text-[10px] text-muted-foreground">{getRoleDisplayName(user.role, user.position)}</p>
+                <p className="text-sm font-semibold text-foreground">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{getRoleDisplayName(user.role, user.position)}</p>
               </div>
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft font-bold text-primary">
                 {user.name.charAt(0)}
               </div>
             </div>
@@ -287,113 +269,126 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-4 pb-40 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto px-5 pb-40 pt-2">
           {children}
         </main>
 
-        {/* 하단 탭 바 - PC 스타일 */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex items-center justify-around px-2 pt-2 pb-8 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        {/* 아래 탭 */}
+        <nav
+          aria-label="아래 메뉴"
+          className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-around border-t border-border/60 bg-card/95 px-2 backdrop-blur"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
           {bottomTabs.map((tab) => {
             if (tab.href === '#more') {
               return (
                 <button
                   key={tab.name}
+                  type="button"
                   onClick={() => setShowMoreMenu(true)}
-                  className="flex flex-col items-center justify-center py-2 px-3 min-w-[64px] text-muted-foreground"
+                  aria-expanded={showMoreMenu}
+                  className={`flex h-[64px] min-w-[72px] flex-col items-center justify-center gap-1 text-xs font-semibold ${showMoreMenu ? 'text-foreground' : 'text-muted-foreground'}`}
                 >
-                  <tab.icon size={24} />
-                  <span className="text-xs mt-1">{tab.name}</span>
+                  <tab.icon className={`h-6 w-6 ${showMoreMenu ? 'text-primary' : ''}`} />
+                  {tab.name}
                 </button>
               );
             }
-            const isActive = pathname === tab.href ||
-              (tab.href !== '/tablet' && pathname.startsWith(tab.href + '/'));
+            const isActive = !showMoreMenu && isActiveHref(tab.href);
             return (
               <Link
                 key={tab.name}
                 href={tab.href}
-                className={`flex flex-col items-center justify-center py-2 px-3 min-w-[64px] ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex h-[64px] min-w-[72px] flex-col items-center justify-center gap-1 text-xs font-semibold ${
+                  isActive ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
-                <tab.icon size={24} />
-                <span className="text-xs mt-1">{tab.name}</span>
+                <tab.icon className={`h-6 w-6 ${isActive ? 'text-primary' : ''}`} />
+                {tab.name}
               </Link>
             );
           })}
         </nav>
 
-        {/* 더보기 메뉴 모달 - PC 스타일 */}
+        {/* 더보기 메뉴 - 아래에서 올라오는 시트 */}
         {showMoreMenu && (
-          <div className="fixed inset-0 bg-black/50 z-30 flex items-end" onClick={() => setShowMoreMenu(false)}>
+          <div className="fixed inset-0 z-30 flex items-end bg-black/40 backdrop-blur-[2px]" onClick={() => setShowMoreMenu(false)}>
             <div
-              className="bg-card w-full rounded-t-2xl p-4 pb-8 safe-area-pb"
+              className="w-full rounded-t-3xl bg-card px-5 pb-8 pt-3"
+              style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="메뉴"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-foreground">메뉴</h2>
-                <button onClick={() => setShowMoreMenu(false)} className="p-2 text-muted-foreground">
-                  <X size={24} />
+              <div className="flex justify-center pb-2">
+                <div className="h-1 w-10 rounded-full bg-border" />
+              </div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">메뉴</h2>
+                <button type="button" onClick={() => setShowMoreMenu(false)} aria-label="메뉴 닫기" className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted">
+                  <X className="h-6 w-6" />
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-4">
-                {navigation
-                  .filter(item => (!item.adminOnly || isAdmin) && (!item.ownerOnly || isOwner))
-                  .map((item) => {
-                    const isActive = pathname === item.href ||
-                      (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
+              <div className="grid grid-cols-4 gap-3">
+                {visibleNavigation.map((item) => {
+                  const isActive = isActiveHref(item.href);
+                  const className = `flex flex-col items-center gap-2 rounded-2xl p-4 text-sm font-semibold transition-colors ${
+                    isActive ? 'bg-primary-soft text-primary' : 'bg-muted text-foreground hover:bg-muted/70'
+                  }`;
 
-                    // PC버전은 쿠키 설정 후 이동
-                    if (item.name === 'PC버전') {
-                      return (
-                        <button
-                          key={item.name}
-                          onClick={() => {
-                            setShowMoreMenu(false);
-                            document.cookie = 'force_pc_mode=true; path=/; max-age=86400';
-                            window.location.href = '/';
-                          }}
-                          className="flex flex-col items-center p-4 rounded-xl transition bg-muted text-foreground"
-                        >
-                          <item.icon size={28} />
-                          <span className="text-xs mt-2 text-center">{item.name}</span>
-                        </button>
-                      );
-                    }
-
+                  // PC버전은 쿠키 설정 후 이동
+                  if (item.name === 'PC버전') {
                     return (
-                      <Link
+                      <button
                         key={item.name}
-                        href={item.href}
-                        onClick={() => setShowMoreMenu(false)}
-                        className={`flex flex-col items-center p-4 rounded-xl transition ${
-                          isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'
-                        }`}
+                        type="button"
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          openPcMode();
+                        }}
+                        className={className}
                       >
-                        <item.icon size={28} />
-                        <span className="text-xs mt-2 text-center">{item.name}</span>
-                      </Link>
+                        <item.icon className="h-7 w-7" />
+                        <span className="text-center">{item.name}</span>
+                      </button>
                     );
-                  })}
-	                <button
-	                  onClick={() => {
-	                    setShowMoreMenu(false);
-	                    void openPeakSso();
-	                  }}
-                  className="flex flex-col items-center p-4 rounded-xl bg-warning/10 text-warning"
+                  }
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowMoreMenu(false)}
+                      className={className}
+                    >
+                      <item.icon className="h-7 w-7" />
+                      <span className="text-center">{item.name}</span>
+                    </Link>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    void openPeakSso();
+                  }}
+                  className="flex flex-col items-center gap-2 rounded-2xl bg-warning-soft p-4 text-sm font-semibold text-warning"
                 >
-                  <Mountain size={28} />
-                  <span className="text-xs mt-2">P-EAK</span>
+                  <Mountain className="h-7 w-7" />
+                  P-EAK
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowMoreMenu(false);
                     handleLogout();
                   }}
-                  className="flex flex-col items-center p-4 rounded-xl bg-destructive/10 text-destructive"
+                  className="flex flex-col items-center gap-2 rounded-2xl bg-destructive-soft p-4 text-sm font-semibold text-destructive"
                 >
-                  <LogOut size={28} />
-                  <span className="text-xs mt-2">로그아웃</span>
+                  <LogOut className="h-7 w-7" />
+                  로그아웃
                 </button>
               </div>
             </div>

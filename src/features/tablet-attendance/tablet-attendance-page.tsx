@@ -21,38 +21,39 @@ export function TabletAttendancePage() {
         dateLabel={state.dateLabel}
         isToday={state.isToday}
         loading={state.loading}
-        stats={state.stats}
         timeSlot={state.timeSlot}
         onNextDate={state.nextDate}
         onPreviousDate={state.previousDate}
         onRefresh={state.reload}
         onTimeSlotChange={state.setTimeSlot}
-      />
-
-      <ClassRosterSelect
-        branches={branches}
-        classId={state.classId}
-        className="w-full rounded-lg border border-border bg-card px-3 py-3 text-base text-foreground"
-        onChange={state.setClassId}
+        roster={(
+          <ClassRosterSelect
+            branches={branches}
+            classId={state.classId}
+            className="h-11 w-full min-w-0 rounded-xl border border-transparent bg-muted px-4 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
+            onChange={state.setClassId}
+          />
+        )}
       />
 
       {!state.loading && !state.loadError && (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-4">
-            <TabletAttendanceStats stats={state.stats} />
-            <TabletAttendanceFilters filters={state.filters} onChange={state.setFilters} />
-          </div>
-          <aside className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm font-medium text-foreground">현재 표시</p>
-            <p className="mt-2 font-mono text-4xl font-semibold text-foreground">
-              {state.filteredStudents.length}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">전체 {state.students.length}명 중 조건에 맞는 학생</p>
-            <Button className="mt-4 h-12 w-full" onClick={state.markAllPresent} disabled={!hasStudents || state.savingId !== null}>
-              전체 출석
-            </Button>
-          </aside>
-        </div>
+        <>
+          <TabletAttendanceStats stats={state.stats} />
+          <TabletAttendanceFilters
+            filters={state.filters}
+            onChange={state.setFilters}
+            trailing={(
+              <div className="flex shrink-0 items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-base font-extrabold text-foreground tabular-nums">{state.filteredStudents.length}</span>명 표시
+                </p>
+                <Button onClick={state.markAllPresent} disabled={!hasStudents || state.savingId !== null}>
+                  전체 출석
+                </Button>
+              </div>
+            )}
+          />
+        </>
       )}
 
       <TabletAttendanceGrid
@@ -66,7 +67,7 @@ export function TabletAttendancePage() {
       />
 
       {state.savingId !== null && (
-        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-white shadow-lg">
+        <div role="status" className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-foreground px-5 py-3 text-sm font-semibold text-background">
           저장 중...
         </div>
       )}

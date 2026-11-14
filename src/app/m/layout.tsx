@@ -29,7 +29,7 @@ export default function MobileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen">
       {children}
     </div>
   );

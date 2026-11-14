@@ -1,4 +1,5 @@
-import { UserRound } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils/cn';
 import { MOBILE_INSTRUCTOR_STATUSES, MOBILE_INSTRUCTOR_STATUS_META } from './mobile-instructor-constants';
 import type { MobileInstructor, MobileInstructorAttendanceStatus } from './mobile-instructor-types';
 
@@ -20,27 +21,24 @@ export function MobileInstructorCard({
   const activeMeta = attendanceStatus ? MOBILE_INSTRUCTOR_STATUS_META[attendanceStatus] : null;
 
   return (
-    <article
-      className="rounded-lg border border-border bg-card p-4 shadow-sm"
-      data-testid="mobile-instructor-card"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
-          <UserRound className="h-5 w-5" />
+    <article className="py-4 first:pt-1 last:pb-1" data-testid="mobile-instructor-card">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-[15px] font-bold text-secondary-foreground">
+          {instructor.name.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h3 className="truncate text-base font-semibold text-foreground">{instructor.name}</h3>
-            {activeMeta && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${activeMeta.badgeClassName}`}>{activeMeta.label}</span>}
-            {cleared && <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">해제</span>}
+            <h3 className="truncate text-[17px] font-bold text-foreground">{instructor.name}</h3>
+            {activeMeta && <Badge variant={activeMeta.badgeVariant} className="shrink-0">{activeMeta.label}</Badge>}
+            {cleared && <Badge variant="secondary" className="shrink-0">해제</Badge>}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             {instructor.source === 'approved' ? '승인된 추가 출근' : '배정된 강사'}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-1.5">
+      <div className="mt-3 grid grid-cols-4 gap-2">
         {MOBILE_INSTRUCTOR_STATUSES.map((status) => {
           const meta = MOBILE_INSTRUCTOR_STATUS_META[status];
           const active = attendanceStatus === status;
@@ -49,8 +47,12 @@ export function MobileInstructorCard({
               type="button"
               key={status}
               disabled={saving}
+              aria-pressed={active}
               onClick={() => onStatusChange(status)}
-              className={`rounded-lg border px-2 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 ${active ? meta.activeClassName : meta.buttonClassName}`}
+              className={cn(
+                'h-11 rounded-xl text-[15px] font-bold transition active:scale-[0.98] disabled:opacity-50',
+                active ? meta.activeClassName : meta.buttonClassName
+              )}
             >
               {meta.label}
             </button>

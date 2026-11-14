@@ -1,6 +1,9 @@
-import { Check, Clock, GraduationCap, Loader2, Phone, School, User, X } from 'lucide-react';
+import { Check, Clock, GraduationCap, Loader2, Phone, School, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import { MobileSheet } from '../mobile-home/mobile-screen';
 import { CONSULTATION_STATUS_META, CONSULTATION_STATUS_ORDER } from './mobile-consultations-constants';
 import { formatGrade, formatTime } from './mobile-consultations-utils';
 
@@ -26,25 +29,25 @@ function DetailRow({
 }) {
   const content = (
     <>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-secondary-foreground">
         {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-base font-semibold text-foreground">{value}</p>
-      </div>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] text-muted-foreground">{label}</span>
+        <span className={cn('block truncate text-[15px] font-semibold', href ? 'text-primary' : 'text-foreground')}>{value}</span>
+      </span>
     </>
   );
 
   if (href) {
     return (
-      <a href={href} className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3">
+      <a href={href} className="flex min-h-14 items-center gap-3 rounded-xl px-1 py-2 transition-colors hover:bg-muted">
         {content}
       </a>
     );
   }
 
-  return <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">{content}</div>;
+  return <div className="flex min-h-14 items-center gap-3 px-1 py-2">{content}</div>;
 }
 
 export function MobileConsultationDetailSheet({
@@ -59,80 +62,67 @@ export function MobileConsultationDetailSheet({
   const status = CONSULTATION_STATUS_META[consultation.status];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55" onClick={onClose}>
-      <div
-        className="max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-card pb-8 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-        data-testid="mobile-consultation-detail-sheet"
-      >
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="h-1 w-10 rounded-full bg-muted-foreground/40" />
+    <MobileSheet
+      title={consultation.student_name}
+      description={`${formatTime(consultation.preferred_time)} 상담`}
+      closeLabel="상담 정보 닫기"
+      onClose={onClose}
+      onOverlayClick={onClose}
+      testId="mobile-consultation-detail-sheet"
+    >
+      <section className="rounded-2xl bg-muted p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Badge variant={status.badgeVariant} className="px-3 py-1 text-sm">{status.label}</Badge>
+          <Button type="button" variant="ghost" size="sm" className="bg-card" onClick={onToggleStatusChange}>
+            {showStatusChange ? '닫기' : '상태변경'}
+          </Button>
         </div>
 
-        <div className="space-y-4 px-5 pb-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-xl font-semibold text-foreground">{consultation.student_name}</h2>
-              <p className="text-sm text-muted-foreground">{formatTime(consultation.preferred_time)} 상담</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="상담 정보 닫기">
-              <X className="h-5 w-5" />
-            </Button>
+        {showStatusChange && (
+          <div className="mt-3 grid grid-cols-5 gap-1.5">
+            {CONSULTATION_STATUS_ORDER.map((item) => {
+              const meta = CONSULTATION_STATUS_META[item];
+              const selected = consultation.status === item;
+              return (
+                <button
+                  type="button"
+                  key={item}
+                  disabled={updatingStatus || selected}
+                  onClick={() => onStatusChange(consultation, item)}
+                  className={cn(
+                    'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[13px] font-semibold transition-colors',
+                    selected ? 'bg-primary text-primary-foreground' : 'bg-card text-secondary-foreground',
+                    updatingStatus && 'opacity-60'
+                  )}
+                >
+                  {updatingStatus && !selected ? <Loader2 className="h-3 w-3 animate-spin" /> : selected ? <Check className="h-3 w-3" /> : <span className={`h-2 w-2 rounded-full ${meta.dotClassName}`} />}
+                  {meta.label}
+                </button>
+              );
+            })}
           </div>
+        )}
+      </section>
 
-          <section className="rounded-lg border border-border bg-muted p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className={`rounded-full border px-3 py-1 text-sm font-medium ${status.className}`}>{status.label}</span>
-              <Button type="button" variant="outline" size="sm" onClick={onToggleStatusChange}>
-                {showStatusChange ? '닫기' : '상태변경'}
-              </Button>
-            </div>
+      <section className="divide-y divide-border/60">
+        <DetailRow icon={<User className="h-5 w-5" />} label="이름" value={consultation.student_name} />
+        <DetailRow icon={<Clock className="h-5 w-5" />} label="상담 시간" value={formatTime(consultation.preferred_time)} />
+        {consultation.student_phone && (
+          <DetailRow icon={<Phone className="h-5 w-5" />} label="학생 전화번호" value={consultation.student_phone} href={`tel:${consultation.student_phone}`} />
+        )}
+        {consultation.parent_phone && (
+          <DetailRow icon={<Phone className="h-5 w-5" />} label="연락처" value={consultation.parent_phone} href={`tel:${consultation.parent_phone}`} />
+        )}
+        {consultation.student_school && <DetailRow icon={<School className="h-5 w-5" />} label="학교" value={consultation.student_school} />}
+        {consultation.student_grade && <DetailRow icon={<GraduationCap className="h-5 w-5" />} label="학년" value={formatGrade(consultation.student_grade)} />}
+      </section>
 
-            {showStatusChange && (
-              <div className="mt-3 grid grid-cols-5 gap-1.5">
-                {CONSULTATION_STATUS_ORDER.map((item) => {
-                  const meta = CONSULTATION_STATUS_META[item];
-                  const selected = consultation.status === item;
-                  return (
-                    <button
-                      type="button"
-                      key={item}
-                      disabled={updatingStatus || selected}
-                      onClick={() => onStatusChange(consultation, item)}
-                      className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg border px-1 text-xs font-medium transition
-                        ${selected ? 'border-muted-foreground/40 bg-foreground text-white' : 'border-border bg-card text-secondary-foreground'}
-                        ${updatingStatus ? 'opacity-60' : ''}`}
-                    >
-                      {updatingStatus && !selected ? <Loader2 className="h-3 w-3 animate-spin" /> : selected ? <Check className="h-3 w-3" /> : <span className={`h-2 w-2 rounded-full ${meta.dotClassName}`} />}
-                      {meta.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className="space-y-2">
-            <DetailRow icon={<User className="h-5 w-5" />} label="이름" value={consultation.student_name} />
-            <DetailRow icon={<Clock className="h-5 w-5" />} label="상담 시간" value={formatTime(consultation.preferred_time)} />
-            {consultation.student_phone && (
-              <DetailRow icon={<Phone className="h-5 w-5" />} label="학생 전화번호" value={consultation.student_phone} href={`tel:${consultation.student_phone}`} />
-            )}
-            {consultation.parent_phone && (
-              <DetailRow icon={<Phone className="h-5 w-5" />} label="연락처" value={consultation.parent_phone} href={`tel:${consultation.parent_phone}`} />
-            )}
-            {consultation.student_school && <DetailRow icon={<School className="h-5 w-5" />} label="학교" value={consultation.student_school} />}
-            {consultation.student_grade && <DetailRow icon={<GraduationCap className="h-5 w-5" />} label="학년" value={formatGrade(consultation.student_grade)} />}
-          </section>
-
-          {consultation.inquiry_content && (
-            <section className="rounded-lg border border-border bg-card p-3">
-              <p className="text-xs text-muted-foreground">문의 내용</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{consultation.inquiry_content}</p>
-            </section>
-          )}
-        </div>
-      </div>
-    </div>
+      {consultation.inquiry_content && (
+        <section className="rounded-2xl bg-muted p-4">
+          <p className="text-[13px] font-semibold text-muted-foreground">문의 내용</p>
+          <p className="mt-1 whitespace-pre-wrap text-[15px] text-foreground">{consultation.inquiry_content}</p>
+        </section>
+      )}
+    </MobileSheet>
   );
 }
