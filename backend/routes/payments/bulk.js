@@ -46,6 +46,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
 const { monthlyBillAmounts, floorRatio, floorAfterPercent, exactPercent } = require('../../utils/monthlyBillAmounts');
+const { parseClassDaysWithSlots, extractDayNumbers } = require('../../services/studentScheduleAssignment');
 
 module.exports = function(router) {
 
@@ -359,9 +360,9 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
             classDays = [];
         }
 
-        // 해당 월의 총 수업일수 계산
-        const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
-        const classDayNums = classDays.map(d => dayNameToNum[d]).filter(d => d !== undefined);
+        // 해당 월의 총 수업일수 계산 — 수업 요일은 다른 경로와 같은 공통 파서로 읽는다
+        // (저장 형식: 숫자 [1,3,5] 또는 [{ day, timeSlot }]. 예전엔 한글 요일 이름만 읽어 실제 자료로는 일할을 하지 않았다)
+        const classDayNums = extractDayNumbers(parseClassDaysWithSlots(student.class_days)).filter(Number.isInteger);
 
         let totalClassDays = 0;
         let remainingClassDays = 0;
