@@ -38,27 +38,27 @@ export function BookingScheduleStep({
   const availableSlots = slots.filter((slot) => slot.available);
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+    <section className="rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Calendar className="h-4 w-4" />
           일정 선택
         </h2>
         <Button size="sm" variant="outline" onClick={onBack}>이전</Button>
       </div>
       <div className="space-y-5 p-4">
-        <div className="rounded-md border border-slate-200 p-3">
+        <div className="rounded-md border border-border p-3">
           <div className="mb-3 flex items-center justify-between">
-            <button className="rounded-md p-1 hover:bg-slate-100" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}>
+            <button className="rounded-md p-1 hover:bg-muted" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}>
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <p className="text-sm font-semibold text-slate-950">{format(currentMonth, 'yyyy년 M월', { locale: ko })}</p>
-            <button className="rounded-md p-1 hover:bg-slate-100" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}>
+            <p className="text-sm font-semibold text-foreground">{format(currentMonth, 'yyyy년 M월', { locale: ko })}</p>
+            <button className="rounded-md p-1 hover:bg-muted" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}>
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
+          <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
             {['일', '월', '화', '수', '목', '금', '토'].map((day) => <div key={day}>{day}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
@@ -70,7 +70,7 @@ export function BookingScheduleStep({
               return (
                 <button
                   key={dateKey}
-                  className={`h-10 rounded-md text-sm transition-colors ${selected ? 'bg-blue-600 font-semibold text-white' : available ? 'text-slate-700 hover:bg-blue-50' : 'cursor-not-allowed text-slate-300'}`}
+                  className={`h-10 rounded-md text-sm transition-colors ${selected ? 'bg-primary font-semibold text-white' : available ? 'text-secondary-foreground hover:bg-primary-soft' : 'cursor-not-allowed text-muted-foreground/60'}`}
                   data-testid={`booking-date-${dateKey}`}
                   disabled={!available}
                   onClick={() => onSelectDate(date)}
@@ -84,21 +84,21 @@ export function BookingScheduleStep({
 
         {selectedDate && (
           <div>
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-secondary-foreground">
               <Clock className="h-4 w-4" />
               {format(selectedDate, 'M월 d일 (EEEE)', { locale: ko })} 가능 시간
             </h3>
             {slotsError && (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              <div className="rounded-md border border-destructive/30 bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">
                 {slotsError}
               </div>
             )}
             {slotsLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : availableSlots.length === 0 && !slotsError ? (
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">예약 가능한 시간이 없습니다.</div>
+              <div className="rounded-md border border-border bg-muted p-4 text-center text-sm text-muted-foreground">예약 가능한 시간이 없습니다.</div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {availableSlots.map((slot) => {
@@ -106,7 +106,7 @@ export function BookingScheduleStep({
                   return (
                     <button
                       key={slot.time}
-                      className={`h-10 rounded-md text-sm font-semibold transition-colors ${selectedTime === label ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-blue-50'}`}
+                      className={`h-10 rounded-md text-sm font-semibold transition-colors ${selectedTime === label ? 'bg-primary text-white' : 'bg-muted text-secondary-foreground hover:bg-primary-soft'}`}
                       onClick={() => onSelectTime(label)}
                     >
                       {label}

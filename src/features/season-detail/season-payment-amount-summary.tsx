@@ -13,9 +13,9 @@ export function SeasonPaymentAmountSummary({ enrollment }: SeasonPaymentAmountSu
 
   return (
     <div className="mt-1 space-y-0.5 text-xs">
-      <p className="font-medium text-emerald-700">기납부 {formatSeasonFee(paidAmount)}</p>
+      <p className="font-medium text-success">기납부 {formatSeasonFee(paidAmount)}</p>
       {remainingAmount > 0 ? (
-        <p className="font-medium text-rose-600">잔액 {formatSeasonFee(remainingAmount)}</p>
+        <p className="font-medium text-destructive">잔액 {formatSeasonFee(remainingAmount)}</p>
       ) : null}
     </div>
   );

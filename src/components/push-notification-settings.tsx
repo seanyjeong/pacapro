@@ -206,11 +206,11 @@ export default function PushNotificationSettings() {
     return (
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Bell className="w-5 h-5 text-blue-600" />
+          <Bell className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">PWA 푸시 알림</h2>
         </div>
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
       </div>
     );
@@ -223,11 +223,11 @@ export default function PushNotificationSettings() {
           <BellOff className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">PWA 푸시 알림</h2>
         </div>
-        <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-200">
+        <div className="p-4 bg-warning-soft rounded-lg border border-warning/30">
+          <p className="text-warning">
             이 브라우저는 푸시 알림을 지원하지 않습니다.
           </p>
-          <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+          <p className="text-sm text-warning mt-1">
             PWA 앱으로 설치하거나 최신 브라우저를 사용해주세요.
           </p>
         </div>
@@ -238,12 +238,12 @@ export default function PushNotificationSettings() {
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Bell className="w-5 h-5 text-blue-600" />
+        <Bell className="w-5 h-5 text-primary" />
         <h2 className="text-lg font-semibold text-foreground">PWA 푸시 알림</h2>
       </div>
 
       {message && (
-        <div className={`mb-4 p-3 rounded-lg ${message.type === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'}`}>
+        <div className={`mb-4 p-3 rounded-lg ${message.type === 'success' ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
           {message.text}
         </div>
       )}
@@ -253,7 +253,7 @@ export default function PushNotificationSettings() {
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
           <div className="flex items-center gap-3">
             {subscribed ? (
-              <CheckCircle className="w-6 h-6 text-green-600" />
+              <CheckCircle className="w-6 h-6 text-success" />
             ) : (
               <BellOff className="w-6 h-6 text-muted-foreground" />
             )}
@@ -274,8 +274,8 @@ export default function PushNotificationSettings() {
             disabled={enabling}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               subscribed
-                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-destructive-soft text-destructive hover:bg-destructive/20'
+                : 'bg-primary text-white hover:bg-primary/90'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {enabling ? '처리 중...' : subscribed ? '전체 비활성화' : '활성화'}
@@ -303,12 +303,12 @@ export default function PushNotificationSettings() {
                   disabled={settingsLoading}
                   className={`relative w-12 h-6 rounded-full transition-colors ${
                     notificationSettings[type.key]
-                      ? 'bg-blue-600'
-                      : 'bg-gray-300 dark:bg-gray-600'
+                      ? 'bg-primary'
+                      : 'bg-muted-foreground/40'
                   } disabled:opacity-50`}
                 >
                   <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    className={`absolute top-1 w-4 h-4 bg-card rounded-full transition-transform ${
                       notificationSettings[type.key] ? 'left-7' : 'left-1'
                     }`}
                   />
@@ -360,7 +360,7 @@ export default function PushNotificationSettings() {
                   }
                 }}
                 disabled={testingLocal || testingServer}
-                className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="px-3 py-2 text-sm bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50"
               >
                 {testingLocal ? '발송 중...' : '로컬 테스트'}
               </button>
@@ -381,7 +381,7 @@ export default function PushNotificationSettings() {
                   }
                 }}
                 disabled={testingLocal || testingServer}
-                className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="px-3 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
               >
                 {testingServer ? '발송 중...' : '서버 테스트'}
               </button>
@@ -393,9 +393,9 @@ export default function PushNotificationSettings() {
         )}
 
         {/* 안내 사항 */}
-        <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">푸시 알림 안내</p>
-          <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+        <div className="p-4 bg-primary-soft rounded-lg border border-primary/30">
+          <p className="text-sm font-medium text-primary mb-2">푸시 알림 안내</p>
+          <ul className="text-xs text-primary space-y-1 list-disc list-inside">
             <li>PWA 앱으로 설치하면 더 안정적으로 알림을 받을 수 있습니다</li>
             <li>알림이 오지 않으면 브라우저/시스템 알림 설정을 확인해주세요</li>
             <li>위 토글로 원하는 알림만 선택적으로 받을 수 있습니다</li>

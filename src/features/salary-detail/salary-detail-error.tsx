@@ -17,7 +17,7 @@ export function SalaryDetailError({ message, onBack, onRetry }: SalaryDetailErro
         <h1 className="text-2xl font-semibold text-foreground">급여 명세서</h1>
       </div>
       <section
-        className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-none dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+        className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning shadow-none"
         role="alert"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

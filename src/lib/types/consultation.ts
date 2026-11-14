@@ -284,11 +284,11 @@ export const CONSULTATION_STATUS_LABELS: Record<ConsultationStatus, string> = {
 
 // 상태별 색상
 export const CONSULTATION_STATUS_COLORS: Record<ConsultationStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800',
-  no_show: 'bg-red-100 text-red-800'
+  pending: 'bg-warning-soft text-warning',
+  confirmed: 'bg-primary-soft text-primary',
+  completed: 'bg-success-soft text-success',
+  cancelled: 'bg-muted text-foreground',
+  no_show: 'bg-destructive-soft text-destructive'
 };
 
 // 학년 목록 (체대입시 학원 - 중3부터)

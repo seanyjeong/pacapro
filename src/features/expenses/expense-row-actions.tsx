@@ -68,7 +68,7 @@ export function ExpenseRowActions({
           size="sm"
           variant="outline"
           onClick={() => onCompleteRefund(expense.id)}
-          className="border-green-600 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950/35"
+          className="border-success text-success hover:bg-success-soft"
         >
           <CheckCircle className="mr-1.5 h-4 w-4" />
           환불 완료
@@ -89,7 +89,7 @@ export function ExpenseRowActions({
             type="button"
             aria-label="지출 삭제"
             onClick={() => onDelete(expense.id)}
-            className="rounded-md p-2 text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 dark:text-red-300 dark:hover:bg-red-950/35"
+            className="rounded-md p-2 text-destructive hover:bg-destructive-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
             <Trash2 className="h-4 w-4" />
           </button>

@@ -10,7 +10,6 @@ export function SeasonListHeader({ onAddSeason, onRefresh }: SeasonListHeaderPro
   return (
     <header className="flex flex-col gap-4 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Season Desk</div>
         <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">시즌 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">수시/정시 시즌 등록 및 관리</p>
       </div>

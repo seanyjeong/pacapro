@@ -17,7 +17,7 @@ export function MobileUnpaidFilters({
 }: MobileUnpaidFiltersProps) {
   return (
     <section
-      className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950"
+      className="rounded-lg border border-border bg-card p-3"
       aria-label="미납자 조회 범위"
       data-testid="mobile-unpaid-filters"
     >
@@ -48,7 +48,7 @@ export function MobileUnpaidFilters({
 
       {scope === 'month' && (
         <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-3">
-          <label htmlFor="mobile-unpaid-month" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="mobile-unpaid-month" className="text-sm font-medium text-secondary-foreground">
             조회 월
           </label>
           <input
@@ -59,7 +59,7 @@ export function MobileUnpaidFilters({
             onChange={(event) => {
               if (event.target.value) onMonthChange(event.target.value);
             }}
-            className="h-11 min-w-0 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-950 focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-200"
+            className="h-11 min-w-0 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:ring-2 focus:ring-muted-foreground/40"
           />
         </div>
       )}

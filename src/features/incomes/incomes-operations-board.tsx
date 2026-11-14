@@ -45,21 +45,20 @@ export function IncomesOperationsBoard({
   return (
     <aside
       aria-label="수입 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="incomes-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Finance Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">수입 작업 보드</h2>
-        <p className="text-sm text-slate-600">학원비 수납, 기타수입, 월별 수입 비율을 한곳에서 확인합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">수입 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">학원비 수납, 기타수입, 월별 수입 비율을 한곳에서 확인합니다.</p>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-medium text-slate-500">현재 보기</p>
-        <p className="mt-1 text-sm font-semibold text-slate-950">
+      <div className="rounded-md border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">현재 보기</p>
+        <p className="mt-1 text-sm font-semibold text-foreground">
           {formatMonth(selectedMonth)} · {getTabLabel(activeTab)} · {viewMode === 'calendar' ? '달력' : '리스트'}
         </p>
-        {searchQuery ? <p className="mt-1 text-xs text-slate-600">검색: {searchQuery}</p> : null}
+        {searchQuery ? <p className="mt-1 text-xs text-secondary-foreground">검색: {searchQuery}</p> : null}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -118,10 +117,10 @@ export function IncomesOperationsBoard({
 
       <div className="space-y-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             aria-label="작업 보드 수입 검색"
-            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="h-10 w-full rounded-md border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20"
             placeholder="학생, 날짜, 항목 검색"
             type="text"
             value={searchQuery}
@@ -130,7 +129,7 @@ export function IncomesOperationsBoard({
         </div>
         <input
           aria-label="작업 보드 조회 월"
-          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20"
           type="month"
           value={selectedMonth}
           onChange={(event) => onMonthChange(event.target.value)}
@@ -170,17 +169,17 @@ interface MetricProps {
 function Metric({ active, ariaLabel, icon, label, onClick, testId, value }: MetricProps) {
   const content = (
     <>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </>
   );
 
   if (!onClick) {
     return (
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+      <div className="rounded-md border border-border bg-muted p-3" data-testid={testId}>
         {content}
       </div>
     );
@@ -191,10 +190,10 @@ function Metric({ active, ariaLabel, icon, label, onClick, testId, value }: Metr
       aria-label={ariaLabel}
       aria-pressed={Boolean(active)}
       className={cn(
-        'rounded-md border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500/25',
+        'rounded-md border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/25',
         active
-          ? 'border-blue-300 bg-blue-50 shadow-sm'
-          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+          ? 'border-primary/30 bg-primary-soft shadow-sm'
+          : 'border-border bg-muted hover:border-border hover:bg-card'
       )}
       data-testid={testId}
       type="button"

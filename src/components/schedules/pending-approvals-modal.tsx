@@ -37,8 +37,8 @@ import { toast } from 'sonner';
 type TimeSlot = 'morning' | 'afternoon' | 'evening';
 
 const TIME_SLOT_INFO: Record<TimeSlot, { label: string; icon: typeof Sun; color: string; bgColor: string }> = {
-  morning: { label: '오전', icon: Sunrise, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  afternoon: { label: '오후', icon: Sun, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  morning: { label: '오전', icon: Sunrise, color: 'text-warning', bgColor: 'bg-warning-soft' },
+  afternoon: { label: '오후', icon: Sun, color: 'text-primary', bgColor: 'bg-primary-soft' },
   evening: { label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-100' },
 };
 
@@ -122,7 +122,7 @@ export function PendingApprovalsModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              <AlertCircle className="w-5 h-5 text-warning" />
               승인 대기 중인 요청
             </DialogTitle>
             <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
@@ -137,11 +137,11 @@ export function PendingApprovalsModal({
         <div className="flex-1 overflow-y-auto py-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : requests.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-400" />
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-success" />
               <p>대기 중인 요청이 없습니다.</p>
             </div>
           ) : (
@@ -154,17 +154,17 @@ export function PendingApprovalsModal({
                 return (
                   <div
                     key={request.id}
-                    className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="p-4 bg-muted rounded-lg border border-border"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         {/* 강사 정보 */}
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="w-4 h-4 text-blue-600" />
+                          <div className="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center">
+                            <User className="w-4 h-4 text-primary" />
                           </div>
                           <div>
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-semibold text-foreground">
                               {request.instructor_name}
                             </span>
                             {request.salary_type === 'hourly' && (
@@ -176,7 +176,7 @@ export function PendingApprovalsModal({
                         </div>
 
                         {/* 날짜 및 시간대 */}
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="flex items-center gap-3 text-sm text-secondary-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {formatDate(request.work_date)}
@@ -191,7 +191,7 @@ export function PendingApprovalsModal({
 
                         {/* 시급제: 시간 정보 */}
                         {request.salary_type === 'hourly' && (request.original_end_time || request.actual_end_time) && (
-                          <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+                          <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
                             {formatTime(request.original_end_time)} ~ {formatTime(request.actual_end_time)}
                           </div>
@@ -199,13 +199,13 @@ export function PendingApprovalsModal({
 
                         {/* 사유 */}
                         {request.notes && (
-                          <p className="mt-2 text-sm text-gray-600 bg-white p-2 rounded">
+                          <p className="mt-2 text-sm text-secondary-foreground bg-card p-2 rounded">
                             {request.notes}
                           </p>
                         )}
 
                         {/* 요청일 */}
-                        <p className="mt-2 text-xs text-gray-400">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           요청일: {new Date(request.created_at).toLocaleDateString('ko-KR')}
                         </p>
                       </div>
@@ -216,7 +216,7 @@ export function PendingApprovalsModal({
                           size="sm"
                           onClick={() => handleApprove(request)}
                           disabled={isProcessing}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-success hover:bg-success/90"
                         >
                           {isProcessing ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -232,7 +232,7 @@ export function PendingApprovalsModal({
                           variant="outline"
                           onClick={() => handleReject(request)}
                           disabled={isProcessing}
-                          className="text-red-600 border-red-300 hover:bg-red-50"
+                          className="text-destructive border-destructive/30 hover:bg-destructive-soft"
                         >
                           {isProcessing ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

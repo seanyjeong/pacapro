@@ -24,7 +24,7 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
                 <p className="truncate text-sm font-semibold text-foreground">{payment.student_name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{payment.year_month}</p>
               </div>
-              <p className="shrink-0 text-base font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+              <p className="shrink-0 text-base font-semibold tabular-nums text-success">
                 +{formatAmount(payment.final_amount)}원
               </p>
             </div>
@@ -62,7 +62,7 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
               <tr key={`tuition-${payment.id}`} className="transition-colors hover:bg-muted/35">
                 <td className="px-5 py-3 font-medium text-foreground">{payment.student_name}</td>
                 <td className="px-5 py-3 text-muted-foreground">{payment.year_month}</td>
-                <td className="px-5 py-3 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                <td className="px-5 py-3 text-right font-semibold tabular-nums text-success">
                   +{formatAmount(payment.final_amount)}원
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">{payment.paid_date?.split('T')[0] || '-'}</td>

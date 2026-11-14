@@ -11,14 +11,14 @@ export const TIME_SLOT_INFO: Record<TimeSlot, {
   morning: {
     label: '오전',
     icon: Sunrise,
-    color: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-100 dark:bg-orange-950',
+    color: 'text-warning',
+    bgColor: 'bg-warning-soft',
   },
   afternoon: {
     label: '오후',
     icon: Sun,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-950',
+    color: 'text-primary',
+    bgColor: 'bg-primary-soft',
   },
   evening: {
     label: '저녁',
@@ -35,17 +35,17 @@ export const OTHER_SLOTS: Record<TimeSlot, TimeSlot[]> = {
 };
 
 export const INSTRUCTOR_ATTENDANCE_STATUS = [
-  { value: 'present', label: '출근', color: 'bg-green-500' },
-  { value: 'absent', label: '결근', color: 'bg-red-500' },
-  { value: 'late', label: '지각', color: 'bg-yellow-500' },
-  { value: 'half_day', label: '반차', color: 'bg-blue-500' },
+  { value: 'present', label: '출근', color: 'bg-success' },
+  { value: 'absent', label: '결근', color: 'bg-destructive' },
+  { value: 'late', label: '지각', color: 'bg-warning' },
+  { value: 'half_day', label: '반차', color: 'bg-primary' },
 ] as const;
 
 export const STUDENT_ATTENDANCE_STATUS = [
-  { value: 'present', label: '출석', color: 'bg-green-500' },
-  { value: 'absent', label: '결석', color: 'bg-red-500' },
-  { value: 'late', label: '지각', color: 'bg-yellow-500' },
-  { value: 'excused', label: '공결', color: 'bg-blue-500' },
+  { value: 'present', label: '출석', color: 'bg-success' },
+  { value: 'absent', label: '결석', color: 'bg-destructive' },
+  { value: 'late', label: '지각', color: 'bg-warning' },
+  { value: 'excused', label: '공결', color: 'bg-primary' },
 ] as const;
 
 export const EXCUSED_REASONS = [

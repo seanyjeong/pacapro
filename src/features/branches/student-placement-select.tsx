@@ -19,7 +19,7 @@ export function StudentPlacementSelect({
   onChange,
   disabled,
   placeholder = '배정 안 함',
-  className = 'h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-slate-300',
+  className = 'h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-border',
   id,
 }: StudentPlacementSelectProps) {
   const selected = value.class_id ? `c:${value.class_id}` : value.branch_id ? `b:${value.branch_id}` : NONE;

@@ -21,7 +21,7 @@ export function SMSPage() {
         />
 
         {sms.loadErrors.length > 0 ? (
-          <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning">
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>

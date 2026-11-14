@@ -7,8 +7,8 @@ interface ReportProgressRowProps {
 
 const BAR_TONES: Record<ReportProgressRowProps['tone'], string> = {
   primary: 'bg-sky-600',
-  success: 'bg-emerald-600',
-  danger: 'bg-rose-600',
+  success: 'bg-success',
+  danger: 'bg-destructive',
 };
 
 export function ReportProgressRow({ label, value, percent, tone }: ReportProgressRowProps) {

@@ -18,8 +18,8 @@ export function ExpenseStatCard({ label, value, icon, subValue, tone = 'default'
           <p
             className={cn(
               'mt-1 truncate text-2xl font-semibold tracking-normal tabular-nums text-foreground',
-              tone === 'danger' && 'text-red-600 dark:text-red-300',
-              tone === 'warning' && 'text-amber-700 dark:text-amber-300'
+              tone === 'danger' && 'text-destructive',
+              tone === 'warning' && 'text-warning'
             )}
           >
             {value}
@@ -29,8 +29,8 @@ export function ExpenseStatCard({ label, value, icon, subValue, tone = 'default'
         <div
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/35 text-muted-foreground',
-            tone === 'danger' && 'border-red-200 bg-red-50 text-red-600 dark:border-red-900/60 dark:bg-red-950/45 dark:text-red-300',
-            tone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-300'
+            tone === 'danger' && 'border-destructive/30 bg-destructive-soft text-destructive',
+            tone === 'warning' && 'border-warning/30 bg-warning-soft text-warning'
           )}
         >
           {icon}

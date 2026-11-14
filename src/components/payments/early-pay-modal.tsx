@@ -122,7 +122,7 @@ export function EarlyPayModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Banknote className="h-5 w-5 text-emerald-600" />
+            <Banknote className="h-5 w-5 text-success" />
             다음 달 미리 받기
           </DialogTitle>
           <DialogDescription>
@@ -155,12 +155,12 @@ export function EarlyPayModal({
             {studentDiscount > 0 && (
               <div className="mt-1 flex justify-between">
                 <span className="text-muted-foreground">학생 할인</span>
-                <span className="text-rose-600">-{studentDiscount.toLocaleString()}원</span>
+                <span className="text-destructive">-{studentDiscount.toLocaleString()}원</span>
               </div>
             )}
             <div className="mt-1 flex justify-between font-semibold">
               <span>납부 금액</span>
-              <span className="text-emerald-700">{finalAmount.toLocaleString()}원</span>
+              <span className="text-success">{finalAmount.toLocaleString()}원</span>
             </div>
           </div>
 
@@ -191,7 +191,7 @@ export function EarlyPayModal({
           </div>
 
           {formError && (
-            <p className="text-sm text-rose-600" role="alert">
+            <p className="text-sm text-destructive" role="alert">
               {formError}
             </p>
           )}

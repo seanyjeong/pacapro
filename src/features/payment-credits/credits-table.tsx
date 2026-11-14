@@ -75,7 +75,7 @@ export function CreditsTable({ credits }: CreditsTableProps) {
                 <p className="text-xs text-muted-foreground">잔여</p>
                 <p
                   className={cn(
-                    'mt-1 font-semibold text-orange-700 dark:text-orange-300',
+                    'mt-1 font-semibold text-warning',
                     credit.remaining_amount === 0 && 'text-muted-foreground'
                   )}
                 >
@@ -124,7 +124,7 @@ export function CreditsTable({ credits }: CreditsTableProps) {
                 </td>
                 <td className="px-5 py-4 text-muted-foreground">{formatCreditPeriod(credit)}</td>
                 <td className="px-5 py-4 font-medium text-foreground">{formatWon(credit.credit_amount)}</td>
-                <td className="px-5 py-4 font-semibold text-orange-700">{formatWon(credit.remaining_amount)}</td>
+                <td className="px-5 py-4 font-semibold text-warning">{formatWon(credit.remaining_amount)}</td>
                 <td className="px-5 py-4">
                   <Badge className={`border ${CREDIT_STATUS_BADGE_COLORS[credit.status]}`}>
                     {getCreditStatusLabel(credit.status)}

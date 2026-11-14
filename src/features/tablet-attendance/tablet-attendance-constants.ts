@@ -49,21 +49,21 @@ export const TABLET_STATUS_META: Record<
 > = {
   present: {
     label: '출석',
-    activeClassName: 'border-emerald-600 bg-emerald-600 text-white',
-    buttonClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    activeClassName: 'border-success bg-success text-white',
+    buttonClassName: 'border-success/30 bg-success-soft text-success',
+    badgeClassName: 'border-success/30 bg-success-soft text-success',
   },
   late: {
     label: '지각',
-    activeClassName: 'border-amber-600 bg-amber-500 text-white',
-    buttonClassName: 'border-amber-200 bg-amber-50 text-amber-700',
-    badgeClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    activeClassName: 'border-warning bg-warning text-white',
+    buttonClassName: 'border-warning/30 bg-warning-soft text-warning',
+    badgeClassName: 'border-warning/30 bg-warning-soft text-warning',
   },
   absent: {
     label: '결석',
-    activeClassName: 'border-rose-600 bg-rose-600 text-white',
-    buttonClassName: 'border-rose-200 bg-rose-50 text-rose-700',
-    badgeClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    activeClassName: 'border-destructive bg-destructive text-white',
+    buttonClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
+    badgeClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
   },
   excused: {
     label: '공결',

@@ -35,7 +35,7 @@ export function ReferralSourcesSection({
           {settings.referralSources?.map((source) => (
             <Badge key={source} variant="secondary" className="gap-1 px-3 py-1.5">
               {source}
-              <button onClick={() => onRemoveReferralSource(source)} className="ml-1 hover:text-red-600">
+              <button onClick={() => onRemoveReferralSource(source)} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             </Badge>

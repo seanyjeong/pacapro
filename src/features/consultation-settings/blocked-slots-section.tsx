@@ -46,7 +46,7 @@ export function BlockedSlotsSection({
             {blockedSlots.map((slot) => (
               <div
                 key={slot.id}
-                className="flex flex-col gap-2 rounded-md border border-red-100 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-md border border-destructive/30 bg-destructive-soft p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <span className="font-medium text-foreground">
@@ -57,7 +57,7 @@ export function BlockedSlotsSection({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="self-start text-red-600 hover:text-red-700 sm:self-center"
+                  className="self-start text-destructive hover:text-destructive sm:self-center"
                   onClick={() => onRemoveBlockedSlot(slot.id)}
                 >
                   <Trash2 className="h-4 w-4" />

@@ -29,7 +29,7 @@ export function SettingsOperationsBoard({
     <div className="space-y-4" data-testid="consultation-settings-operations-board">
       <section className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start gap-3">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${hasSavedWeeklyHours ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${hasSavedWeeklyHours ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'}`}>
             {hasSavedWeeklyHours ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
           </span>
           <div className="min-w-0">
@@ -45,7 +45,7 @@ export function SettingsOperationsBoard({
           <BoardRow label="유입 경로" value={`${referralCount}개`} />
         </div>
 
-        <div className={`mt-4 rounded-md border px-3 py-2 text-sm ${hasSavedWeeklyHours ? 'border-emerald-200 bg-emerald-50 text-emerald-950' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
+        <div className={`mt-4 rounded-md border px-3 py-2 text-sm ${hasSavedWeeklyHours ? 'border-success/30 bg-success-soft text-success' : 'border-warning/30 bg-warning-soft text-warning'}`}>
           <p className="font-semibold">{timeStatus}</p>
           <p className="mt-1 text-xs">
             {hasSavedWeeklyHours ? '신규상담 시간 선택에 저장된 운영 요일이 반영됩니다.' : '운영 시간을 저장해야 신규상담 시간 선택이 안정적으로 열립니다.'}

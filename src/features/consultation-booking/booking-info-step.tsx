@@ -27,13 +27,13 @@ export function BookingInfoStep({
     <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
       <BookingIntakePanel formData={formData} />
 
-      <section className="rounded-md border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-950">정보 입력</h2>
+      <section className="rounded-md border border-border bg-card">
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold text-foreground">정보 입력</h2>
         </div>
         <div className="space-y-5 p-4">
           {error && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            <div className="rounded-md border border-destructive/30 bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">
               {error}
             </div>
           )}
@@ -89,7 +89,7 @@ export function BookingInfoStep({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-slate-700">모의고사 등급</p>
+          <p className="mb-2 text-sm font-medium text-secondary-foreground">모의고사 등급</p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <SelectField label="국어 *" value={formData.mockTestGrades?.korean?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('korean', parseOptionalGrade(value))} />
             <SelectField label="수학 *" value={formData.mockTestGrades?.math?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('math', parseOptionalGrade(value))} />
@@ -112,10 +112,10 @@ export function BookingInfoStep({
           />
         )}
 
-        <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <label className="grid gap-1 text-sm font-medium text-secondary-foreground">
           문의 내용
           <Textarea
-            className="min-h-24 border-slate-300 text-sm"
+            className="min-h-24 border-border text-sm"
             value={formData.inquiryContent || ''}
             onChange={(event) => onChange({ inquiryContent: event.target.value })}
           />
@@ -130,10 +130,10 @@ export function BookingInfoStep({
 
 function TextField({ inputMode, label, onChange, value }: { inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']; label: string; onChange: (value: string) => void; value: string }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
+    <label className="grid min-w-0 gap-1 text-sm font-medium text-secondary-foreground">
       {label}
       <input
-        className="h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -144,10 +144,10 @@ function TextField({ inputMode, label, onChange, value }: { inputMode?: React.HT
 
 function SelectField({ label, onChange, options, value }: { label: string; onChange: (value: string) => void; options: Array<{ label: string; value: string }>; value: string }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
+    <label className="grid min-w-0 gap-1 text-sm font-medium text-secondary-foreground">
       {label}
       <select
-        className="h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >

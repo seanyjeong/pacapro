@@ -49,12 +49,12 @@ export default function ForgotPasswordPage() {
         tone="success"
         description={
           <>
-            <strong className="font-semibold text-slate-950">{email}</strong>로 비밀번호 재설정 링크를 발송했습니다.
+            <strong className="font-semibold text-foreground">{email}</strong>로 비밀번호 재설정 링크를 발송했습니다.
           </>
         }
       >
         <div className="space-y-4">
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
             메일함과 스팸함을 확인해주세요. 링크는 1시간 동안 유효합니다.
           </div>
           <Link href="/login" className={buttonVariants({ variant: 'outline', className: 'w-full gap-2' })}>
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
             {error}
           </div>
         ) : null}

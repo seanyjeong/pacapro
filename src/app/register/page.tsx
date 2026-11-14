@@ -80,7 +80,7 @@ export default function RegisterPage() {
         tone="success"
         description="관리자 승인 후 로그인이 가능합니다. 승인 상태는 등록한 이메일로 안내됩니다."
       >
-        <p className="text-sm text-slate-600">잠시 후 로그인 페이지로 이동합니다.</p>
+        <p className="text-sm text-secondary-foreground">잠시 후 로그인 페이지로 이동합니다.</p>
       </AuthPageShell>
     );
   }
@@ -147,7 +147,7 @@ export default function RegisterPage() {
         />
 
         {error ? (
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
             {error}
           </div>
         ) : null}
@@ -164,7 +164,7 @@ export default function RegisterPage() {
             로그인
           </Link>
         </p>
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-900">
+        <div className="rounded-md border border-primary/30 bg-primary-soft px-4 py-3 text-xs leading-5 text-primary">
           회원가입 후 관리자 승인이 필요합니다. 학원명은 승인 기준으로 사용되므로 정확히 입력해주세요.
         </div>
       </div>
@@ -189,7 +189,7 @@ function AuthInput({ autoComplete, id, label, name, onChange, placeholder, requi
     <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        {required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
       <Input
         id={id}

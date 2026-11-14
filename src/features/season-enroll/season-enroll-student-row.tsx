@@ -23,29 +23,29 @@ export function SeasonEnrollStudentRow({ enrolling, student, type, onEnrollClick
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Link
             aria-label={`${student.name} 학생 상세`}
-            className="min-w-0 truncate text-sm font-semibold text-slate-950 underline-offset-4 hover:underline"
+            className="min-w-0 truncate text-sm font-semibold text-foreground underline-offset-4 hover:underline"
             href={`/students/${student.id}`}
           >
             {student.name}
           </Link>
           <span
             className={`rounded-md px-2 py-1 text-[11px] font-medium ${
-              isAvailable ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'
+              isAvailable ? 'bg-primary-soft text-primary' : 'bg-success-soft text-success'
             }`}
           >
             {isAvailable ? '등록 가능' : '등록 완료'}
           </span>
           {student.status === 'paused' ? (
-            <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700">휴원</span>
+            <span className="rounded-md bg-warning-soft px-2 py-1 text-[11px] font-medium text-warning">휴원</span>
           ) : null}
         </div>
-        <p className="truncate text-xs text-slate-500">{meta}</p>
+        <p className="truncate text-xs text-muted-foreground">{meta}</p>
       </div>
       {isAvailable ? (
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
           <Link
             aria-label={`${student.name} 학생 상세 열기`}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-secondary-foreground transition hover:bg-muted"
             href={`/students/${student.id}`}
           >
             <ExternalLink className="mr-1 h-4 w-4" />
@@ -66,13 +66,13 @@ export function SeasonEnrollStudentRow({ enrolling, student, type, onEnrollClick
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <Link
             aria-label={`${student.name} 학생 상세 열기`}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-secondary-foreground transition hover:bg-muted"
             href={`/students/${student.id}`}
           >
             <ExternalLink className="mr-1 h-4 w-4" />
             상세
           </Link>
-          <div className="flex items-center gap-2 text-sm font-medium text-emerald-700" aria-label="등록 완료 상태">
+          <div className="flex items-center gap-2 text-sm font-medium text-success" aria-label="등록 완료 상태">
             <CheckCircle className="h-4 w-4" />
             완료
           </div>

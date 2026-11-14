@@ -46,7 +46,7 @@ export function StudentConsultationCard({
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{formatKoreanDate(consultation.consultation_date)}</span>
-                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                        <Badge variant="secondary" className="bg-success-soft text-success">
                             {CONSULTATION_TYPE_LABELS[consultation.consultation_type] || consultation.consultation_type}
                         </Badge>
                         {consultation.admission_type && (
@@ -80,7 +80,7 @@ export function StudentConsultationCard({
                     {consultation.general_memo && (
                         <section className="space-y-2">
                             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                <FileText className="h-4 w-4 text-green-600" />
+                                <FileText className="h-4 w-4 text-success" />
                                 종합 메모
                             </div>
                             <p className="pl-6 text-sm text-muted-foreground whitespace-pre-wrap">
@@ -106,7 +106,7 @@ function StudentAcademicSection({
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <GraduationCap className="h-4 w-4 text-blue-600" />
+                <GraduationCap className="h-4 w-4 text-primary" />
                 학업
             </div>
             <div className="pl-6 space-y-2">
@@ -165,7 +165,7 @@ function StudentPhysicalSection({
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Sparkles className="h-4 w-4 text-orange-600" />
+                <Sparkles className="h-4 w-4 text-warning" />
                 실기 ({consultation.physical_record_type === 'latest' ? '최근 기록' : '평균 기록'})
             </div>
             <div className="pl-6">

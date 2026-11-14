@@ -25,7 +25,7 @@ export function TabletSmsHeader({
     <header className="space-y-4 border-b border-border/70 pb-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-success/30 bg-success-soft text-success">
             <MessageSquare className="h-5 w-5" />
           </div>
           <div>

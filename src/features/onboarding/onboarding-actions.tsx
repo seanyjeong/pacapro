@@ -26,7 +26,7 @@ export function OnboardingActions({
 
   return (
     <footer className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-h-5 text-sm text-amber-700" role={validationMessage ? 'alert' : undefined}>
+      <div className="min-h-5 text-sm text-warning" role={validationMessage ? 'alert' : undefined}>
         {validationMessage}
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">

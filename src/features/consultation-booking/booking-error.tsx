@@ -9,7 +9,7 @@ interface BookingErrorProps {
 export function BookingError({ message, onRetry }: BookingErrorProps) {
   return (
     <div className="mx-auto flex min-h-[60vh] w-full max-w-xl flex-col justify-center px-4">
-      <div className="rounded-md border border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">
+      <div className="rounded-md border border-destructive/30 bg-destructive-soft p-5 text-sm font-medium text-destructive">
         {message}
       </div>
       <Button className="mt-4" onClick={onRetry}>

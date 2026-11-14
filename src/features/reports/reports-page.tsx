@@ -51,7 +51,7 @@ export function ReportsPage() {
 
       <BranchChecks branches={branches} selected={state.branchIds} onChange={state.setBranchIds} />
       {state.branchIds.length > 0 && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="note">
+        <p className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning" role="note">
           학생 수와 학원비 매출·미납만 체크한 지점 기준입니다. 지출·기타 수입·강사는 지점으로 나누지 않아 학원 전체 금액이고,
           순이익은 그 전체 지출을 뺀 값입니다.
         </p>

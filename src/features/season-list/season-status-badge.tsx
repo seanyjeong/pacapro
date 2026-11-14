@@ -8,12 +8,12 @@ interface SeasonStatusBadgeProps {
 export function SeasonStatusBadge({ status }: SeasonStatusBadgeProps) {
   const className =
     status === 'active'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      ? 'border-success/30 bg-success-soft text-success'
       : status === 'draft' || status === 'upcoming'
-        ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
+        ? 'border-warning/30 bg-warning-soft text-warning'
         : status === 'completed' || status === 'ended'
-          ? 'border-slate-200 bg-slate-50 text-slate-600'
-          : 'border-rose-200 bg-rose-50 text-rose-700';
+          ? 'border-border bg-muted text-secondary-foreground'
+          : 'border-destructive/30 bg-destructive-soft text-destructive';
 
   return (
     <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${className}`}>

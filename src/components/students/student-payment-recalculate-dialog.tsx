@@ -31,7 +31,7 @@ export function StudentPaymentRecalculateDialog({
             현재 학생 등록일과 수업 기준으로 첫 달 학원비를 다시 계산합니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
           미납 상태인 첫 달 청구만 다시 계산됩니다. 이미 납부된 청구는 유지됩니다.
         </div>
         <AlertDialogFooter>

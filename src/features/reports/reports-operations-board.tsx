@@ -42,13 +42,12 @@ export function ReportsOperationsBoard({
   return (
     <aside
       aria-label="리포트 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="reports-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Finance Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">리포트 작업 보드</h2>
-        <p className="text-sm text-slate-600">월별 손익, 미수납, 다운로드를 한곳에서 처리합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">리포트 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">월별 손익, 미수납, 다운로드를 한곳에서 처리합니다.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -77,7 +76,7 @@ export function ReportsOperationsBoard({
           </Button>
           <input
             aria-label="작업 보드 리포트 조회 월"
-            className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="h-10 min-w-0 rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20"
             type="month"
             value={selectedMonth}
             onChange={(event) => onMonthChange(event.target.value)}
@@ -125,14 +124,14 @@ export function ReportsOperationsBoard({
           return (
             <Link
               key={link.href}
-              className="flex min-h-16 flex-col justify-between rounded-md border border-slate-200 bg-slate-50 p-3 text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+              className="flex min-h-16 flex-col justify-between rounded-md border border-border bg-muted p-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
               href={link.href}
             >
               <span className="flex min-w-0 items-center gap-2">
-                <Icon className="h-4 w-4 shrink-0 text-slate-500" />
-                <span className="truncate font-medium text-slate-950">{link.label}</span>
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate font-medium text-foreground">{link.label}</span>
               </span>
-              <span className="text-xs text-slate-600">{link.meta}</span>
+              <span className="text-xs text-secondary-foreground">{link.meta}</span>
             </Link>
           );
         })}
@@ -143,9 +142,9 @@ export function ReportsOperationsBoard({
 
 function Metric({ label, testId, value }: { label: string; testId: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+    <div className="rounded-md border border-border bg-muted p-3" data-testid={testId}>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-2 text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </div>
   );
 }

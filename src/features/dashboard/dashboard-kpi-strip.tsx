@@ -20,9 +20,9 @@ interface KpiItem {
 
 const toneClass = {
     normal: 'text-muted-foreground',
-    good: 'text-emerald-700 dark:text-emerald-300',
-    warn: 'text-amber-700 dark:text-amber-300',
-    bad: 'text-red-700 dark:text-red-300',
+    good: 'text-success',
+    warn: 'text-warning',
+    bad: 'text-destructive',
 };
 
 function getProtectedAmount(amountsVisible: boolean, value: string): string {

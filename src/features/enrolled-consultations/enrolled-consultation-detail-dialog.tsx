@@ -96,7 +96,7 @@ export function EnrolledConsultationDetailDialog({
                   onClick={onToggleScores}
                 >
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-blue-600" />
+                    <Award className="h-4 w-4 text-primary" />
                     <span className="font-medium">모의고사 성적 조회</span>
                   </div>
                   {showScores ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

@@ -307,7 +307,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="text-sm text-foreground">
                         <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                          student.student_type === 'exam' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                          student.student_type === 'exam' ? 'bg-primary-soft text-primary' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                         }`}>
                           {STUDENT_TYPE_LABELS[student.student_type]}
                         </span>
@@ -318,12 +318,12 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     <td className="whitespace-nowrap px-4 py-4">
                       <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                         student.admission_type === 'regular'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          ? 'bg-primary-soft text-primary'
                           : student.admission_type === 'early'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          ? 'bg-success-soft text-success'
                           : student.admission_type === 'advance'
                           ? 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
-                          : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                          : 'bg-warning-soft text-warning'
                       }`}>
                         {ADMISSION_TYPE_LABELS[student.admission_type] || student.admission_type}
                       </span>
@@ -344,7 +344,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                           {formatCurrency(student.monthly_tuition)}
                         </div>
                         {discountRate > 0 && (
-                          <div className="text-xs text-red-500">
+                          <div className="text-xs text-destructive">
                             {discountRate}% 할인
                           </div>
                         )}

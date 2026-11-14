@@ -25,7 +25,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     >
       {/* Backdrop + Content Container */}
       <div
-        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+        className="fixed inset-0 flex items-end justify-center bg-black/40 backdrop-blur-[2px] sm:items-center sm:p-4"
         onClick={handleBackdropClick}
       >
         {children}
@@ -45,9 +45,9 @@ export function DialogContent({ children, className }: DialogContentProps) {
       role="dialog"
       aria-modal="true"
       className={cn(
-        'relative bg-card rounded-xl border border-border/50',
-        'shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)]',
-        'w-full max-w-lg max-h-[85vh] overflow-y-auto',
+        'relative w-full max-w-lg overflow-y-auto bg-card text-card-foreground',
+        'max-h-[92vh] rounded-t-3xl pb-[env(safe-area-inset-bottom)] sm:max-h-[85vh] sm:rounded-3xl sm:pb-0',
+        'shadow-[0_16px_48px_rgba(0,0,0,0.16)]',
         className
       )}
       onClick={(e) => e.stopPropagation()}
@@ -64,7 +64,7 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ children, className }: DialogHeaderProps) {
   return (
-    <div className={cn('px-6 py-6 border-b border-border/50', className)}>
+    <div className={cn('px-6 pb-2 pt-6', className)}>
       {children}
     </div>
   );
@@ -77,7 +77,7 @@ interface DialogTitleProps {
 
 export function DialogTitle({ children, className }: DialogTitleProps) {
   return (
-    <h2 className={cn('text-lg font-semibold text-foreground', className)}>
+    <h2 className={cn('text-xl font-bold tracking-tight text-foreground', className)}>
       {children}
     </h2>
   );
@@ -90,7 +90,7 @@ interface DialogDescriptionProps {
 
 export function DialogDescription({ children, className }: DialogDescriptionProps) {
   return (
-    <p className={cn('text-sm text-muted-foreground mt-1', className)}>
+    <p className={cn('mt-1.5 text-[15px] text-muted-foreground', className)}>
       {children}
     </p>
   );
@@ -103,7 +103,7 @@ interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('px-6 py-6 border-t border-border/50 flex justify-end gap-3', className)}>
+    <div className={cn('flex justify-end gap-2 px-6 pb-6 pt-3', className)}>
       {children}
     </div>
   );

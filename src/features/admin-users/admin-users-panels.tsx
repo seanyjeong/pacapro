@@ -11,7 +11,7 @@ export function AccessDeniedPanel({ onGoDashboard }: AccessDeniedPanelProps) {
         <div className="flex min-h-[70vh] items-center justify-center bg-background px-4">
             <Card className="w-full max-w-md rounded-md border-border shadow-sm">
                 <CardContent className="p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-red-50 text-red-600">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-destructive-soft text-destructive">
                         <ShieldX className="h-8 w-8" />
                     </div>
                     <h2 className="mb-2 text-2xl font-semibold text-foreground">접근 권한 없음</h2>
@@ -69,7 +69,7 @@ export function AdminUsersErrorPanel({ error, onRetry }: { error: string; onRetr
             <AdminUsersHeader />
             <Card className="rounded-md border-border shadow-sm">
                 <CardContent className="p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-red-50 text-red-600">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-destructive-soft text-destructive">
                         <AlertCircle className="h-6 w-6" />
                     </div>
                     <h2 className="mb-2 text-lg font-semibold text-foreground">사용자 목록을 불러오지 못했습니다</h2>
@@ -86,7 +86,7 @@ export function AdminUsersSummary({ pendingCount }: { pendingCount: number }) {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <Card className="rounded-md border-border shadow-sm">
                 <CardContent className="flex items-center gap-4 p-5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-md bg-orange-50 text-orange-600">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-md bg-warning-soft text-warning">
                         <Clock className="h-5 w-5" />
                     </div>
                     <div>
@@ -97,7 +97,7 @@ export function AdminUsersSummary({ pendingCount }: { pendingCount: number }) {
             </Card>
             <Card className="rounded-md border-border shadow-sm">
                 <CardContent className="flex items-start gap-3 p-5">
-                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <div>
                         <h2 className="text-sm font-semibold text-foreground">검토 기준</h2>
                         <p className="mt-1 text-sm leading-6 text-muted-foreground">

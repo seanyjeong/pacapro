@@ -17,16 +17,16 @@ export const MOBILE_INSTRUCTOR_STATUS_META: Record<MobileInstructorAttendanceSta
   present: {
     value: 'present',
     label: '출근',
-    activeClassName: 'border-emerald-600 bg-emerald-600 text-white',
-    buttonClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
-    badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
+    activeClassName: 'border-success bg-success text-white',
+    buttonClassName: 'border-success/30 bg-success-soft text-success',
+    badgeClassName: 'border-success/30 bg-success-soft text-success',
   },
   late: {
     value: 'late',
     label: '지각',
-    activeClassName: 'border-amber-600 bg-amber-500 text-white',
-    buttonClassName: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300',
-    badgeClassName: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300',
+    activeClassName: 'border-warning bg-warning text-white',
+    buttonClassName: 'border-warning/30 bg-warning-soft text-warning',
+    badgeClassName: 'border-warning/30 bg-warning-soft text-warning',
   },
   half_day: {
     value: 'half_day',
@@ -38,9 +38,9 @@ export const MOBILE_INSTRUCTOR_STATUS_META: Record<MobileInstructorAttendanceSta
   absent: {
     value: 'absent',
     label: '결근',
-    activeClassName: 'border-rose-700 bg-rose-600 text-white',
-    buttonClassName: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300',
-    badgeClassName: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300',
+    activeClassName: 'border-destructive bg-destructive text-white',
+    buttonClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
+    badgeClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
   },
 };
 

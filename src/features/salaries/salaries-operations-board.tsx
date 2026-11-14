@@ -47,18 +47,17 @@ export function SalariesOperationsBoard({
   return (
     <aside
       aria-label="급여 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="salaries-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Finance Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">급여 작업 보드</h2>
-        <p className="text-sm text-slate-600">선택 월 급여, 지급 대기, 명세서 다운로드를 한곳에서 처리합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">급여 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">선택 월 급여, 지급 대기, 명세서 다운로드를 한곳에서 처리합니다.</p>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-medium text-slate-500">현재 보기</p>
-        <p className="mt-1 text-sm font-semibold text-slate-950">{formatCurrentView(filters, instructors)}</p>
+      <div className="rounded-md border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">현재 보기</p>
+        <p className="mt-1 text-sm font-semibold text-foreground">{formatCurrentView(filters, instructors)}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -147,17 +146,17 @@ interface MetricProps {
 
 function Metric({ icon, label, selected = false, testId, value, onClick }: MetricProps) {
   const className = cn(
-    'rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition',
-    onClick && 'hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
-    selected && 'border-blue-300 bg-blue-50 text-blue-950'
+    'rounded-md border border-border bg-muted p-3 text-left transition',
+    onClick && 'hover:border-border hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground/40',
+    selected && 'border-primary/30 bg-primary-soft text-primary'
   );
   const content = (
     <>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </>
   );
 

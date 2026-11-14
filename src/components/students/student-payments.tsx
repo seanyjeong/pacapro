@@ -40,15 +40,15 @@ interface StudentPaymentsProps {
 function getCreditTypeBadgeColor(type: string) {
   switch (type) {
     case 'carryover':
-      return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800';
+      return 'bg-primary-soft text-primary border-primary/30';
     case 'excused':
       return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800';
     case 'manual':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800';
+      return 'bg-success-soft text-success border-success/30';
     case 'refund':
-      return 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-800';
+      return 'bg-warning-soft text-warning border-warning/30';
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
+      return 'bg-muted text-secondary-foreground border-border';
   }
 }
 
@@ -56,17 +56,17 @@ function getCreditTypeBadgeColor(type: string) {
 function getCreditStatusBadgeColor(status: string) {
   switch (status) {
     case 'pending':
-      return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-800';
+      return 'bg-warning-soft text-warning border-warning/30';
     case 'partial':
-      return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800';
+      return 'bg-primary-soft text-primary border-primary/30';
     case 'applied':
-      return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800';
+      return 'bg-success-soft text-success border-success/30';
     case 'refunded':
-      return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
+      return 'bg-muted text-secondary-foreground border-border';
     case 'cancelled':
-      return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800';
+      return 'bg-destructive-soft text-destructive border-destructive/30';
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
+      return 'bg-muted text-secondary-foreground border-border';
   }
 }
 
@@ -196,10 +196,10 @@ export function StudentPaymentsComponent({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Coins className="w-5 h-5 text-blue-600" />
+                <Coins className="w-5 h-5 text-primary" />
                 크레딧
                 {pendingTotal > 0 && (
-                  <span className="ml-2 text-sm font-normal text-blue-600 dark:text-blue-400">
+                  <span className="ml-2 text-sm font-normal text-primary">
                     (미사용: {pendingTotal.toLocaleString()}원)
                   </span>
                 )}
@@ -222,7 +222,7 @@ export function StudentPaymentsComponent({
                 size="sm"
                 variant="outline"
                 onClick={() => setPrepaidModalOpen(true)}
-                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950"
+                className="border-success/30 text-success hover:bg-success-soft"
               >
                 <Banknote className="w-4 h-4 mr-1" />
                 선납 결제
@@ -230,7 +230,7 @@ export function StudentPaymentsComponent({
               <Button
                 size="sm"
                 onClick={() => setCreditModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 크레딧 추가
@@ -395,7 +395,7 @@ export function StudentPaymentsComponent({
             <Button
               onClick={handleApplyCredit}
               disabled={applying || !applyYearMonth}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               {applying ? '적용 중...' : '적용'}
             </Button>

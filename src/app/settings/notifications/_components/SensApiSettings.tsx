@@ -36,7 +36,7 @@ export default function SensApiSettings({
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Key className="w-5 h-5 text-green-600" />
+        <Key className="w-5 h-5 text-success" />
         <h2 className="text-lg font-semibold text-foreground">네이버 SENS API 설정</h2>
       </div>
 
@@ -47,7 +47,7 @@ export default function SensApiSettings({
             type="text"
             value={settings.naver_access_key}
             onChange={e => setSettings(prev => ({ ...prev, naver_access_key: e.target.value }))}
-            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success"
             placeholder="Access Key ID"
           />
         </div>
@@ -58,7 +58,7 @@ export default function SensApiSettings({
             type="password"
             value={settings.naver_secret_key}
             onChange={e => setSettings(prev => ({ ...prev, naver_secret_key: e.target.value }))}
-            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success"
             placeholder={settings.has_secret_key ? '저장됨 (변경하려면 새로 입력)' : 'Secret Key'}
           />
         </div>
@@ -69,7 +69,7 @@ export default function SensApiSettings({
             type="text"
             value={settings.naver_service_id}
             onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
-            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success"
             placeholder="ncp:kkobizmsg:kr:..."
           />
           <p className="text-xs text-muted-foreground mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
@@ -81,7 +81,7 @@ export default function SensApiSettings({
             type="text"
             value={settings.sms_service_id}
             onChange={e => setSettings(prev => ({ ...prev, sms_service_id: e.target.value }))}
-            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success"
             placeholder="ncp:sms:kr:..."
           />
           <p className="text-xs text-muted-foreground mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
@@ -93,7 +93,7 @@ export default function SensApiSettings({
             type="text"
             value={settings.kakao_channel_id}
             onChange={e => setSettings(prev => ({ ...prev, kakao_channel_id: e.target.value }))}
-            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success"
             placeholder="@채널ID"
           />
         </div>

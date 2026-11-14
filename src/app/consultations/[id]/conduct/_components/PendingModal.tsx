@@ -49,7 +49,7 @@ export function PendingModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button onClick={onConvert} disabled={convertingToPending} className="bg-orange-600 hover:bg-orange-700">
+          <Button onClick={onConvert} disabled={convertingToPending} className="bg-warning hover:bg-warning/90">
             {convertingToPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (

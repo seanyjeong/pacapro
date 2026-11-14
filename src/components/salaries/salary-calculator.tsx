@@ -190,11 +190,11 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">강사 *</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">강사 *</label>
             <select
               value={instructorId}
               onChange={(e) => setInstructorId(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
             >
               <option value={0}>강사 선택</option>
               {instructors.map((instructor) => (
@@ -206,12 +206,12 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">급여월 *</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">급여월 *</label>
             <input
               type="month"
               value={yearMonth}
               onChange={(e) => setYearMonth(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>
@@ -220,52 +220,52 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         {loadingWorkData && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            <span className="text-sm text-gray-600">근무 기록 조회 중...</span>
+            <span className="text-sm text-secondary-foreground">근무 기록 조회 중...</span>
           </div>
         )}
 
         {/* 에러 메시지 */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-destructive-soft border border-destructive/30 rounded-md p-3">
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
         {/* 근무 요약 정보 */}
         {workSummary && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-3">
+          <div className="bg-primary-soft border border-primary/30 rounded-md p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-blue-900">근무 기록 요약</h4>
-              <span className="text-xs text-blue-600">
+              <h4 className="font-medium text-primary">근무 기록 요약</h4>
+              <span className="text-xs text-primary">
                 {TAX_TYPE_LABELS[workSummary.instructor.tax_type as keyof typeof TAX_TYPE_LABELS] || workSummary.instructor.tax_type}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-blue-700">급여 유형:</span>
-                <span className="font-medium text-blue-900">
+                <span className="text-primary">급여 유형:</span>
+                <span className="font-medium text-primary">
                   {SALARY_TYPE_LABELS[workSummary.instructor.salary_type as keyof typeof SALARY_TYPE_LABELS] || workSummary.instructor.salary_type}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">출근일수:</span>
-                <span className="font-medium text-blue-900">{workSummary.work_summary.attendance_days}일</span>
+                <span className="text-primary">출근일수:</span>
+                <span className="font-medium text-primary">{workSummary.work_summary.attendance_days}일</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">총 수업:</span>
-                <span className="font-medium text-blue-900">{workSummary.work_summary.total_classes}회</span>
+                <span className="text-primary">총 수업:</span>
+                <span className="font-medium text-primary">{workSummary.work_summary.total_classes}회</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">총 시간:</span>
-                <span className="font-medium text-blue-900">{workSummary.work_summary.total_hours}시간</span>
+                <span className="text-primary">총 시간:</span>
+                <span className="font-medium text-primary">{workSummary.work_summary.total_hours}시간</span>
               </div>
             </div>
 
             {/* 날짜별 출근 내역 */}
             {workSummary.work_summary.daily_breakdown && Object.keys(workSummary.work_summary.daily_breakdown).length > 0 && (
-              <div className="pt-2 border-t border-blue-200">
-                <p className="text-xs text-blue-700 mb-2 font-medium">날짜별 출근 내역:</p>
+              <div className="pt-2 border-t border-primary/30">
+                <p className="text-xs text-primary mb-2 font-medium">날짜별 출근 내역:</p>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {Object.entries(workSummary.work_summary.daily_breakdown)
                     .sort(([a], [b]) => a.localeCompare(b))
@@ -276,15 +276,15 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
                       const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
                       return (
                         <div key={date} className="flex items-center text-xs">
-                          <span className="text-blue-800 w-20">
+                          <span className="text-primary w-20">
                             {month}/{day}({dayOfWeek})
                           </span>
-                          <span className="text-blue-600">{slots.join(', ')}</span>
+                          <span className="text-primary">{slots.join(', ')}</span>
                         </div>
                       );
                     })}
                 </div>
-                <div className="text-xs text-blue-800 font-medium mt-2 pt-2 border-t border-blue-200">
+                <div className="text-xs text-primary font-medium mt-2 pt-2 border-t border-primary/30">
                   총 {workSummary.work_summary.total_classes}회 (오전 {workSummary.work_summary.morning_classes} | 오후 {workSummary.work_summary.afternoon_classes} | 저녁 {workSummary.work_summary.evening_classes})
                 </div>
               </div>
@@ -294,8 +294,8 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
         {/* 근무 기록 없음 (월급제가 아닌 경우에만 경고) */}
         {!loadingWorkData && !error && instructorId && yearMonth && !workSummary?.work_summary.total_classes && workSummary?.instructor?.salary_type !== 'monthly' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-warning-soft border border-warning/30 rounded-md p-3">
+            <p className="text-sm text-warning">
               선택한 월에 출근 기록이 없습니다. 먼저 강사 출근 체크를 진행해주세요.
             </p>
           </div>
@@ -303,8 +303,8 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
         {/* 월급제 안내 */}
         {!loadingWorkData && !error && workSummary?.instructor?.salary_type === 'monthly' && (
-          <div className="bg-green-50 border border-green-200 rounded-md p-3">
-            <p className="text-sm text-green-800">
+          <div className="bg-success-soft border border-success/30 rounded-md p-3">
+            <p className="text-sm text-success">
               월급제 강사입니다. 기본 월급 {parseInt(String(workSummary.instructor.base_salary || 0)).toLocaleString()}원이 적용됩니다.
             </p>
           </div>
@@ -312,7 +312,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">인센티브</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">인센티브</label>
             <MoneyInput
               value={incentive}
               onChange={(v) => setIncentive(v)}
@@ -321,7 +321,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">공제액</label>
+            <label className="block text-sm font-medium text-secondary-foreground mb-1">공제액</label>
             <MoneyInput
               value={deduction}
               onChange={(v) => setDeduction(v)}
@@ -341,38 +341,38 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         </Button>
 
         {result && (
-          <div className="bg-gray-50 border border-gray-200 rounded-md p-4 space-y-2">
-            <h4 className="font-semibold text-gray-900 mb-3">계산 결과</h4>
+          <div className="bg-muted border border-border rounded-md p-4 space-y-2">
+            <h4 className="font-semibold text-foreground mb-3">계산 결과</h4>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">기본 급여</span>
+              <span className="text-secondary-foreground">기본 급여</span>
               <span className="font-medium">{formatSalaryAmount(result.base_amount)}</span>
             </div>
             {result.incentive_amount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">인센티브</span>
-                <span className="font-medium text-blue-600">+{formatSalaryAmount(result.incentive_amount)}</span>
+                <span className="text-secondary-foreground">인센티브</span>
+                <span className="font-medium text-primary">+{formatSalaryAmount(result.incentive_amount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm font-semibold border-t pt-2">
-              <span className="text-gray-900">총 급여</span>
+              <span className="text-foreground">총 급여</span>
               <span>{formatSalaryAmount(result.gross_salary)}</span>
             </div>
             {result.tax_amount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-secondary-foreground">
                   세금 ({TAX_TYPE_LABELS[result.tax_type as keyof typeof TAX_TYPE_LABELS] || result.tax_type})
                 </span>
-                <span className="font-medium text-red-600">-{formatSalaryAmount(result.tax_amount)}</span>
+                <span className="font-medium text-destructive">-{formatSalaryAmount(result.tax_amount)}</span>
               </div>
             )}
             {result.total_deduction > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">공제액</span>
-                <span className="font-medium text-red-600">-{formatSalaryAmount(result.total_deduction)}</span>
+                <span className="text-secondary-foreground">공제액</span>
+                <span className="font-medium text-destructive">-{formatSalaryAmount(result.total_deduction)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold border-t pt-2">
-              <span className="text-gray-900">실수령액</span>
+              <span className="text-foreground">실수령액</span>
               <span className="text-primary-600">{formatSalaryAmount(result.net_salary)}</span>
             </div>
 

@@ -58,7 +58,7 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
 
   return (
     <Tabs defaultValue="calendar" className="space-y-5">
-      <TabsList className="grid w-full max-w-xs grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
+      <TabsList className="grid w-full max-w-xs grid-cols-2 rounded-md border border-border bg-muted p-1">
         <TabsTrigger value="calendar" className="flex items-center gap-2 rounded-sm">
           <Calendar className="h-4 w-4" />
           캘린더

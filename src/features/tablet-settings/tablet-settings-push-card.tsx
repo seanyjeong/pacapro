@@ -37,7 +37,7 @@ export function TabletSettingsPushCard({
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            {pushSubscribed ? <Bell className="h-5 w-5 text-emerald-600" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+            {pushSubscribed ? <Bell className="h-5 w-5 text-success" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
             <h2 className="text-base font-semibold text-foreground">푸시 알림</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -72,7 +72,7 @@ export function TabletSettingsPushCard({
                 {saving ? (
                   <Loader2 className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-spin text-white" />
                 ) : (
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-card transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 )}
               </button>
             </div>

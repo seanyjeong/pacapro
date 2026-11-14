@@ -9,10 +9,10 @@ import type { StudentAttendanceRecord } from '@/lib/types/student';
 import { TIME_SLOT_LABELS } from '@/lib/types/schedule';
 
 const STATUS_COLORS: Record<string, string> = {
-  present: 'bg-green-500',
-  absent: 'bg-red-500',
-  late: 'bg-yellow-500',
-  excused: 'bg-blue-500',
+  present: 'bg-success',
+  absent: 'bg-destructive',
+  late: 'bg-warning',
+  excused: 'bg-primary',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -103,11 +103,11 @@ export function StudentAttendanceComponent({ studentId }: Props) {
       {/* Summary Stats */}
       {data?.summary && (
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          <StatCard label="전체" value={data.summary.total} color="bg-gray-100 dark:bg-gray-800" textColor="text-foreground" />
-          <StatCard label="출석" value={data.summary.present} color="bg-green-50 dark:bg-green-900/30" textColor="text-green-700 dark:text-green-400" />
-          <StatCard label="결석" value={data.summary.absent} color="bg-red-50 dark:bg-red-900/30" textColor="text-red-700 dark:text-red-400" />
-          <StatCard label="지각" value={data.summary.late} color="bg-yellow-50 dark:bg-yellow-900/30" textColor="text-yellow-700 dark:text-yellow-400" />
-          <StatCard label="공결" value={data.summary.excused} color="bg-blue-50 dark:bg-blue-900/30" textColor="text-blue-700 dark:text-blue-400" />
+          <StatCard label="전체" value={data.summary.total} color="bg-muted" textColor="text-foreground" />
+          <StatCard label="출석" value={data.summary.present} color="bg-success-soft" textColor="text-success" />
+          <StatCard label="결석" value={data.summary.absent} color="bg-destructive-soft" textColor="text-destructive" />
+          <StatCard label="지각" value={data.summary.late} color="bg-warning-soft" textColor="text-warning" />
+          <StatCard label="공결" value={data.summary.excused} color="bg-primary-soft" textColor="text-primary" />
           <StatCard
             label="출석률"
             value={`${data.summary.attendance_rate}%`}
@@ -133,7 +133,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-2">
                 {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
-                  <div key={d} className={`text-center text-xs font-medium py-1 ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                  <div key={d} className={`text-center text-xs font-medium py-1 ${i === 0 ? 'text-destructive' : i === 6 ? 'text-primary' : 'text-muted-foreground'}`}>
                     {d}
                   </div>
                 ))}
@@ -157,7 +157,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                       }`}
                     >
                       <span className={`text-xs font-medium ${
-                        dow === 0 ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-foreground'
+                        dow === 0 ? 'text-destructive' : dow === 6 ? 'text-primary' : 'text-foreground'
                       } ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center' : ''}`}>
                         {day}
                       </span>
@@ -168,7 +168,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                             .map((r, i) => (
                               <div
                                 key={i}
-                                className={`w-2.5 h-2.5 rounded-full ${STATUS_COLORS[r.attendance_status || ''] || 'bg-gray-300'}`}
+                                className={`w-2.5 h-2.5 rounded-full ${STATUS_COLORS[r.attendance_status || ''] || 'bg-muted-foreground/40'}`}
                                 title={`${TIME_SLOT_LABELS[r.time_slot] || r.time_slot}: ${STATUS_LABELS[r.attendance_status || ''] || '미체크'}${r.is_makeup ? ' (보충)' : ''}`}
                               />
                             ))}
@@ -214,7 +214,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                       {TIME_SLOT_LABELS[r.time_slot] || r.time_slot}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[r.attendance_status || ''] || 'bg-gray-300'}`} />
+                      <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[r.attendance_status || ''] || 'bg-muted-foreground/40'}`} />
                       {STATUS_LABELS[r.attendance_status || ''] || '미체크'}
                     </span>
                     {r.is_makeup && (

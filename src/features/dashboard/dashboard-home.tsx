@@ -45,7 +45,6 @@ export function DashboardHome() {
         <div className="space-y-5">
             <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">PACA Operations Desk</div>
                     <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">오늘의 운영 현황</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {dashboard.todayLabel} · {dashboard.stats.current_month.month} 기준
@@ -71,7 +70,7 @@ export function DashboardHome() {
 
             <BranchChecks branches={branches} selected={dashboard.branchIds} onChange={dashboard.setBranchIds} />
             {dashboard.branchIds.length > 0 && (
-                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="note">
+                <p className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning" role="note">
                     학생 수와 학원비 매출·미납만 체크한 지점 기준입니다. 기타 수입·지출·강사는 학원 전체 금액입니다.
                 </p>
             )}

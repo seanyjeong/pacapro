@@ -48,14 +48,14 @@ export function EnrolledStudentRow({
         <p className="mt-1 text-xs text-muted-foreground">
           {[enrollment.student_grade, enrollment.student_number].filter(Boolean).join(' · ') || '학생 정보'}
         </p>
-        {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-blue-700">자동 졸업 완료</p>}
+        {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-primary">자동 졸업 완료</p>}
       </td>
       <td className="px-4 py-3">
         {discountAmount > 0 ? (
           <div className="space-y-0.5">
             <p className="text-xs text-muted-foreground line-through">{formatSeasonFee(originalFee)}</p>
             <p className="text-sm font-semibold text-foreground">
-              <span className="mr-1 text-rose-600">-{formatSeasonFee(discountAmount)}</span>
+              <span className="mr-1 text-destructive">-{formatSeasonFee(discountAmount)}</span>
               {formatSeasonFee(seasonFee)}
             </p>
           </div>
@@ -83,13 +83,13 @@ export function EnrolledStudentRow({
         {!isCancelled ? (
           <div className="flex justify-end gap-1">
             {hasPaidAmount ? (
-              <Button className="text-orange-700 hover:text-orange-800" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
+              <Button className="text-warning hover:text-warning" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
                 <Receipt className="mr-1 h-4 w-4" />
                 환불
               </Button>
             ) : (
               <Button
-                className="text-rose-700 hover:text-rose-800"
+                className="text-destructive hover:text-destructive"
                 disabled={cancelling}
                 size="sm"
                 type="button"

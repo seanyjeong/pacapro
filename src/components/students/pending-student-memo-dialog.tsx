@@ -52,10 +52,10 @@ export function PendingStudentMemoDialog({
               {data?.inquiryContent && (
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <MessageSquare className="h-4 w-4 text-blue-500" />
+                    <MessageSquare className="h-4 w-4 text-primary" />
                     상담 신청 문의
                   </label>
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950/30">
+                  <div className="rounded-lg border border-primary/30 bg-primary-soft p-3 text-sm">
                     {data.inquiryContent}
                   </div>
                 </div>
@@ -64,10 +64,10 @@ export function PendingStudentMemoDialog({
               {data?.consultationMemo && (
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <FileText className="h-4 w-4 text-green-500" />
+                    <FileText className="h-4 w-4 text-success" />
                     상담 메모
                   </label>
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm dark:border-green-800 dark:bg-green-950/30">
+                  <div className="rounded-lg border border-success/30 bg-success-soft p-3 text-sm">
                     {data.consultationMemo}
                   </div>
                 </div>
@@ -75,7 +75,7 @@ export function PendingStudentMemoDialog({
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <StickyNote className="h-4 w-4 text-orange-500" />
+                  <StickyNote className="h-4 w-4 text-warning" />
                   미등록관리 메모
                   <span className="text-xs text-muted-foreground/70">(수정 가능)</span>
                 </label>

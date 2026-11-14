@@ -14,14 +14,14 @@ export function MobileAttendancePage() {
 
   if (state.hasPermission === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <div className="text-sm text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50" data-testid="mobile-attendance-workspace">
+    <div className="min-h-screen bg-muted text-foreground" data-testid="mobile-attendance-workspace">
       <MobileAttendanceHeader
         date={state.date}
         formattedDate={state.formattedDate}
@@ -38,7 +38,7 @@ export function MobileAttendancePage() {
         <ClassRosterSelect
           branches={branches}
           classId={state.classId}
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
           onChange={state.setClassId}
         />
         {!state.loading && !state.loadError && <MobileAttendanceStats stats={state.stats} />}
@@ -60,7 +60,7 @@ export function MobileAttendancePage() {
       </main>
 
       {state.saving && (
-        <div className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-zinc-50 dark:text-zinc-950">
+        <div className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-white shadow-lg">
           저장 중...
         </div>
       )}

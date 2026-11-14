@@ -34,10 +34,10 @@ export function MobileInstructorSlotSection({
   return (
     <section className="space-y-3" data-testid="mobile-instructor-slot">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-base font-semibold text-zinc-950 dark:text-zinc-50">
-          <Clock className="h-4 w-4 shrink-0 text-zinc-500" />
+        <h2 className="flex min-w-0 items-center gap-2 text-base font-semibold text-foreground">
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span>{label}</span>
-          <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">{instructors.length}명</span>
+          <span className="text-sm font-normal text-muted-foreground">{instructors.length}명</span>
         </h2>
         <Button
           type="button"

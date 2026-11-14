@@ -127,7 +127,7 @@ export default function PWAInstallPrompt() {
               // Android/Chrome 설치 버튼
               <button
                 onClick={handleInstall}
-                className="mt-3 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="mt-3 w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
               >
                 <Download className="h-5 w-5" />
                 앱 설치하기

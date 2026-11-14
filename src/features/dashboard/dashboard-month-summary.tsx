@@ -111,9 +111,9 @@ function MoneyRow({
     tone: 'good' | 'bad' | 'warn';
 }) {
     const toneClass = {
-        good: 'text-emerald-700 dark:text-emerald-300',
-        bad: 'text-red-700 dark:text-red-300',
-        warn: 'text-amber-700 dark:text-amber-300',
+        good: 'text-success',
+        bad: 'text-destructive',
+        warn: 'text-warning',
     };
 
     return (

@@ -73,12 +73,12 @@ export function StudentAttendanceCard({
               </Badge>
             )}
             {student.season_type && (
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
+              <Badge className="bg-success-soft text-success border-success/30 text-xs">
                 시즌
               </Badge>
             )}
             {!!student.is_makeup && (
-              <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">
+              <Badge className="bg-warning-soft text-warning border-warning/30 text-xs">
                 보충
               </Badge>
             )}
@@ -150,8 +150,8 @@ export function StudentAttendanceCard({
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 ml-0 sm:ml-11 rounded-md text-xs',
             currentStatus === 'excused'
-              ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-              : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              ? 'bg-primary-soft text-primary'
+              : 'bg-destructive-soft text-destructive'
           )}
         >
           <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />

@@ -22,7 +22,7 @@ export function StatsCards({ stats, statusFilter, setStatusFilter }: Props) {
       {(['pending', 'confirmed', 'completed', 'cancelled'] as const).map((status) => (
         <Card
           key={status}
-          className={`cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? 'ring-2 ring-blue-500' : ''}`}
+          className={`cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setStatusFilter(statusFilter === status ? '' : status)}
         >
           <CardContent className="pt-4">

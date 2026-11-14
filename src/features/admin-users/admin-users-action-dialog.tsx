@@ -48,7 +48,7 @@ export function AdminUsersActionDialog({
                                     event.preventDefault();
                                     onConfirm();
                                 }}
-                                className={action.kind === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                                className={action.kind === 'approve' ? 'bg-success hover:bg-success/90' : 'bg-destructive hover:bg-destructive/90'}
                             >
                                 {loadingUserId === action.user.id ? (
                                     <>

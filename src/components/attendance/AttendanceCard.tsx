@@ -32,32 +32,32 @@ const STATUS_CONFIG = {
     label: '출석', 
     icon: CheckCircle2, 
     gradient: 'bg-attendance-present',
-    lightBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-    lightText: 'text-emerald-700 dark:text-emerald-300',
+    lightBg: 'bg-success-soft',
+    lightText: 'text-success',
     glow: 'glow-present'
   },
   late: { 
     label: '지각', 
     icon: Clock, 
     gradient: 'bg-attendance-late',
-    lightBg: 'bg-amber-100 dark:bg-amber-900/30',
-    lightText: 'text-amber-700 dark:text-amber-300',
+    lightBg: 'bg-warning-soft',
+    lightText: 'text-warning',
     glow: 'glow-late'
   },
   absent: { 
     label: '결석', 
     icon: XCircle, 
     gradient: 'bg-attendance-absent',
-    lightBg: 'bg-red-100 dark:bg-red-900/30',
-    lightText: 'text-red-700 dark:text-red-300',
+    lightBg: 'bg-destructive-soft',
+    lightText: 'text-destructive',
     glow: 'glow-absent'
   },
   excused: { 
     label: '공결', 
     icon: AlertCircle, 
     gradient: 'bg-attendance-excused',
-    lightBg: 'bg-blue-100 dark:bg-blue-900/30',
-    lightText: 'text-blue-700 dark:text-blue-300',
+    lightBg: 'bg-primary-soft',
+    lightText: 'text-primary',
     glow: 'glow-excused'
   },
 };
@@ -91,10 +91,10 @@ export function AttendanceCard({
         ${isChecking ? 'animate-card-check' : ''}
         ${isCompact ? 'p-3' : isTablet ? 'p-3' : 'p-4'}
         ${currentStatus ? 'ring-2 ring-opacity-20' : ''}
-        ${currentStatus === 'present' ? 'ring-emerald-500' : ''}
-        ${currentStatus === 'late' ? 'ring-amber-500' : ''}
-        ${currentStatus === 'absent' ? 'ring-red-500' : ''}
-        ${currentStatus === 'excused' ? 'ring-blue-500' : ''}
+        ${currentStatus === 'present' ? 'ring-success' : ''}
+        ${currentStatus === 'late' ? 'ring-warning' : ''}
+        ${currentStatus === 'absent' ? 'ring-destructive' : ''}
+        ${currentStatus === 'excused' ? 'ring-primary' : ''}
       `}
     >
       {/* Header */}
@@ -108,7 +108,7 @@ export function AttendanceCard({
             {/* Compact Badges */}
             <div className="flex items-center gap-1 shrink-0">
               {!!student.is_season_student && (
-                <span className={`px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'}`}>
+                <span className={`px-1.5 py-0.5 bg-warning-soft text-warning rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'}`}>
                   시즌
                 </span>
               )}
@@ -123,7 +123,7 @@ export function AttendanceCard({
                 return (
                   <span className={`px-1.5 py-0.5 rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'} ${
                     remaining === 0
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                      ? 'bg-muted text-muted-foreground'
                       : 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300'
                   }`}>
                     {remaining === 0 ? '완료' : `${currentSession}/2`}
@@ -144,7 +144,7 @@ export function AttendanceCard({
         {onPhoneCall && (student.phone || student.parent_phone) && !isTablet && (
           <button
             onClick={() => onPhoneCall(student.phone)}
-            className="p-2 text-muted-foreground hover:text-emerald-500 dark:hover:text-emerald-400 transition shrink-0"
+            className="p-2 text-muted-foreground hover:text-success transition shrink-0"
           >
             <Phone className="h-5 w-5" />
           </button>

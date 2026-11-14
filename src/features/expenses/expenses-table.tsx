@@ -33,7 +33,7 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
                 <p className="truncate text-sm font-semibold text-foreground">{expense.description || '-'}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{expense.expense_date.split('T')[0]}</p>
               </div>
-              <p className="shrink-0 text-base font-semibold tabular-nums text-red-600 dark:text-red-300">
+              <p className="shrink-0 text-base font-semibold tabular-nums text-destructive">
                 -{formatAmount(expense.amount)}원
               </p>
             </div>
@@ -92,7 +92,7 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
                   <ExpenseCategoryBadge expense={expense} />
                 </td>
                 <td className="max-w-[280px] truncate px-5 py-3 text-foreground">{expense.description || '-'}</td>
-                <td className="px-5 py-3 text-right font-semibold tabular-nums text-red-600 dark:text-red-300">
+                <td className="px-5 py-3 text-right font-semibold tabular-nums text-destructive">
                   -{formatAmount(expense.amount)}원
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">

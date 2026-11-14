@@ -54,7 +54,7 @@ export function TrialStudentActionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
           {copy.description} 기존 상담 기록과 메모는 유지됩니다.
         </div>
 

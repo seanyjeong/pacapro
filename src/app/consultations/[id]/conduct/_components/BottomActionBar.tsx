@@ -50,7 +50,7 @@ export function BottomActionBar({
                 <ArrowLeft className="h-4 w-4" />
                 돌아가기
               </Button>
-              <Button onClick={onSave} disabled={saving} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={onSave} disabled={saving} className="gap-2 bg-success hover:bg-success/90">
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -77,7 +77,7 @@ export function BottomActionBar({
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950"
+                className="gap-2 border-warning/30 text-warning hover:bg-warning-soft"
                 onClick={onOpenPending}
                 disabled={!!consultation?.linked_student_id}
               >
@@ -86,7 +86,7 @@ export function BottomActionBar({
               </Button>
               <Button
                 variant="default"
-                className="gap-2 bg-green-600 hover:bg-green-700"
+                className="gap-2 bg-success hover:bg-success/90"
                 onClick={onOpenTrial}
                 disabled={!!consultation?.linked_student_id}
               >

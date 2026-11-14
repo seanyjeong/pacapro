@@ -61,7 +61,7 @@ export function TabletPendingModal({
           <Button
             onClick={onConfirm}
             disabled={converting}
-            className="bg-orange-600/80 dark:bg-orange-600 hover:bg-orange-700"
+            className="bg-warning/80 hover:bg-warning/90"
           >
             {converting ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

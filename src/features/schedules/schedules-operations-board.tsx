@@ -41,14 +41,13 @@ export function SchedulesOperationsBoard({
 
   return (
     <aside
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="schedules-operations-board"
       aria-label="수업 운영 보드"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Schedule Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">수업 운영 보드</h2>
-        <p className="text-sm text-slate-600">
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">수업 운영 보드</h2>
+        <p className="text-sm text-secondary-foreground">
           {selectedDate ? formatDateKorean(selectedDate) : '날짜를 선택하면 출석과 강사 출근을 이어서 처리할 수 있습니다.'}
         </p>
       </div>
@@ -130,11 +129,11 @@ interface MetricProps {
 function Metric({ ariaLabel, href, icon, label, value }: MetricProps) {
   const content = (
     <>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </>
   );
 
@@ -142,7 +141,7 @@ function Metric({ ariaLabel, href, icon, label, value }: MetricProps) {
     return (
       <Link
         aria-label={ariaLabel || label}
-        className="block rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        className="block rounded-md border border-border bg-muted p-3 transition hover:border-border hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground/40"
         href={href}
       >
         {content}
@@ -151,7 +150,7 @@ function Metric({ ariaLabel, href, icon, label, value }: MetricProps) {
   }
 
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+    <div className="rounded-md border border-border bg-muted p-3">
       {content}
     </div>
   );

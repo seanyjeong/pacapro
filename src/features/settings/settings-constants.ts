@@ -68,7 +68,7 @@ export const SALARY_MONTH_TYPE_OPTIONS = [
 ] as const;
 
 export const CLASS_TIME_FIELDS: Array<{ key: ClassTimeKey; label: string; tone: string }> = [
-  { key: 'morning_class_time', label: '오전반', tone: 'border-amber-200 bg-amber-50/70 text-amber-900' },
+  { key: 'morning_class_time', label: '오전반', tone: 'border-warning/30 bg-warning-soft/70 text-warning' },
   { key: 'afternoon_class_time', label: '오후반', tone: 'border-sky-200 bg-sky-50/70 text-sky-900' },
   { key: 'evening_class_time', label: '저녁반', tone: 'border-violet-200 bg-violet-50/70 text-violet-900' },
 ];

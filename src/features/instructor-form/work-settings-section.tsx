@@ -24,7 +24,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
     <>
       <div>
         <label className="mb-2 block text-sm font-medium text-foreground">
-          출근 요일 <span className="text-red-500">*</span>
+          출근 요일 <span className="text-destructive">*</span>
         </label>
         <div className="mb-3 flex flex-wrap gap-2">
           {WORK_DAY_PRESETS.map((preset) => (
@@ -61,13 +61,13 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
             );
           })}
         </div>
-        {errors.work_days && <p className="text-red-500 text-sm mt-1">{errors.work_days}</p>}
+        {errors.work_days && <p className="text-destructive text-sm mt-1">{errors.work_days}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="instructor-work-start-time" className="mb-2 block text-sm font-medium text-foreground">
-            출근 시간 <span className="text-red-500">*</span>
+            출근 시간 <span className="text-destructive">*</span>
           </label>
           <input
             id="instructor-work-start-time"
@@ -76,11 +76,11 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
             onChange={(event) => onChange('work_start_time', event.target.value)}
             className={inputClassName(errors.work_start_time)}
           />
-          {errors.work_start_time && <p className="text-red-500 text-sm mt-1">{errors.work_start_time}</p>}
+          {errors.work_start_time && <p className="text-destructive text-sm mt-1">{errors.work_start_time}</p>}
         </div>
         <div>
           <label htmlFor="instructor-work-end-time" className="mb-2 block text-sm font-medium text-foreground">
-            퇴근 시간 <span className="text-red-500">*</span>
+            퇴근 시간 <span className="text-destructive">*</span>
           </label>
           <input
             id="instructor-work-end-time"
@@ -89,7 +89,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
             onChange={(event) => onChange('work_end_time', event.target.value)}
             className={inputClassName(errors.work_end_time)}
           />
-          {errors.work_end_time && <p className="text-red-500 text-sm mt-1">{errors.work_end_time}</p>}
+          {errors.work_end_time && <p className="text-destructive text-sm mt-1">{errors.work_end_time}</p>}
         </div>
       </div>
       <p className="text-xs text-muted-foreground">

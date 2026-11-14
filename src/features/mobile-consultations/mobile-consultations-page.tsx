@@ -13,8 +13,8 @@ export function MobileConsultationsPage() {
 
   if (state.hasPermission === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <div className="text-sm text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
@@ -22,7 +22,7 @@ export function MobileConsultationsPage() {
   const canCreate = isOwner();
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50" data-testid="mobile-consultations-workspace">
+    <div className="min-h-screen bg-muted text-foreground" data-testid="mobile-consultations-workspace">
       <MobileConsultationsHeader
         selectedDateLabel={state.selectedDateLabel}
         showCalendar={state.showCalendar}
@@ -61,7 +61,7 @@ export function MobileConsultationsPage() {
         <button
           type="button"
           onClick={state.openCreateForm}
-          className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-950 text-white shadow-lg transition active:scale-95 dark:bg-zinc-50 dark:text-zinc-950"
+          className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-white shadow-lg transition active:scale-95"
           aria-label="신규 상담 등록"
         >
           <span className="text-2xl leading-none">+</span>

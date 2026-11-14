@@ -44,8 +44,8 @@ export function SalaryCalculationSection({
 
   return (
     <section className="print-section overflow-hidden rounded-lg border border-border/70 bg-card">
-      <div className="border-b border-border/70 bg-emerald-50 p-3 print-compact">
-        <h2 className="text-sm font-semibold text-emerald-900">급여 계산</h2>
+      <div className="border-b border-border/70 bg-success-soft p-3 print-compact">
+        <h2 className="text-sm font-semibold text-success">급여 계산</h2>
       </div>
       <div className="space-y-2 p-4 text-sm print-compact">
         <Formula salary={salary} attendanceSummary={attendanceSummary} />
@@ -68,7 +68,7 @@ export function SalaryCalculationSection({
                 aria-label="인센티브 저장"
                 onClick={onSave}
                 disabled={savingIncentive}
-                className="rounded p-1 text-green-600 hover:bg-green-50"
+                className="rounded p-1 text-success hover:bg-success-soft"
               >
                 <Save className="h-4 w-4" />
               </button>
@@ -83,7 +83,7 @@ export function SalaryCalculationSection({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-success' : 'text-muted-foreground'}`}>
                 {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
               </span>
               {salary.payment_status === 'pending' ? (
@@ -105,9 +105,9 @@ export function SalaryCalculationSection({
         ) : (
           <Line label={`세금 (${TAX_TYPE_LABELS[salary.tax_type] || salary.tax_type})`} value={`-${formatCurrency(salary.tax_amount)}`} danger />
         )}
-        <div className="mt-3 flex justify-between rounded-md bg-blue-50 px-3 py-3">
+        <div className="mt-3 flex justify-between rounded-md bg-primary-soft px-3 py-3">
           <span className="font-semibold text-foreground">실수령액</span>
-          <span className="text-xl font-bold text-blue-700">{formatCurrency(salary.net_salary)}</span>
+          <span className="text-xl font-bold text-primary">{formatCurrency(salary.net_salary)}</span>
         </div>
       </div>
     </section>
@@ -149,7 +149,7 @@ function Line({ label, value, danger = false }: { label: string; value: string; 
   return (
     <div className="flex justify-between border-b border-border/70 py-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium ${danger ? 'text-red-600' : 'text-foreground'}`}>{value}</span>
+      <span className={`font-medium ${danger ? 'text-destructive' : 'text-foreground'}`}>{value}</span>
     </div>
   );
 }
@@ -159,13 +159,13 @@ function InsuranceDetails({ details, total }: { details: Record<string, number>;
     <div className="border-b border-border/70 py-2">
       <div className="mb-2 flex justify-between">
         <span className="font-medium text-muted-foreground">4대보험 공제</span>
-        <span className="font-medium text-red-600">-{formatCurrency(total)}</span>
+        <span className="font-medium text-destructive">-{formatCurrency(total)}</span>
       </div>
-      <div className="space-y-1 rounded-md bg-red-50 p-2 text-sm">
+      <div className="space-y-1 rounded-md bg-destructive-soft p-2 text-sm">
         {INSURANCE_FIELDS.map(({ key, label }) => (
           <div key={key} className="flex justify-between">
             <span className="text-muted-foreground">{label}</span>
-            <span className="text-red-600">{formatCurrency(details[key])}</span>
+            <span className="text-destructive">{formatCurrency(details[key])}</span>
           </div>
         ))}
       </div>

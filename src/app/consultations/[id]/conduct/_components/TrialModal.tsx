@@ -83,7 +83,7 @@ export function TrialModal({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveDate(index)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -95,7 +95,7 @@ export function TrialModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button onClick={onConvert} disabled={convertingToTrial} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={onConvert} disabled={convertingToTrial} className="bg-success hover:bg-success/90">
             {convertingToTrial ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (

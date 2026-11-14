@@ -207,7 +207,7 @@ export default function NotificationSettingsPage() {
                 className="flex w-full items-center justify-between rounded-md p-4 text-left transition-colors hover:bg-muted/50"
               >
                 <div className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-blue-600" />
+                  <Bell className="h-5 w-5 text-primary" />
                   <span className="font-semibold text-foreground">PWA 푸시 알림 설정</span>
                 </div>
                 {h.showPushSection ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}

@@ -31,21 +31,21 @@ export const STATUS_META: Record<
 > = {
   present: {
     label: '출석',
-    buttonClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300',
-    activeClassName: 'border-emerald-600 bg-emerald-600 text-white dark:border-emerald-400',
-    badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300',
+    buttonClassName: 'border-success/30 bg-success-soft text-success',
+    activeClassName: 'border-success bg-success text-white',
+    badgeClassName: 'border-success/30 bg-success-soft text-success',
   },
   late: {
     label: '지각',
-    buttonClassName: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300',
-    activeClassName: 'border-amber-600 bg-amber-500 text-white dark:border-amber-400',
-    badgeClassName: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300',
+    buttonClassName: 'border-warning/30 bg-warning-soft text-warning',
+    activeClassName: 'border-warning bg-warning text-white',
+    badgeClassName: 'border-warning/30 bg-warning-soft text-warning',
   },
   absent: {
     label: '결석',
-    buttonClassName: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300',
-    activeClassName: 'border-rose-600 bg-rose-600 text-white dark:border-rose-400',
-    badgeClassName: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300',
+    buttonClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
+    activeClassName: 'border-destructive bg-destructive text-white',
+    badgeClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
   },
   excused: {
     label: '공결',

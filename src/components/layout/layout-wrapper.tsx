@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { TopNav } from './topnav';
+import { MobileNav } from './mobile-nav';
 import { cn } from '@/lib/utils/cn';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -70,11 +72,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         const publicContentWidth = pathname?.startsWith('/c/') ? 'max-w-6xl' : 'max-w-lg';
 
         return (
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-background">
                 <main className={cn('mx-auto w-full px-4 py-6 sm:py-8', publicContentWidth)}>
                     {children}
                 </main>
-                <footer className="py-4 text-center text-xs text-gray-400">
+                <footer className="py-4 text-center text-xs text-muted-foreground">
                     Powered by P-ACA
                 </footer>
             </div>
@@ -83,20 +85,20 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
     // 일반 페이지는 사이드바/TopNav 포함
     return (
-        <div className="flex h-screen overflow-hidden overflow-x-hidden">
+        <div className="flex h-screen overflow-hidden overflow-x-hidden bg-background">
             <Sidebar />
             <div className={cn(
-                "min-w-0 flex-1 flex flex-col transition-all duration-300 ease-in-out",
-                mounted ? (sidebarCollapsed ? "md:ml-[68px]" : "md:ml-64") : "md:ml-64"
+                "flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ease-in-out",
+                mounted ? (sidebarCollapsed ? "md:ml-[76px]" : "md:ml-[248px]") : "md:ml-[248px]"
             )}>
-                <TopNav />
-                {/* 메인 콘텐츠 영역에 배경색 추가 (깊이감 부여) */}
-                <main className="flex-1 overflow-y-auto pt-16 bg-slate-50/50 dark:bg-background">
-                    <div className="p-4 md:p-6">
+                <main className="flex-1 overflow-y-auto">
+                    <TopNav />
+                    <div className="mx-auto w-full max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+84px)] pt-2 md:px-8 md:pb-10">
                         {children}
                     </div>
                 </main>
             </div>
+            <MobileNav menuOpen={mobileMenuOpen} onMenuOpenChange={setMobileMenuOpen} />
         </div>
     );
 }

@@ -310,8 +310,8 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                                 variant="outline"
                                 className={`text-xs flex items-center gap-1 ${
                                   trial.attended
-                                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
-                                    : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                                    ? 'bg-success-soft text-success border-success/30'
+                                    : 'bg-muted text-secondary-foreground border-border'
                                 }`}
                               >
                                 {formatTrialDate(trial.date)}
@@ -385,7 +385,7 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 min-h-[40px] min-w-[40px]"
+                          className="text-destructive hover:text-destructive hover:bg-destructive-soft min-h-[40px] min-w-[40px]"
                           onClick={() => {
                             setDeleteError(null);
                             setDeleteTarget(student);

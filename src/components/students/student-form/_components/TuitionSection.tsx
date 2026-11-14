@@ -80,15 +80,15 @@ export function TuitionSection({
         {(formData.discount_rate || 0) > 0 && (
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              할인 사유 <span className="text-red-500">*</span>
+              할인 사유 <span className="text-destructive">*</span>
             </label>
             <input type="text" value={formData.discount_reason || ''}
               onChange={(e) => handleChange('discount_reason', e.target.value)}
               placeholder="예: 형제자매 할인, 장기등록 할인, 추천인 할인 등"
               className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                errors.discount_reason ? 'border-red-500' : 'border-border'
+                errors.discount_reason ? 'border-destructive' : 'border-border'
               }`} />
-            {errors.discount_reason && <p className="text-red-500 text-sm mt-1">{errors.discount_reason}</p>}
+            {errors.discount_reason && <p className="text-destructive text-sm mt-1">{errors.discount_reason}</p>}
           </div>
         )}
 
@@ -99,7 +99,7 @@ export function TuitionSection({
             <span className="font-medium text-foreground">{formatCurrency(formData.monthly_tuition || 0)}</span>
           </div>
           {(formData.discount_rate || 0) > 0 && (
-            <div className="flex justify-between items-center text-red-600 mt-2">
+            <div className="flex justify-between items-center text-destructive mt-2">
               <span>할인 ({formData.discount_rate}%)</span>
               <span>-{formatCurrency(Math.round((formData.monthly_tuition || 0) * ((formData.discount_rate || 0) / 100)))}</span>
             </div>

@@ -32,7 +32,6 @@ export function InstructorsWorkQueue({
     <aside className="space-y-4" data-testid="instructors-work-queue">
       <section className="rounded-md border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Instructor Desk</p>
           <h2 className="mt-1 text-sm font-semibold text-foreground">강사 운영 보드</h2>
           <p className="mt-1 text-xs text-muted-foreground">강사 등록, 출근, 급여, 수업 배정을 한곳에서 이어갑니다.</p>
         </div>
@@ -104,7 +103,7 @@ function QueueRow({
       aria-pressed={active}
       className={[
         'rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        active ? 'border-blue-300 bg-blue-50' : 'border-border bg-muted/30 hover:bg-muted',
+        active ? 'border-primary/30 bg-primary-soft' : 'border-border bg-muted/30 hover:bg-muted',
       ].join(' ')}
       type="button"
       onClick={onClick}

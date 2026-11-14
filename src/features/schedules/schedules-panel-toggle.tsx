@@ -15,7 +15,7 @@ export function SchedulesPanelToggle({ expanded, instructorStats, mode = 'rail',
 
     return (
       <button
-        className="mb-2 flex h-10 w-full items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-sm text-slate-700 transition hover:bg-slate-100"
+        className="mb-2 flex h-10 w-full items-center justify-center rounded-md border border-border bg-muted text-sm text-secondary-foreground transition hover:bg-muted"
         title={title}
         type="button"
         onClick={onToggle}
@@ -34,7 +34,7 @@ export function SchedulesPanelToggle({ expanded, instructorStats, mode = 'rail',
   if (mode === 'bar') {
     return (
       <button
-        className="flex min-h-11 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+        className="flex min-h-11 w-full items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm text-secondary-foreground transition hover:bg-muted"
         title="강사 근무 배정 펼치기"
         type="button"
         onClick={onToggle}
@@ -43,7 +43,7 @@ export function SchedulesPanelToggle({ expanded, instructorStats, mode = 'rail',
           <PanelRightOpen className="h-4 w-4" />
           강사 근무 배정
         </span>
-        <span className="flex items-center gap-3 text-xs text-slate-600">
+        <span className="flex items-center gap-3 text-xs text-secondary-foreground">
           <span className="flex items-center gap-1">
             <UserCheck className="h-4 w-4" />
             {attendedCount}
@@ -59,7 +59,7 @@ export function SchedulesPanelToggle({ expanded, instructorStats, mode = 'rail',
 
   return (
     <button
-      className="flex h-full flex-col items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-2 py-4 text-slate-600 transition hover:bg-slate-100"
+      className="flex h-full flex-col items-center gap-3 rounded-md border border-border bg-muted px-2 py-4 text-secondary-foreground transition hover:bg-muted"
       title="강사 근무 패널 펼치기"
       type="button"
       onClick={onToggle}

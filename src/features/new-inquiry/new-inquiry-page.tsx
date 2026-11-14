@@ -40,10 +40,10 @@ export function NewInquiryPage() {
   const hasWeeklyHours = h.weeklyHours.some((hour) => hour.isAvailable && hour.startTime && hour.endTime);
 
   const statCards = [
-    { label: '전체', value: totalCount, helper: '신규상담 전체', icon: UsersRound, tone: 'text-slate-700 bg-slate-50' },
-    { label: '대기중', value: pendingCount, helper: '확인 필요', icon: Clock3, tone: 'text-amber-700 bg-amber-50' },
+    { label: '전체', value: totalCount, helper: '신규상담 전체', icon: UsersRound, tone: 'text-secondary-foreground bg-muted' },
+    { label: '대기중', value: pendingCount, helper: '확인 필요', icon: Clock3, tone: 'text-warning bg-warning-soft' },
     { label: '확정', value: confirmedCount, helper: '일정 확정', icon: Calendar, tone: 'text-sky-700 bg-sky-50' },
-    { label: '완료', value: h.stats.completed || 0, helper: '상담 완료', icon: CheckCircle2, tone: 'text-emerald-700 bg-emerald-50' },
+    { label: '완료', value: h.stats.completed || 0, helper: '상담 완료', icon: CheckCircle2, tone: 'text-success bg-success-soft' },
     { label: '등록완료', value: h.completedStats.registered, helper: '학생 전환', icon: UserCheck, tone: 'text-primary bg-primary/5' },
   ];
 
@@ -77,11 +77,10 @@ export function NewInquiryPage() {
       <header className="rounded-md border border-border bg-card px-5 py-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-amber-100 bg-amber-50 text-amber-700">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-warning/30 bg-warning-soft text-warning">
               <ClipboardList className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Admissions Desk</p>
               <h1 className="text-2xl font-semibold tracking-normal text-foreground">신규상담</h1>
               <p className="mt-1 text-sm text-muted-foreground">상담 접수, 일정 확정, 등록 전환까지 한 화면에서 처리합니다.</p>
             </div>
@@ -114,12 +113,12 @@ export function NewInquiryPage() {
       </header>
 
       {h.loadError ? (
-        <section className="flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 text-rose-950 sm:flex-row sm:items-center sm:justify-between">
+        <section className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive-soft p-4 text-destructive sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" />
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
             <div className="space-y-1">
               <p className="text-sm font-semibold">{h.loadError}</p>
-              <p className="text-xs text-rose-800">목록은 다시 불러올 수 있고, 신규상담 등록은 화면에서 계속 확인할 수 있습니다.</p>
+              <p className="text-xs text-destructive">목록은 다시 불러올 수 있고, 신규상담 등록은 화면에서 계속 확인할 수 있습니다.</p>
             </div>
           </div>
           <Button className="shrink-0" size="sm" variant="outline" onClick={h.loadData}>
@@ -314,9 +313,9 @@ type NewInquiryState = ReturnType<typeof useNewInquiry>;
 function CompletedFilter({ h }: { h: NewInquiryState }) {
   const tabs = [
     { value: 'all', label: '전체', count: h.completedStats.total, icon: null, tone: '' },
-    { value: 'unregistered', label: '미등록', count: h.completedStats.unregistered, icon: UserX, tone: 'text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-950' },
-    { value: 'trial_ongoing', label: '체험중', count: h.completedStats.trialOngoing, icon: Dumbbell, tone: 'text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950' },
-    { value: 'registered', label: '등록', count: h.completedStats.registered, icon: UserCheck, tone: 'text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-950' },
+    { value: 'unregistered', label: '미등록', count: h.completedStats.unregistered, icon: UserX, tone: 'text-warning border-warning/30 hover:bg-warning-soft hover:text-warning' },
+    { value: 'trial_ongoing', label: '체험중', count: h.completedStats.trialOngoing, icon: Dumbbell, tone: 'text-primary border-primary/30 hover:bg-primary-soft hover:text-primary' },
+    { value: 'registered', label: '등록', count: h.completedStats.registered, icon: UserCheck, tone: 'text-success border-success/30 hover:bg-success-soft hover:text-success' },
   ] as const;
 
   return (
@@ -346,11 +345,11 @@ function CompletedFilter({ h }: { h: NewInquiryState }) {
 
 function TagFilter({ h }: { h: NewInquiryState }) {
   const tags = [
-    { tag: 'registered', label: '등록', icon: UserCheck, tone: 'text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950' },
+    { tag: 'registered', label: '등록', icon: UserCheck, tone: 'text-success border-success/30 hover:bg-success-soft' },
     { tag: 'trial_completed', label: '체험완료', icon: Dumbbell, tone: 'text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950' },
-    { tag: 'trial_ongoing', label: '체험중', icon: Dumbbell, tone: 'text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950' },
-    { tag: 'unregistered', label: '미등록', icon: UserX, tone: 'text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950' },
-    { tag: 'no_trial', label: '미체험', icon: null, tone: 'text-gray-600 border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900' },
+    { tag: 'trial_ongoing', label: '체험중', icon: Dumbbell, tone: 'text-primary border-primary/30 hover:bg-primary-soft' },
+    { tag: 'unregistered', label: '미등록', icon: UserX, tone: 'text-warning border-warning/30 hover:bg-warning-soft' },
+    { tag: 'no_trial', label: '미체험', icon: null, tone: 'text-secondary-foreground border-border hover:bg-muted' },
   ] as const;
 
   return (

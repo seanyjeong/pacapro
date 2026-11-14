@@ -108,7 +108,7 @@ export default function TabletConductPage({ params }: PageProps) {
   if (loadError || !consultation) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center px-4">
-        <section className="w-full max-w-xl rounded-md border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+        <section className="w-full max-w-xl rounded-md border border-warning/30 bg-warning-soft p-5 text-warning">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>

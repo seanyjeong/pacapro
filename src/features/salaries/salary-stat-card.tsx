@@ -10,8 +10,8 @@ interface SalaryStatCardProps {
 
 const toneClasses = {
   blue: ['text-sky-700 dark:text-sky-300', 'bg-sky-50 dark:bg-sky-950/45', 'text-sky-600 dark:text-sky-300'],
-  green: ['text-emerald-700 dark:text-emerald-300', 'bg-emerald-50 dark:bg-emerald-950/45', 'text-emerald-600 dark:text-emerald-300'],
-  yellow: ['text-amber-700 dark:text-amber-300', 'bg-amber-50 dark:bg-amber-950/45', 'text-amber-600 dark:text-amber-300'],
+  green: ['text-success', 'bg-success-soft', 'text-success'],
+  yellow: ['text-warning', 'bg-warning-soft', 'text-warning'],
   default: ['text-foreground', 'bg-muted/70', 'text-muted-foreground'],
 };
 

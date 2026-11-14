@@ -87,7 +87,7 @@ export default function LoginPage() {
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
             {error}
           </div>
         ) : null}

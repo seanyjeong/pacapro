@@ -11,7 +11,6 @@ export function EnrolledConsultationsHeader({ onCreate }: EnrolledConsultationsH
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Learning Desk</p>
         <h1 className="text-2xl font-semibold tracking-normal text-foreground">재원생상담</h1>
         <p className="text-sm text-muted-foreground">재원생 상담 일정, 상태 변경, 정시엔진 성적 확인을 한 화면에서 처리합니다.</p>
       </div>

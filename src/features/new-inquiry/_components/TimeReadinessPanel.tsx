@@ -13,18 +13,18 @@ export function TimeReadinessPanel({ hasWeeklyHours }: TimeReadinessPanelProps) 
     <section
       className={`rounded-md border px-3 py-3 ${
         hasWeeklyHours
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
-          : 'border-amber-200 bg-amber-50 text-amber-950'
+          ? 'border-success/30 bg-success-soft text-success'
+          : 'border-warning/30 bg-warning-soft text-warning'
       }`}
       data-testid="new-inquiry-time-readiness"
     >
       <div className="flex items-start gap-3">
-        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${hasWeeklyHours ? 'text-emerald-700' : 'text-amber-700'}`} />
+        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${hasWeeklyHours ? 'text-success' : 'text-warning'}`} />
         <div className="min-w-0 flex-1">
           <h4 className="text-sm font-semibold">
             {hasWeeklyHours ? '상담 시간 설정 정상' : '상담 시간 설정 필요'}
           </h4>
-          <p className={`mt-1 text-xs leading-5 ${hasWeeklyHours ? 'text-emerald-800' : 'text-amber-800'}`}>
+          <p className={`mt-1 text-xs leading-5 ${hasWeeklyHours ? 'text-success' : 'text-warning'}`}>
             {hasWeeklyHours
               ? '요일별 상담 시간이 연결되어 있어 날짜 선택 후 시간을 고를 수 있습니다.'
               : '요일별 상담 가능 시간을 먼저 등록해야 합니다.'}

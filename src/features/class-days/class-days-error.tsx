@@ -11,7 +11,7 @@ export function ClassDaysError({ onRetry }: ClassDaysErrorProps) {
     <div className="mx-auto w-full max-w-7xl space-y-5">
       <ClassDaysHeader description="수업일 목록을 다시 불러올 수 있습니다." />
       <section
-        className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+        className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
         role="alert"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

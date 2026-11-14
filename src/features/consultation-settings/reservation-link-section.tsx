@@ -82,16 +82,16 @@ export function ReservationLinkSection({
           </div>
           <p className="text-xs text-muted-foreground">영문 소문자, 숫자, 하이픈(-)만 사용 가능 (3자 이상)</p>
           {slugAvailable === true && slug !== originalSlug && (
-            <p className="text-xs text-green-600">사용 가능한 주소입니다. &quot;주소 저장&quot;을 눌러주세요.</p>
+            <p className="text-xs text-success">사용 가능한 주소입니다. &quot;주소 저장&quot;을 눌러주세요.</p>
           )}
           {!slug && !originalSlug && (
-            <p className="text-xs text-orange-600">페이지 주소를 설정해야 상담 예약 링크를 사용할 수 있습니다.</p>
+            <p className="text-xs text-warning">페이지 주소를 설정해야 상담 예약 링크를 사용할 수 있습니다.</p>
           )}
         </div>
 
         {slug && originalSlug && (
-          <div className="flex flex-col gap-2 rounded-md border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/60 dark:bg-blue-950/40 sm:flex-row sm:items-center">
-            <span className="min-w-0 flex-1 break-all text-sm text-blue-800 dark:text-blue-200">
+          <div className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary-soft p-3 sm:flex-row sm:items-center">
+            <span className="min-w-0 flex-1 break-all text-sm text-primary">
               {origin}/c/{originalSlug}
             </span>
             <div className="flex gap-2">

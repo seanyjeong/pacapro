@@ -130,7 +130,7 @@ export function StudentPhotoField({
             {mode === 'create' && hasPendingPhoto ? (
               <p className="mt-1 text-xs text-muted-foreground">등록 저장 후 사진이 함께 반영됩니다.</p>
             ) : null}
-            {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
+            {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
           </div>
         </div>
 

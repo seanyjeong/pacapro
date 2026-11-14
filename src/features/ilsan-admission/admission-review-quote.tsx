@@ -31,7 +31,7 @@ export function AdmissionReviewQuote({quote,title,today,duplicates=[],busy,canCo
         {quote.class_dates.length ? <ul className="flex flex-wrap gap-1.5">{quote.class_dates.map(date=><li key={date} className="rounded border border-border bg-background px-2 py-1 text-xs tabular-nums">{date.slice(5).replace('-','/')} {ADMISSION_DAYS[new Date(`${date}T00:00:00`).getDay()]}</li>)}</ul>
           : <p className="text-sm text-muted-foreground">해당 월에 남은 수업이 없습니다.</p>}
         <p className="mt-2 text-xs leading-5 text-muted-foreground">선택한 요일 기준이며 공휴일·교육원 휴무는 별도 차감하지 않습니다. 금액은 천원 미만 버림입니다.</p></div>
-      {duplicates.length>0 && <div role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100">
+      {duplicates.length>0 && <div role="alert" className="rounded-md border border-warning/30 bg-warning-soft p-4 text-sm text-warning">
         <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4 shrink-0"/>같은 이름과 전화번호의 학생이 이미 있습니다</p>
         <p className="mt-1 leading-6">기존 학생을 확인한 뒤 처리해 주세요. 이 상태에서는 승인할 수 없습니다.</p>
         <div className="mt-2 flex flex-wrap gap-2">{duplicates.map(id=><Link key={id} href={`/students/${id}`} className="font-medium underline underline-offset-4">학생 #{id} 보기</Link>)}</div>

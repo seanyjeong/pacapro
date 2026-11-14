@@ -46,7 +46,7 @@ export function TabletBottomActionBar({
                 <ArrowLeft className="h-5 w-5" />
                 돌아가기
               </Button>
-              <Button size="lg" onClick={onSave} disabled={saving} className="h-12 gap-2 bg-emerald-600 px-6 text-base hover:bg-emerald-700">
+              <Button size="lg" onClick={onSave} disabled={saving} className="h-12 gap-2 bg-success px-6 text-base hover:bg-success/90">
                 {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                 상담 기록 저장
               </Button>
@@ -65,7 +65,7 @@ export function TabletBottomActionBar({
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 gap-2 border-orange-300 px-5 text-base text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950"
+                className="h-12 gap-2 border-warning/30 px-5 text-base text-warning hover:bg-warning-soft"
                 onClick={onOpenPending}
                 disabled={!!consultation?.linked_student_id}
               >
@@ -75,7 +75,7 @@ export function TabletBottomActionBar({
               <Button
                 size="lg"
                 variant="default"
-                className="h-12 gap-2 bg-green-600 px-5 text-base hover:bg-green-700"
+                className="h-12 gap-2 bg-success px-5 text-base hover:bg-success/90"
                 onClick={onOpenTrial}
                 disabled={!!consultation?.linked_student_id}
               >

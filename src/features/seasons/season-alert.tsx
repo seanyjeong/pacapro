@@ -13,7 +13,7 @@ interface SeasonAlertProps {
 export function SeasonAlert({ actionLabel, className = '', message, onAction, testId, title }: SeasonAlertProps) {
   return (
     <section
-      className={`rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100 ${className}`}
+      className={`rounded-md border border-warning/30 bg-warning-soft p-4 text-warning ${className}`}
       data-testid={testId}
       role="alert"
     >

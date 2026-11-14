@@ -144,7 +144,7 @@ function ClassDaysMobileCard({
   const hasScheduled = student.class_days_next !== null;
 
   return (
-    <article className={cn('rounded-md border border-border bg-background p-4', hasChange && 'border-blue-300 bg-blue-50/45')}>
+    <article className={cn('rounded-md border border-border bg-background p-4', hasChange && 'border-primary/30 bg-primary-soft/45')}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <Checkbox
@@ -214,7 +214,7 @@ function ClassDaysRow({
     <tr
       className={cn(
         'border-b transition-colors hover:bg-muted/30',
-        hasChange && 'bg-blue-50/50 dark:bg-blue-950/20'
+        hasChange && 'bg-primary-soft/50'
       )}
     >
       <td className="p-3">
@@ -306,8 +306,8 @@ function ClassDayEditor({
                 isActive
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background text-muted-foreground border-input hover:border-primary/50',
-                isChanged && isActive && 'ring-2 ring-blue-400',
-                isChanged && !isActive && 'ring-2 ring-red-300 border-red-300'
+                isChanged && isActive && 'ring-2 ring-primary',
+                isChanged && !isActive && 'ring-2 ring-destructive/30 border-destructive/30'
               )}
             >
               {option.label}
@@ -367,7 +367,7 @@ function ScheduleStatus({
     return (
       <div className="flex items-center gap-2">
         <div className="text-sm">
-          <Badge variant="outline" className="text-orange-600 border-orange-300">
+          <Badge variant="outline" className="text-warning border-warning/30">
             {formatClassDaysWithSlots(student.class_days_next, defaultTimeSlot)}
           </Badge>
           <span className="ml-1 text-xs text-muted-foreground">
@@ -378,7 +378,7 @@ function ScheduleStatus({
           type="button"
           aria-label={`${student.name} 예약 변경 취소`}
           onClick={() => onCancelSchedule(student.id)}
-          className="text-red-500 hover:text-red-700"
+          className="text-destructive hover:text-destructive"
           title="예약 취소"
         >
           <X className="w-4 h-4" />
@@ -389,7 +389,7 @@ function ScheduleStatus({
 
   if (hasChange) {
     return (
-      <Badge variant="secondary" className="text-blue-600">
+      <Badge variant="secondary" className="text-primary">
         {formatClassDaysWithSlots(currentSlots)} (주{currentSlots.length}회)
       </Badge>
     );

@@ -15,14 +15,14 @@ export function MobileUnpaidPage() {
 
   if (state.hasPermission === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <div className="text-sm text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50" data-testid="mobile-unpaid-workspace">
+    <div className="min-h-screen bg-muted text-foreground" data-testid="mobile-unpaid-workspace">
       <MobileUnpaidHeader
         dayName={state.dayName}
         loading={state.loading}

@@ -24,15 +24,15 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
       title: '전체 강사',
       value: stats.total,
       icon: Users,
-      bgColor: 'bg-slate-100 dark:bg-slate-900/60',
-      iconColor: 'text-slate-700 dark:text-slate-200',
+      bgColor: 'bg-muted',
+      iconColor: 'text-secondary-foreground',
     },
     {
       title: '재직',
       value: stats.active,
       icon: UserCheck,
-      bgColor: 'bg-emerald-100 dark:bg-emerald-900/50',
-      iconColor: 'text-emerald-700 dark:text-emerald-300',
+      bgColor: 'bg-success-soft',
+      iconColor: 'text-success',
     },
     {
       title: '휴직',
@@ -45,8 +45,8 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
       title: '퇴사',
       value: stats.retired,
       icon: UserMinus,
-      bgColor: 'bg-rose-100 dark:bg-rose-900/50',
-      iconColor: 'text-rose-700 dark:text-rose-300',
+      bgColor: 'bg-destructive-soft',
+      iconColor: 'text-destructive',
     },
   ];
 

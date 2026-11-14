@@ -27,7 +27,7 @@ export function StaffSummaryStrip({ summary }: Props) {
             <p className="text-xs font-medium text-muted-foreground">{label}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">{summary[key]}명</p>
           </div>
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-secondary-foreground">
             <Icon className="h-4 w-4" />
           </span>
         </div>

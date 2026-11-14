@@ -36,7 +36,7 @@ export function LearningModal({
       <DialogContent className="max-w-md">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-600" />
+            <UserCheck className="h-5 w-5 text-success" />
             재원생 상담 등록
           </DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ export function LearningModal({
           <Button
             onClick={handleLearningSubmit}
             disabled={submittingLearning}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-success hover:bg-success/90"
           >
             {submittingLearning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             등록

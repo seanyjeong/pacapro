@@ -16,28 +16,28 @@ export function TabletAttendanceCard({ saving, student, onChange }: TabletAttend
     : null;
 
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950" data-testid="tablet-attendance-card">
+    <article className="rounded-lg border border-border bg-card p-3 shadow-sm" data-testid="tablet-attendance-card">
       <div className="flex items-start gap-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
           <UserRound className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <h2 className="truncate text-sm font-semibold text-zinc-950 dark:text-zinc-50">{student.student_name}</h2>
+            <h2 className="truncate text-sm font-semibold text-foreground">{student.student_name}</h2>
             {activeMeta && <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[11px] font-medium ${activeMeta.badgeClassName}`}>{activeMeta.label}</span>}
           </div>
-          <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-muted-foreground">
             {student.grade && student.grade !== '0' && student.grade !== '00' && <span>{student.grade}</span>}
-            {student.season_type && <span className="rounded-full bg-orange-50 px-1.5 py-0.5 text-orange-700">시즌</span>}
+            {student.season_type && <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-warning">시즌</span>}
             {student.is_trial && <span className="rounded-full bg-pink-50 px-1.5 py-0.5 text-pink-700">체험 {student.trial_remaining ?? 0}회</span>}
             {student.is_makeup && <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-violet-700">보충</span>}
-            {student.assigned === false && <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-zinc-600">오늘 수업 아님</span>}
+            {student.assigned === false && <span className="rounded-full bg-muted px-1.5 py-0.5 text-secondary-foreground">오늘 수업 아님</span>}
           </div>
         </div>
       </div>
 
       {student.notes && (
-        <div className="mt-2 rounded-md bg-zinc-100 px-2 py-1.5 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+        <div className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-secondary-foreground">
           {student.notes}
         </div>
       )}

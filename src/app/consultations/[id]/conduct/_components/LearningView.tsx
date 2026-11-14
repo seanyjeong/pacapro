@@ -42,7 +42,7 @@ export function LearningView({
               className="w-full flex items-center justify-between"
             >
               <CardTitle className="text-lg flex items-center">
-                <GraduationCap className="h-5 w-5 mr-2 text-blue-600" />
+                <GraduationCap className="h-5 w-5 mr-2 text-primary" />
                 학업
               </CardTitle>
               {expandedSections['학업'] ? (
@@ -63,10 +63,10 @@ export function LearningView({
                     type: 'academic',
                     content: prev.academic_memo || '',
                   })}
-                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-2"
+                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-primary-soft text-primary hover:bg-primary-soft transition-colors flex items-center gap-2"
                 >
                   <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
-                  <span className="truncate text-blue-600">{prev.academic_memo?.slice(0, 30)}{(prev.academic_memo?.length || 0) > 30 ? '...' : ''}</span>
+                  <span className="truncate text-primary">{prev.academic_memo?.slice(0, 30)}{(prev.academic_memo?.length || 0) > 30 ? '...' : ''}</span>
                 </button>
               ))}
             </div>
@@ -250,7 +250,7 @@ export function LearningView({
               className="w-full flex items-center justify-between"
             >
               <CardTitle className="text-lg flex items-center">
-                <Sparkles className="h-5 w-5 mr-2 text-orange-600" />
+                <Sparkles className="h-5 w-5 mr-2 text-warning" />
                 실기 (P-EAK)
               </CardTitle>
               {expandedSections['실기'] ? (
@@ -271,10 +271,10 @@ export function LearningView({
                     type: 'physical',
                     content: prev.physical_memo || '',
                   })}
-                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors flex items-center gap-2"
+                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-warning-soft text-warning hover:bg-warning-soft transition-colors flex items-center gap-2"
                 >
                   <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
-                  <span className="truncate text-orange-600">{prev.physical_memo?.slice(0, 30)}{(prev.physical_memo?.length || 0) > 30 ? '...' : ''}</span>
+                  <span className="truncate text-warning">{prev.physical_memo?.slice(0, 30)}{(prev.physical_memo?.length || 0) > 30 ? '...' : ''}</span>
                 </button>
               ))}
             </div>
@@ -359,7 +359,7 @@ export function LearningView({
               className="w-full flex items-center justify-between"
             >
               <CardTitle className="text-lg flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-green-600" />
+                <Calendar className="h-5 w-5 mr-2 text-success" />
                 기타
               </CardTitle>
               {expandedSections['기타'] ? (
@@ -380,10 +380,10 @@ export function LearningView({
                     type: 'general',
                     content: prev.general_memo || '',
                   })}
-                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-green-50 text-green-700 hover:bg-green-100 transition-colors flex items-center gap-2"
+                  className="w-full text-left text-xs px-2 py-1.5 rounded bg-success-soft text-success hover:bg-success-soft transition-colors flex items-center gap-2"
                 >
                   <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
-                  <span className="truncate text-green-600">{prev.general_memo?.slice(0, 30)}{(prev.general_memo?.length || 0) > 30 ? '...' : ''}</span>
+                  <span className="truncate text-success">{prev.general_memo?.slice(0, 30)}{(prev.general_memo?.length || 0) > 30 ? '...' : ''}</span>
                 </button>
               ))}
             </div>

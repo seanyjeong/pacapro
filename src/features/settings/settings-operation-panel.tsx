@@ -35,8 +35,8 @@ export function SettingsOperationPanel({ settings, hasUnsavedChanges, isSaving, 
           className={cn(
             'shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold',
             hasUnsavedChanges
-              ? 'border-amber-200 bg-amber-50 text-amber-900'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              ? 'border-warning/30 bg-warning-soft text-warning'
+              : 'border-success/30 bg-success-soft text-success'
           )}
         >
           {statusText}

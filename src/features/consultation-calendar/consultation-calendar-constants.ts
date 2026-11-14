@@ -15,19 +15,19 @@ export const DEFAULT_LEARNING_FORM: LearningConsultationForm = {
 };
 
 export const STATUS_DOT_COLORS: Record<ConsultationStatus, string> = {
-  pending: 'bg-yellow-400',
-  confirmed: 'bg-blue-500',
-  completed: 'bg-green-500',
-  cancelled: 'bg-gray-400',
-  no_show: 'bg-red-500',
+  pending: 'bg-warning',
+  confirmed: 'bg-primary',
+  completed: 'bg-success',
+  cancelled: 'bg-muted-foreground/40',
+  no_show: 'bg-destructive',
 };
 
 export const LEARNING_STATUS_DOT_COLORS: Record<ConsultationStatus, string> = {
-  pending: 'bg-emerald-300',
-  confirmed: 'bg-emerald-500',
-  completed: 'bg-emerald-700',
-  cancelled: 'bg-gray-400',
-  no_show: 'bg-red-500',
+  pending: 'bg-success/20',
+  confirmed: 'bg-success',
+  completed: 'bg-success',
+  cancelled: 'bg-muted-foreground/40',
+  no_show: 'bg-destructive',
 };
 
 export function createDefaultLearningForm(): LearningConsultationForm {

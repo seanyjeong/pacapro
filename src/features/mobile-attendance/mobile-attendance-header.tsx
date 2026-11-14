@@ -30,14 +30,14 @@ export function MobileAttendanceHeader({
   onTimeSlotChange,
 }: MobileAttendanceHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
+    <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-4 py-3 backdrop-blur">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="모바일 홈으로 이동" className="-ml-2 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">학생 출석체크</h1>
-          <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="truncate text-lg font-semibold tracking-normal text-foreground">학생 출석체크</h1>
+          <p className="truncate text-sm text-muted-foreground">
             {formattedDate} · {stats.present}/{stats.total} 출석
           </p>
         </div>
@@ -47,12 +47,12 @@ export function MobileAttendanceHeader({
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <Calendar className="h-4 w-4 shrink-0 text-zinc-500" />
+        <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
           type="date"
           value={date}
           onChange={(event) => onDateChange(event.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:[color-scheme:dark] dark:focus:ring-zinc-200"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40 dark:[color-scheme:dark]"
           aria-label="출석 날짜"
         />
       </div>
@@ -65,8 +65,8 @@ export function MobileAttendanceHeader({
             onClick={() => onTimeSlotChange(slot.value)}
             className={`rounded-lg border px-3 py-2 text-sm font-medium transition
               ${timeSlot === slot.value
-                ? 'border-zinc-950 bg-zinc-950 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950'
-                : 'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'}`}
+                ? 'border-muted-foreground/40 bg-foreground text-white'
+                : 'border-border bg-muted text-secondary-foreground'}`}
             aria-selected={timeSlot === slot.value}
             role="tab"
           >
@@ -78,7 +78,7 @@ export function MobileAttendanceHeader({
       <Link
         className={buttonVariants({
           variant: 'outline',
-          className: 'mt-3 h-10 w-full justify-center gap-2 border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900',
+          className: 'mt-3 h-10 w-full justify-center gap-2 border-border bg-card',
         })}
         href={ATTENDANCE_TEST_NOTIFICATION_HREF}
       >

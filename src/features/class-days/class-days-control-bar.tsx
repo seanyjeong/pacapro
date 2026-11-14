@@ -46,7 +46,7 @@ export function ClassDaysControlBar({
           <div className="flex items-center gap-3">
             {changedCount > 0 ? <Badge variant="secondary">{changedCount}명 변경됨</Badge> : null}
             {scheduledCount > 0 ? (
-              <Badge variant="outline" className="border-orange-300 text-orange-600">
+              <Badge variant="outline" className="border-warning/30 text-warning">
                 {scheduledCount}명 변경 예정
               </Badge>
             ) : null}

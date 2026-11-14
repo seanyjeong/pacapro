@@ -21,7 +21,6 @@ export function OnboardingPage() {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
       <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Operations Setup</p>
           <h1 className="text-2xl font-semibold tracking-normal text-foreground">초기 운영 설정</h1>
           <p className="text-sm text-muted-foreground">
             파카 운영에 필요한 핵심 값을 먼저 맞추고, 이후 설정 메뉴에서 세부 조정할 수 있습니다.
@@ -33,9 +32,9 @@ export function OnboardingPage() {
       </header>
 
       {state.errorMessage ? (
-        <section className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3" role="alert">
+        <section className="rounded-md border border-warning/30 bg-warning-soft px-4 py-3" role="alert">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-amber-950">{state.errorMessage}</p>
+            <p className="text-sm font-medium text-warning">{state.errorMessage}</p>
             <Button className="w-full sm:w-auto" size="sm" type="button" variant="outline" onClick={state.reload}>
               <RefreshCw className="mr-2 h-4 w-4" />
               다시 시도
@@ -106,11 +105,10 @@ function OnboardingCompleted() {
   return (
     <div className="mx-auto flex min-h-[420px] w-full max-w-3xl items-center justify-center rounded-md border border-border bg-card p-8 text-center">
       <div className="space-y-4">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-md bg-success-soft text-success">
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Setup Complete</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">설정이 저장되었습니다</h2>
           <p className="mt-2 text-sm text-muted-foreground">이제 운영 대시보드에서 실제 데이터를 확인할 수 있습니다.</p>
         </div>

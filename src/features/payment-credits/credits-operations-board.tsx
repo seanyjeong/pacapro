@@ -38,18 +38,17 @@ export function CreditsOperationsBoard({
   return (
     <aside
       aria-label="크레딧 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="credits-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Finance Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">크레딧 작업 보드</h2>
-        <p className="text-sm text-slate-600">잔여 크레딧, 대기 건, 보유 학생을 한곳에서 확인합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">크레딧 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">잔여 크레딧, 대기 건, 보유 학생을 한곳에서 확인합니다.</p>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-medium text-slate-500">현재 보기</p>
-        <p className="mt-1 text-sm font-semibold text-slate-950">
+      <div className="rounded-md border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">현재 보기</p>
+        <p className="mt-1 text-sm font-semibold text-foreground">
           {getFilterLabel(CREDIT_STATUS_OPTIONS, filters.status)} · {getFilterLabel(CREDIT_TYPE_OPTIONS, filters.type)}
         </p>
       </div>
@@ -97,41 +96,41 @@ export function CreditsOperationsBoard({
       {visibleStudents.length > 0 ? (
         <div className="space-y-2" data-testid="credits-board-students">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-slate-950">보유 학생</h3>
-            <span className="text-xs text-slate-500">{students.length}명</span>
+            <h3 className="text-sm font-semibold text-foreground">보유 학생</h3>
+            <span className="text-xs text-muted-foreground">{students.length}명</span>
           </div>
           <div className="space-y-2">
             {visibleStudents.map((student) => (
               <Link
                 key={student.id}
                 aria-label={`${student.name} 학생 상세 보기`}
-                className="block rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                className="block rounded-md border border-border bg-muted p-3 transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground/40"
                 href={`/students/${student.id}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="min-w-0 truncate text-sm font-semibold text-slate-950">{student.name}</p>
-                  <span className="text-xs text-slate-500">{getStudentStatusLabel(student.student_status)}</span>
+                  <p className="min-w-0 truncate text-sm font-semibold text-foreground">{student.name}</p>
+                  <span className="text-xs text-muted-foreground">{getStudentStatusLabel(student.student_status)}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-700">
+                <p className="mt-1 text-sm text-secondary-foreground">
                   {formatWon(student.total_remaining)} · {student.credit_count}건
                 </p>
               </Link>
             ))}
           </div>
-          {hiddenStudentCount > 0 ? <p className="text-xs text-slate-500">외 {hiddenStudentCount}명은 표에서 확인하세요.</p> : null}
+          {hiddenStudentCount > 0 ? <p className="text-xs text-muted-foreground">외 {hiddenStudentCount}명은 표에서 확인하세요.</p> : null}
         </div>
       ) : null}
 
       {typeStats.length > 0 ? (
         <div className="space-y-2" data-testid="credits-board-types">
-          <h3 className="text-sm font-semibold text-slate-950">유형 요약</h3>
+          <h3 className="text-sm font-semibold text-foreground">유형 요약</h3>
           {typeStats.map((stat) => (
-            <div key={stat.credit_type} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div key={stat.credit_type} className="rounded-md border border-border bg-muted p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-slate-950">{getCreditTypeLabel(stat.credit_type)}</p>
-                <span className="text-xs text-slate-500">{stat.count}건</span>
+                <p className="text-sm font-medium text-foreground">{getCreditTypeLabel(stat.credit_type)}</p>
+                <span className="text-xs text-muted-foreground">{stat.count}건</span>
               </div>
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-secondary-foreground">
                 잔여 {formatWon(stat.remaining_amount)} / 총 {formatWon(stat.total_amount)}
               </p>
             </div>
@@ -151,12 +150,12 @@ interface MetricProps {
 
 function Metric({ icon, label, testId, value }: MetricProps) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+    <div className="rounded-md border border-border bg-muted p-3" data-testid={testId}>
+      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </div>
   );
 }

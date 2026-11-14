@@ -27,7 +27,7 @@ export function SeasonSection({
     <Card className="rounded-md shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+          <Trophy className="w-5 h-5 mr-2 text-warning" />
           시즌 등록
         </CardTitle>
       </CardHeader>
@@ -70,9 +70,9 @@ export function SeasonSection({
                 </div>
 
                 {selectedSeasonId && (
-                  <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                  <div className="bg-warning-soft border border-warning/30 rounded-md p-3 text-sm text-warning">
                     <p>학생 등록 완료 후 시즌 등록 페이지에서 상세 설정이 가능합니다.</p>
-                    <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
+                    <p className="mt-1 text-xs text-warning">
                       (등록일이 시즌 시작일 이후인 경우 시즌비가 자동으로 일할계산됩니다)
                     </p>
                   </div>

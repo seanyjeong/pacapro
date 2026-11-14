@@ -27,7 +27,7 @@ export function TrialSection({
       <Card data-testid="trial-section" className={isTrial ? 'rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950' : 'rounded-md shadow-none'}>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
+            <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-muted-foreground'}`} />
             체험생 등록
           </CardTitle>
         </CardHeader>
@@ -41,7 +41,7 @@ export function TrialSection({
                 setIsTrial(e.target.checked);
                 if (e.target.checked && trialDates.length === 0) addTrialDate();
               }}
-              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              className="w-4 h-4 text-purple-600 border-border rounded focus:ring-purple-500"
             />
             <label htmlFor="isTrial" className="text-sm font-medium text-foreground">
               체험 수업 학생으로 등록 (2회 무료 체험)
@@ -80,7 +80,7 @@ export function TrialSection({
                         ))}
                       </select>
                       <button type="button" onClick={() => removeTrialDate(idx)}
-                        className="p-1 text-gray-400 hover:text-red-500">
+                        className="p-1 text-muted-foreground hover:text-destructive">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
@@ -88,7 +88,7 @@ export function TrialSection({
                 </div>
               )}
 
-              {error && <p className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">{error}</p>}
+              {error && <p className="text-sm font-medium text-destructive" role="alert">{error}</p>}
 
               <div className="bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-md p-3 text-sm text-purple-800 dark:text-purple-200">
                 <p className="font-medium">체험생 안내</p>
@@ -134,11 +134,11 @@ export function TrialSection({
               return (
                 <div key={idx} className={`flex items-center gap-2 p-3 bg-card rounded-lg border ${
                   isAttended
-                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950'
+                    ? 'border-success/30 bg-success-soft'
                     : 'border-purple-200 dark:border-purple-700'
                 }`}>
-                  <Calendar className={`w-4 h-4 ${isAttended ? 'text-green-500' : 'text-purple-500'}`} />
-                  <span className={`text-sm font-medium ${isAttended ? 'text-green-700 dark:text-green-300' : 'text-purple-700 dark:text-purple-300'}`}>
+                  <Calendar className={`w-4 h-4 ${isAttended ? 'text-success' : 'text-purple-500'}`} />
+                  <span className={`text-sm font-medium ${isAttended ? 'text-success' : 'text-purple-700 dark:text-purple-300'}`}>
                     {idx + 1}회차{isAttended && ' (출석완료)'}
                   </span>
                   <input type="date" value={td.date}
@@ -160,7 +160,7 @@ export function TrialSection({
                   </select>
                   {!isAttended && (
                     <button type="button" onClick={() => removeTrialDate(idx)}
-                      className="p-1 text-muted-foreground hover:text-red-500">
+                      className="p-1 text-muted-foreground hover:text-destructive">
                       <X className="w-4 h-4" />
                     </button>
                   )}
@@ -170,7 +170,7 @@ export function TrialSection({
           </div>
         )}
 
-        {error && <p className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">{error}</p>}
+        {error && <p className="text-sm font-medium text-destructive" role="alert">{error}</p>}
 
         <div className="text-xs text-purple-600 dark:text-purple-400">
           * 일정 수정 시 기존 미출석 스케줄은 삭제되고 새 일정으로 재배정됩니다.

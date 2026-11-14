@@ -17,7 +17,7 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_0.8fr]">
       <section className="rounded-md border border-border bg-background p-4">
         <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-amber-50 text-amber-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-warning-soft text-warning">
             <CreditCard className="h-4 w-4" />
           </span>
           <div>
@@ -33,7 +33,7 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
               className={[
                 'h-10 rounded-md border px-4 text-sm font-medium transition',
                 formData.salary_payment_day === day
-                  ? 'border-slate-900 bg-slate-900 text-white'
+                  ? 'border-muted-foreground/40 bg-foreground text-white'
                   : 'border-border bg-card text-foreground hover:bg-muted',
               ].join(' ')}
               type="button"
@@ -82,7 +82,7 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
               className={[
                 'rounded-md border p-4 text-left transition',
                 formData.salary_month_type === option.id
-                  ? 'border-slate-900 bg-slate-50'
+                  ? 'border-muted-foreground/40 bg-muted'
                   : 'border-border bg-card hover:bg-muted',
               ].join(' ')}
               type="button"

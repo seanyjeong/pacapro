@@ -92,7 +92,7 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
                     onClick={() => onOpenAction({ kind: 'approve', user })}
                     disabled={actionLoading !== null}
                     aria-label={`${user.name} 승인`}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-success hover:bg-success/90"
                 >
                     {isRowLoading && pendingAction?.kind === 'approve' ? (
                         <>
@@ -112,7 +112,7 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
                     onClick={() => onOpenAction({ kind: 'reject', user })}
                     disabled={actionLoading !== null}
                     aria-label={`${user.name} 거절`}
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="border-destructive/30 text-destructive hover:bg-destructive-soft hover:text-destructive"
                 >
                     {isRowLoading && pendingAction?.kind === 'reject' ? (
                         <>

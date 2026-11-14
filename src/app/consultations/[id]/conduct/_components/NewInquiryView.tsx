@@ -125,7 +125,7 @@ export function NewInquiryView({
                   {hasSchoolGradeAvg && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">내신</span>
-                      <span className="font-bold text-blue-600">
+                      <span className="font-bold text-primary">
                         {scores.schoolGradeAvg === -1 ? '미응시' : `${scores.schoolGradeAvg}등급`}
                       </span>
                     </div>
@@ -133,7 +133,7 @@ export function NewInquiryView({
                   {hasAdmissionType && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">입시</span>
-                      <span className="rounded bg-blue-100 px-2 py-0.5 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      <span className="rounded bg-primary-soft px-2 py-0.5 text-sm font-semibold text-primary">
                         {admissionTypeLabel}
                       </span>
                     </div>

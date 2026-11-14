@@ -35,13 +35,12 @@ export default function NotificationsOperationsBoard({ state }: Props) {
   return (
     <aside
       aria-label="알림톡 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="notifications-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Notification Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">알림톡 작업 보드</h2>
-        <p className="text-sm text-slate-600">발송 채널, 템플릿, 테스트 위치를 빠르게 전환합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">알림톡 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">발송 채널, 템플릿, 테스트 위치를 빠르게 전환합니다.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -80,7 +79,7 @@ export default function NotificationsOperationsBoard({ state }: Props) {
       </div>
 
       {state.loadErrors.length > 0 ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
           준비 정보 일부를 불러오지 못했습니다. 저장 전 설정을 확인해주세요.
         </div>
       ) : null}
@@ -91,7 +90,7 @@ export default function NotificationsOperationsBoard({ state }: Props) {
       </Button>
 
       <Link
-        className="flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+        className="flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-muted px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
         href="/sms"
       >
         <Send className="h-4 w-4" />
@@ -103,12 +102,12 @@ export default function NotificationsOperationsBoard({ state }: Props) {
 
 function Metric({ icon, label, testId, value }: { icon: ReactNode; label: string; testId: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+    <div className="rounded-md border border-border bg-muted p-3" data-testid={testId}>
+      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </div>
   );
 }

@@ -69,9 +69,9 @@ export function PaymentFormSummary({ finalAmount, formData, students, paymentCon
       {paymentContext ? (
         <div className="grid gap-px border-t border-border bg-border sm:grid-cols-4">
           <SummaryStat label="현재 총 청구" value={formatWon(paymentContext.final_amount)} />
-          <SummaryStat label="이미 납부" value={formatWon(settledAmount)} tone="text-emerald-700" />
-          <SummaryStat label="현재 남은 금액" value={formatWon(currentRemainingAmount)} tone="text-rose-700" />
-          <SummaryStat label="수정 후 남은 금액" value={formatWon(nextRemainingAmount)} tone="text-blue-700" />
+          <SummaryStat label="이미 납부" value={formatWon(settledAmount)} tone="text-success" />
+          <SummaryStat label="현재 남은 금액" value={formatWon(currentRemainingAmount)} tone="text-destructive" />
+          <SummaryStat label="수정 후 남은 금액" value={formatWon(nextRemainingAmount)} tone="text-primary" />
         </div>
       ) : null}
     </section>

@@ -160,8 +160,8 @@ export function PrepaidPaymentModal({
   const statusLabel = (status: PrepaidMonthDetail['status']) => {
     switch (status) {
       case 'new': return null;
-      case 'existing_unpaid': return <span className="text-xs text-amber-600 dark:text-amber-400">미납</span>;
-      case 'already_paid': return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">완납</span>;
+      case 'existing_unpaid': return <span className="text-xs text-warning">미납</span>;
+      case 'already_paid': return <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">완납</span>;
     }
   };
 
@@ -175,7 +175,7 @@ export function PrepaidPaymentModal({
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Banknote className="w-5 h-5 text-emerald-600" />
+            <Banknote className="w-5 h-5 text-success" />
             선납 할인 결제
           </DialogTitle>
           <DialogDescription>
@@ -267,7 +267,7 @@ export function PrepaidPaymentModal({
                     </div>
                     <div className="text-right">
                       {m.status === 'already_paid' ? (
-                        <span className="text-gray-400 line-through">{m.base_amount.toLocaleString()}원</span>
+                        <span className="text-muted-foreground line-through">{m.base_amount.toLocaleString()}원</span>
                       ) : (
                         <div>
                           {m.prepaid_discount > 0 && (
@@ -290,7 +290,7 @@ export function PrepaidPaymentModal({
                   <span>{totalNormal.toLocaleString()}원</span>
                 </div>
                 {preview.total_prepaid_discount > 0 && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                  <div className="flex justify-between text-success">
                     <span>선납 할인 (-{preview.prepaid_discount_rate}%)</span>
                     <span>-{preview.total_prepaid_discount.toLocaleString()}원</span>
                   </div>
@@ -342,7 +342,7 @@ export function PrepaidPaymentModal({
         </div>
 
         {formError ? (
-          <div role="alert" className="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+          <div role="alert" className="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-sm font-medium">{formError}</p>
           </div>
@@ -355,7 +355,7 @@ export function PrepaidPaymentModal({
           <Button
             onClick={handlePay}
             disabled={paying || !preview || preview.months_payable === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-success hover:bg-success/90 text-white"
           >
             {paying ? (
               <>

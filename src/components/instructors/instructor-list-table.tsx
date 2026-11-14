@@ -74,9 +74,9 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                 <div className="flex min-w-0 items-center gap-3">
                   <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
                     instructor.gender === 'male'
-                      ? 'bg-slate-800'
+                      ? 'bg-foreground'
                       : instructor.gender === 'female'
-                      ? 'bg-rose-700'
+                      ? 'bg-destructive'
                       : 'bg-primary'
                   }`}>
                     <span className="text-sm font-bold text-white">{instructor.name.charAt(0)}</span>
@@ -185,9 +185,9 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                     <div className="flex items-center">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-md ${
                         instructor.gender === 'male'
-                          ? 'bg-slate-800'
+                          ? 'bg-foreground'
                           : instructor.gender === 'female'
-                          ? 'bg-rose-700'
+                          ? 'bg-destructive'
                           : 'bg-primary'
                       }`}>
                         <span className="text-white font-bold text-sm">
@@ -213,14 +213,14 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-4">
-                    <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                    <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
                       {SALARY_TYPE_LABELS[instructor.salary_type]}
                     </span>
                     {instructor.salary_type === 'hourly' && instructor.instructor_type && (
                       <span className={`ml-1 inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                         instructor.instructor_type === 'assistant'
                           ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/70 dark:text-violet-200'
-                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-200'
+                          : 'bg-success-soft text-success'
                       }`}>
                         {INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}
                       </span>

@@ -99,8 +99,8 @@ export function ScheduleCalendar({
               key={day}
               className={cn(
                 'text-center text-sm font-semibold py-2',
-                index === 0 && 'text-red-600',
-                index === 6 && 'text-blue-600'
+                index === 0 && 'text-destructive',
+                index === 6 && 'text-primary'
               )}
             >
               {day}
@@ -137,8 +137,8 @@ export function ScheduleCalendar({
                   <div
                     className={cn(
                       'text-sm font-medium mb-1',
-                      index % 7 === 0 && 'text-red-600',
-                      index % 7 === 6 && 'text-blue-600',
+                      index % 7 === 0 && 'text-destructive',
+                      index % 7 === 6 && 'text-primary',
                       !inMonth && 'text-muted-foreground'
                     )}
                   >
@@ -177,11 +177,11 @@ export function ScheduleCalendar({
         <div className="mt-4 pt-4 border-t">
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-100 border border-blue-200" />
+              <div className="w-4 h-4 rounded bg-primary-soft border border-primary/30" />
               <span>오전</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-100 border border-green-200" />
+              <div className="w-4 h-4 rounded bg-success-soft border border-success/30" />
               <span>오후</span>
             </div>
             <div className="flex items-center gap-2">

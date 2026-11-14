@@ -85,7 +85,7 @@ function TabletStudentsPageContent() {
 
         <Card>
           <CardContent className="p-12 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">학생 정보를 불러오지 못했습니다</h3>
             <p className="text-muted-foreground mb-4">잠시 후 다시 시도해주세요.</p>
             <Button onClick={handleReload}>다시 시도</Button>
@@ -97,10 +97,10 @@ function TabletStudentsPageContent() {
 
   // 탭 정의
   const tabs = [
-    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600 dark:text-green-400' },
-    { id: 'paused' as const, label: '휴원', icon: Users, color: 'text-yellow-600 dark:text-yellow-400' },
+    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-success' },
+    { id: 'paused' as const, label: '휴원', icon: Users, color: 'text-warning' },
     { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
-    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-orange-600 dark:text-orange-400' },
+    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-warning' },
   ];
 
   return (
@@ -198,13 +198,13 @@ function TabletStudentsPageContent() {
 
       {/* 안내 */}
       {!loading && students.length === 0 && !searchQuery && (
-        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+        <Card className="bg-primary-soft border-primary/30">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">안내</h4>
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+                <h4 className="text-sm font-semibold text-primary mb-1">안내</h4>
+                <p className="text-sm text-primary">
                   해당 상태의 학생이 없습니다.
                 </p>
               </div>

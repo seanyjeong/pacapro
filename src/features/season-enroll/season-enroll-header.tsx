@@ -17,7 +17,6 @@ export function SeasonEnrollHeader({ season, onBack }: SeasonEnrollHeaderProps) 
           뒤로
         </Button>
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Season Enrollment</div>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 등록</h1>
           <p className="mt-1 break-keep text-sm text-muted-foreground">
             {season.season_name} · {SEASON_TYPE_LABELS[season.season_type]} · {formatSeasonFee(season.default_season_fee)}

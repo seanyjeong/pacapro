@@ -113,7 +113,7 @@ export function StudentAvatar({ cacheKey, className, forcePhoto, imageFit = 'cov
         aria-label={`${student.name} 사진`}
         className={cn(
           'flex shrink-0 items-center justify-center overflow-hidden rounded-md font-semibold text-slate-50',
-          imageUrl && imageFit === 'contain' ? 'bg-muted' : 'bg-slate-950',
+          imageUrl && imageFit === 'contain' ? 'bg-muted' : 'bg-foreground',
           SIZE_CLASSES[size],
           className
         )}

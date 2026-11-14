@@ -12,9 +12,9 @@ interface SeasonListSummaryProps {
 export function SeasonListSummary({ stats }: SeasonListSummaryProps) {
   const items = [
     { icon: CalendarDays, label: '전체 시즌', tone: 'text-foreground', value: stats.total },
-    { icon: CircleCheck, label: '진행 중', tone: 'text-emerald-700', value: stats.active },
+    { icon: CircleCheck, label: '진행 중', tone: 'text-success', value: stats.active },
     { icon: Flag, label: '수시 시즌', tone: 'text-sky-700', value: stats.early },
-    { icon: Trophy, label: '정시 시즌', tone: 'text-amber-700', value: stats.regular },
+    { icon: Trophy, label: '정시 시즌', tone: 'text-warning', value: stats.regular },
   ];
 
   return (

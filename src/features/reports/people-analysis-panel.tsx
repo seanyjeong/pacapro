@@ -8,8 +8,8 @@ interface PeopleAnalysisPanelProps {
 
 export function PeopleAnalysisPanel({ access, stats }: PeopleAnalysisPanelProps) {
   const rows = [
-    { label: '재원생', value: `${stats.students.active}명`, marker: 'bg-emerald-500' },
-    { label: '휴원생', value: `${stats.students.paused}명`, marker: 'bg-amber-400' },
+    { label: '재원생', value: `${stats.students.active}명`, marker: 'bg-success' },
+    { label: '휴원생', value: `${stats.students.paused}명`, marker: 'bg-warning' },
   ];
   if (access.instructors) {
     rows.push({ label: '활동 강사', value: `${stats.instructors.active}명`, marker: 'bg-sky-500' });

@@ -107,12 +107,12 @@ export default function InstructorsPage() {
           />
 
           {!loading && instructors.length === 0 && !searchQuery && !filters.status && !filters.salary_type && (
-            <section className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/70 dark:bg-blue-950/30">
+            <section className="rounded-md border border-primary/30 bg-primary-soft p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 text-blue-700 dark:text-blue-300" />
+                <AlertCircle className="mt-0.5 h-5 w-5 text-primary" />
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-blue-950 dark:text-blue-100">시작하기</h2>
-                  <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
+                  <h2 className="text-sm font-semibold text-primary">시작하기</h2>
+                  <p className="mt-1 text-sm text-primary">
                     강사를 등록하면 급여 방식, 재직 상태, 출퇴근 기록을 함께 관리할 수 있습니다.
                   </p>
                 </div>

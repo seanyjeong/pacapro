@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Bell, User, LogOut, Menu, Users, UserCog, Download } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Search, User, LogOut, Users, UserCog, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api/auth';
 import apiClient from '@/lib/api/client';
 
@@ -143,135 +144,107 @@ export function TopNav() {
     };
 
     return (
-        <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border/50 fixed top-0 right-0 left-0 md:left-64 z-10 no-print supports-[backdrop-filter]:bg-background/60">
-            <div className="h-full px-4 md:px-6 flex items-center justify-between">
-                {/* Left: Mobile Menu + Search */}
-                <div className="flex items-center space-x-4 flex-1">
-                    {/* Mobile Menu Button */}
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                        <Menu className="w-5 h-5" />
-                    </Button>
+        <header className="no-print sticky top-0 z-30 shrink-0 bg-background/85 backdrop-blur-md">
+            <div className="flex h-16 items-center gap-3 px-4 md:h-[72px] md:px-8">
+                {/* 휴대폰: 로고 */}
+                <Link href="/" className="shrink-0 md:hidden" aria-label="대시보드로 가기">
+                    <Image src="/icons/icon-96x96.png" alt="P-ACA" width={32} height={32} className="rounded-xl" />
+                </Link>
 
-                    {/* Search Bar */}
-                    <div className="relative max-w-md w-full" ref={searchRef}>
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => searchResults.length > 0 && setShowResults(true)}
-                            placeholder="학생, 강사, 전화번호 검색..."
-                            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background/50 focus:bg-background transition-colors text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        />
+                {/* 검색 */}
+                <div className="relative w-full max-w-md flex-1" ref={searchRef}>
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                        placeholder="학생·강사·전화번호 검색"
+                        aria-label="학생·강사·전화번호 검색"
+                        className="h-11 w-full rounded-xl border border-transparent bg-card pl-11 pr-4 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/80 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                    />
 
-                        {/* 검색 결과 드롭다운 */}
-                        {showResults && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-lg shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)] z-50 max-h-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                                {searching ? (
-                                    <div className="p-4 text-center text-muted-foreground text-sm">
-                                        검색 중...
-                                    </div>
-                                ) : searchResults.length === 0 ? (
-                                    <div className="p-4 text-center text-muted-foreground text-sm">
-                                        검색 결과가 없습니다
-                                    </div>
-                                ) : (
-                                    <ul>
-                                        {searchResults.map((result) => (
-                                            <li key={`${result.type}-${result.id}`}>
-                                                <button
-                                                    onClick={() => handleResultClick(result)}
-                                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
-                                                >
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                        result.type === 'student' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-green-100 dark:bg-green-900/30'
-                                                    }`}>
-                                                        {result.type === 'student' ? (
-                                                            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                                        ) : (
-                                                            <UserCog className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    {/* 검색 결과 */}
+                    {showResults && (
+                        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl bg-popover p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-150">
+                            {searching ? (
+                                <div className="p-4 text-center text-sm text-muted-foreground">검색 중...</div>
+                            ) : searchResults.length === 0 ? (
+                                <div className="p-4 text-center text-sm text-muted-foreground">검색 결과가 없습니다</div>
+                            ) : (
+                                <ul>
+                                    {searchResults.map((result) => (
+                                        <li key={`${result.type}-${result.id}`}>
+                                            <button
+                                                onClick={() => handleResultClick(result)}
+                                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted"
+                                            >
+                                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                                                    result.type === 'student' ? 'bg-primary-soft text-primary' : 'bg-success-soft text-success'
+                                                }`}>
+                                                    {result.type === 'student' ? <Users className="h-5 w-5" /> : <UserCog className="h-5 w-5" />}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="font-semibold text-foreground">{result.name}</span>
+                                                        <span className="text-xs font-medium text-muted-foreground">{result.type === 'student' ? '학생' : '강사'}</span>
+                                                        {result.status !== 'active' && (
+                                                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-secondary-foreground">
+                                                                {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status === 'trial' ? '체험' : result.status}
+                                                            </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-foreground">{result.name}</span>
-                                                            <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                                                result.type === 'student' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                            }`}>
-                                                                {result.type === 'student' ? '학생' : '강사'}
-                                                            </span>
-                                                            {result.status !== 'active' && (
-                                                                <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                                                    {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status === 'trial' ? '체험' : result.status}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-sm text-muted-foreground truncate">
-                                                            {result.subtext}
-                                                            {result.phone && ` · ${result.phone}`}
-                                                        </div>
+                                                    <div className="truncate text-sm text-muted-foreground">
+                                                        {result.subtext}
+                                                        {result.phone && ` · ${result.phone}`}
                                                     </div>
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                                </div>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Right: Notifications + User */}
-                <div className="flex items-center space-x-2 md:space-x-4">
-                    {/* Install App Button */}
+                <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
                     {showInstallButton && (
                         <button
                             onClick={handleInstallClick}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+                            className="hidden h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary-soft sm:flex"
                             title="바탕화면에 앱 설치"
                         >
-                            <Download className="w-4 h-4" />
-                            <span className="hidden md:inline">앱 설치</span>
+                            <Download className="h-4 w-4" />
+                            <span className="hidden lg:inline">앱 설치</span>
                         </button>
                     )}
 
-                    {/* Theme Toggle */}
                     <ThemeToggle />
 
-                    {/* Notifications */}
-                    <button className="relative p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-
-                    {/* User Menu */}
                     <div className="relative">
                         <button
                             onClick={() => setShowUserMenu(!showUserMenu)}
-                            className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg transition-colors"
+                            aria-label="내 계정"
+                            className="flex items-center gap-2.5 rounded-xl p-1.5 transition-colors hover:bg-card md:pr-3"
                         >
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-primary" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft">
+                                <User className="h-[18px] w-[18px] text-primary" />
                             </div>
-                            <div className="hidden md:block text-left">
-                                <div className="text-sm font-medium text-foreground">
-                                    {user?.name || '사용자'}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {user ? getRoleLabel(user.role || '', user.position) : '사용자'}
-                                </div>
+                            <div className="hidden text-left md:block">
+                                <div className="text-sm font-semibold leading-tight text-foreground">{user?.name || '사용자'}</div>
+                                <div className="text-xs text-muted-foreground">{user ? getRoleLabel(user.role || '', user.position) : '사용자'}</div>
                             </div>
                         </button>
 
-                        {/* User Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)] border border-border/50 py-1 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-popover p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-150">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-[15px] font-medium text-foreground transition-colors hover:bg-muted"
                                 >
-                                    <LogOut className="w-4 h-4" />
-                                    <span>로그아웃</span>
+                                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                                    로그아웃
                                 </button>
                             </div>
                         )}

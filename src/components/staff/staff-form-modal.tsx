@@ -206,7 +206,7 @@ export function StaffFormModal({
             {!isEdit && (
               <div>
                 <label htmlFor="staff-instructor-select" className="block text-sm font-medium text-foreground mb-1">
-                  강사 선택 <span className="text-red-500">*</span>
+                  강사 선택 <span className="text-destructive">*</span>
                 </label>
                 <select
                   id="staff-instructor-select"
@@ -217,7 +217,7 @@ export function StaffFormModal({
                   }}
                   aria-invalid={!!errors.instructor_id}
                   aria-describedby={errors.instructor_id ? 'staff-instructor-error' : undefined}
-                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">강사를 선택하세요</option>
                   {availableInstructors.map((instructor) => (
@@ -227,7 +227,7 @@ export function StaffFormModal({
                   ))}
                 </select>
                 {errors.instructor_id && (
-                  <p id="staff-instructor-error" className="mt-1 text-sm text-red-500">{errors.instructor_id}</p>
+                  <p id="staff-instructor-error" className="mt-1 text-sm text-destructive">{errors.instructor_id}</p>
                 )}
               </div>
             )}
@@ -235,7 +235,7 @@ export function StaffFormModal({
             {/* 이메일 */}
             <div>
               <label htmlFor="staff-email" className="block text-sm font-medium text-foreground mb-1">
-                이메일 (로그인 ID) <span className="text-red-500">*</span>
+                이메일 (로그인 ID) <span className="text-destructive">*</span>
               </label>
               <input
                 id="staff-email"
@@ -245,7 +245,7 @@ export function StaffFormModal({
                   setFormData((prev) => ({ ...prev, email: e.target.value }));
                   clearFieldError('email');
                 }}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-muted"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-muted"
                 placeholder="example@email.com"
                 disabled={isEdit}
                 autoComplete="off"
@@ -253,13 +253,13 @@ export function StaffFormModal({
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'staff-email-error' : undefined}
               />
-              {errors.email && <p id="staff-email-error" className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && <p id="staff-email-error" className="mt-1 text-sm text-destructive">{errors.email}</p>}
             </div>
 
             {/* 비밀번호 */}
             <div>
               <label htmlFor="staff-password" className="block text-sm font-medium text-foreground mb-1">
-                비밀번호 {!isEdit && <span className="text-red-500">*</span>}
+                비밀번호 {!isEdit && <span className="text-destructive">*</span>}
                 {isEdit && <span className="text-muted-foreground text-xs">(변경시에만 입력)</span>}
               </label>
               <div className="relative">
@@ -271,7 +271,7 @@ export function StaffFormModal({
                     setFormData((prev) => ({ ...prev, password: e.target.value }));
                     clearFieldError('password');
                   }}
-                  className="w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="8자 이상"
                   autoComplete="new-password"
                   name="staff-password"
@@ -287,7 +287,7 @@ export function StaffFormModal({
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p id="staff-password-error" className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.password && <p id="staff-password-error" className="mt-1 text-sm text-destructive">{errors.password}</p>}
             </div>
 
             {/* 직급 */}
@@ -298,7 +298,7 @@ export function StaffFormModal({
                 type="text"
                 value={formData.position}
                 onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="부원장, 경리, 실장 등"
               />
             </div>
@@ -390,7 +390,7 @@ export function StaffFormModal({
                                   if (el) el.indeterminate = categoryViewIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'view', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 보기</span>
                             </label>
@@ -402,7 +402,7 @@ export function StaffFormModal({
                                   if (el) el.indeterminate = categoryEditIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'edit', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 수정</span>
                             </label>
@@ -429,7 +429,7 @@ export function StaffFormModal({
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'view', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                                     />
                                   </td>
                                   <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
@@ -439,7 +439,7 @@ export function StaffFormModal({
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'edit', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                                     />
                                   </td>
                                 </tr>
@@ -456,7 +456,7 @@ export function StaffFormModal({
 
             {/* 버튼 */}
             {errors.submit && (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
+              <p className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive">
                 {errors.submit}
               </p>
             )}

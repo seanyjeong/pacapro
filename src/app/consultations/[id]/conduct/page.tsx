@@ -71,7 +71,7 @@ export default function ConductPage({ params }: PageProps) {
     return (
       <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
         <section className="mx-auto flex min-h-[60vh] w-full max-w-xl items-center">
-          <div className="w-full rounded-md border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          <div className="w-full rounded-md border border-warning/30 bg-warning-soft p-5 text-warning">
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div className="min-w-0">

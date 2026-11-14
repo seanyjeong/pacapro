@@ -53,7 +53,7 @@ export function AllRecipientFilters({
             className={cn(
               'rounded-md border px-3 py-2 text-left transition-colors',
               statusFilter === option.value
-                ? 'border-emerald-400 bg-emerald-50'
+                ? 'border-success bg-success-soft'
                 : 'border-border hover:border-muted-foreground/50'
             )}
           >
@@ -77,7 +77,7 @@ export function AllRecipientFilters({
               className={cn(
                 'rounded-md border px-2 py-2 text-sm font-medium transition-colors',
                 gradeFilter === option.value
-                  ? 'border-slate-400 bg-slate-100 text-slate-950'
+                  ? 'border-muted-foreground/40 bg-muted text-foreground'
                   : 'border-border bg-background text-foreground hover:border-muted-foreground/50'
               )}
             >
@@ -117,7 +117,7 @@ export function AllRecipientFilters({
         <span>대표번호 {recipientsCount.parents}명</span>
       </div>
       {errorMessage ? (
-        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+        <p className="mt-3 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
           {errorMessage}
         </p>
       ) : null}

@@ -36,7 +36,7 @@ export function ScheduleList({
 }: ScheduleListProps) {
   if (schedules.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+      <div className="rounded-md border border-dashed border-border bg-muted px-4 py-10 text-center text-sm text-muted-foreground">
         {emptyMessage}
       </div>
     );
@@ -44,9 +44,9 @@ export function ScheduleList({
 
   return (
     <div className="space-y-3">
-      <div className="hidden overflow-hidden rounded-md border border-slate-200 bg-card md:block" data-testid="schedule-list-table">
+      <div className="hidden overflow-hidden rounded-md border border-border bg-card md:block" data-testid="schedule-list-table">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500">
+          <thead className="border-b border-border bg-muted text-left text-xs font-semibold text-muted-foreground">
             <tr>
               <th className="px-4 py-3">수업</th>
               <th className="px-4 py-3">일정</th>
@@ -55,25 +55,25 @@ export function ScheduleList({
               <th className="px-4 py-3 text-right">작업</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {schedules.map((schedule) => (
               <tr
                 key={schedule.id}
-                className={cn('transition-colors hover:bg-slate-50', onScheduleClick && 'cursor-pointer')}
+                className={cn('transition-colors hover:bg-muted', onScheduleClick && 'cursor-pointer')}
                 onClick={() => onScheduleClick?.(schedule)}
               >
                 <td className="px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-950">{getScheduleTitle(schedule)}</p>
+                    <p className="truncate font-medium text-foreground">{getScheduleTitle(schedule)}</p>
                     {schedule.content && (
-                      <p className="mt-1 line-clamp-1 text-xs text-slate-500">{schedule.content}</p>
+                      <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{schedule.content}</p>
                     )}
                   </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-slate-700">
-                      <Calendar className="h-4 w-4 text-slate-400" />
+                    <div className="flex items-center gap-1.5 text-secondary-foreground">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
                       {formatDateKorean(schedule.class_date)}
                     </div>
                     <Badge variant="outline" className={cn('gap-1 font-medium', getTimeSlotColor(schedule.time_slot))}>
@@ -83,8 +83,8 @@ export function ScheduleList({
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <User className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center gap-2 text-secondary-foreground">
+                    <User className="h-4 w-4 text-muted-foreground" />
                     {schedule.instructor_name || '강사'}
                   </div>
                 </td>
@@ -115,7 +115,7 @@ export function ScheduleList({
               </div>
             </CardHeader>
             <CardContent className="space-y-3 p-4">
-              <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+              <div className="flex flex-wrap gap-2 text-sm text-secondary-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   {formatDateKorean(schedule.class_date)}
@@ -126,14 +126,14 @@ export function ScheduleList({
                 </Badge>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-slate-400" />
+                <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{schedule.instructor_name || '강사'}</span>
               </div>
               {schedule.content && (
-                <p className="line-clamp-2 text-sm text-slate-500">{schedule.content}</p>
+                <p className="line-clamp-2 text-sm text-muted-foreground">{schedule.content}</p>
               )}
               {schedule.notes && (
-                <div className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">{schedule.notes}</div>
+                <div className="rounded-md bg-muted p-3 text-sm text-secondary-foreground">{schedule.notes}</div>
               )}
               <ScheduleActions
                 schedule={schedule}

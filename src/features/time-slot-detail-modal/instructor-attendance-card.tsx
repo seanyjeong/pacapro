@@ -34,13 +34,13 @@ export function InstructorAttendanceCard({
     <div className="p-3 bg-muted rounded-lg space-y-2">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center shrink-0">
-            <UserCog className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center shrink-0">
+            <UserCog className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0">
             <span className="font-medium text-foreground truncate">{instructor.name}</span>
             {isHourly && (
-              <span className="ml-2 text-xs text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">
+              <span className="ml-2 text-xs text-warning bg-warning-soft px-1.5 py-0.5 rounded">
                 시급
               </span>
             )}
@@ -100,7 +100,7 @@ export function InstructorAttendanceCard({
             aria-label={`${instructor.name} 퇴근 시간`}
           />
           {attendance?.checkIn && attendance?.checkOut && (
-            <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold shrink-0 px-2 py-1 bg-emerald-50 dark:bg-emerald-950 rounded-full">
+            <span className="text-xs text-success font-semibold shrink-0 px-2 py-1 bg-success-soft rounded-full">
               {calculateHours(attendance.checkIn, attendance.checkOut)}
             </span>
           )}
@@ -134,8 +134,8 @@ function HourlyInstructorControls({
         className={cn(
           'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
           attendance?.checkIn
-            ? 'bg-green-500 text-white'
-            : 'bg-green-100 text-green-700 hover:bg-green-200'
+            ? 'bg-success text-white'
+            : 'bg-success-soft text-success hover:bg-success/20'
         )}
       >
         {attendance?.checkIn ? `출근 ${attendance.checkIn}` : '출근'}
@@ -147,9 +147,9 @@ function HourlyInstructorControls({
         className={cn(
           'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
           attendance?.checkOut
-            ? 'bg-blue-500 text-white'
+            ? 'bg-primary text-white'
             : attendance?.checkIn
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              ? 'bg-primary-soft text-primary hover:bg-primary/20'
               : 'bg-muted text-muted-foreground cursor-not-allowed'
         )}
       >
@@ -162,7 +162,7 @@ function HourlyInstructorControls({
         className={cn(
           'px-2.5 py-1.5 rounded-full text-xs font-medium transition-all',
           attendance?.status === 'absent'
-            ? 'bg-red-500 text-white'
+            ? 'bg-destructive text-white'
             : 'bg-background text-muted-foreground hover:bg-muted/80'
         )}
       >

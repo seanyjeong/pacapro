@@ -16,12 +16,12 @@ const RESET_PASSWORD_ERROR_MESSAGE = '비밀번호를 변경하지 못했습니�
 function ResetLoadingState({ label }: { label: string }) {
   return (
     <AuthPageShell
-      icon={<div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />}
+      icon={<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/40 border-t-transparent" />}
       title={label}
       tone="loading"
       description="재설정 링크 상태를 확인하고 있습니다."
     >
-      <p className="text-sm text-slate-600">잠시만 기다려주세요.</p>
+      <p className="text-sm text-secondary-foreground">잠시만 기다려주세요.</p>
     </AuthPageShell>
   );
 }
@@ -181,7 +181,7 @@ function ResetPasswordContent() {
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
             {error}
           </div>
         ) : null}

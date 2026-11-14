@@ -35,22 +35,21 @@ export function BookingIntakePanel({ formData }: BookingIntakePanelProps) {
   const completed = requiredCount === REQUIRED_TOTAL;
 
   return (
-    <aside className="rounded-md border border-slate-200 bg-white lg:sticky lg:top-5" data-testid="booking-intake-panel">
-      <div className="border-b border-slate-200 px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Admissions Desk</p>
-        <h2 className="mt-1 text-sm font-semibold text-slate-950">입력 가이드</h2>
-        <p className="mt-1 text-xs text-slate-500">소요 1분</p>
+    <aside className="rounded-md border border-border bg-card lg:sticky lg:top-5" data-testid="booking-intake-panel">
+      <div className="border-b border-border px-4 py-3">
+        <h2 className="mt-1 text-sm font-semibold text-foreground">입력 가이드</h2>
+        <p className="mt-1 text-xs text-muted-foreground">소요 1분</p>
       </div>
 
       <div className="space-y-3 p-4">
-        <div className={`rounded-md border px-3 py-3 ${completed ? 'border-emerald-200 bg-emerald-50' : 'border-blue-200 bg-blue-50'}`}>
+        <div className={`rounded-md border px-3 py-3 ${completed ? 'border-success/30 bg-success-soft' : 'border-primary/30 bg-primary-soft'}`}>
           <div className="flex items-start gap-2">
-            <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${completed ? 'text-emerald-700' : 'text-blue-700'}`} />
+            <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${completed ? 'text-success' : 'text-primary'}`} />
             <div>
-              <p className={`text-sm font-semibold ${completed ? 'text-emerald-950' : 'text-blue-950'}`}>
+              <p className={`text-sm font-semibold ${completed ? 'text-success' : 'text-primary'}`}>
                 필수 {requiredCount}/{REQUIRED_TOTAL}
               </p>
-              <p className={`mt-1 text-xs leading-5 ${completed ? 'text-emerald-800' : 'text-blue-800'}`}>
+              <p className={`mt-1 text-xs leading-5 ${completed ? 'text-success' : 'text-primary'}`}>
                 필수 정보를 채우면 바로 일정 선택으로 넘어갈 수 있습니다.
               </p>
             </div>
@@ -75,11 +74,11 @@ function GuideRow({
   title: string;
 }) {
   return (
-    <div className="flex min-w-0 gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+    <div className="flex min-w-0 gap-2 rounded-md border border-border bg-muted px-3 py-2.5">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-950">{title}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
       </div>
     </div>
   );

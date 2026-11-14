@@ -119,7 +119,7 @@ export function ConsultationDetailModal({
       if (!nextOpen) handleClose();
     }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-4 border-b sticky top-0 bg-white z-10">
+        <DialogHeader className="p-4 border-b sticky top-0 bg-card z-10">
           <div className="flex items-center justify-between">
             <DialogTitle>상담 기록 상세</DialogTitle>
             <div className="flex gap-2">
@@ -144,7 +144,7 @@ export function ConsultationDetailModal({
         </DialogHeader>
 
         {pdfError ? (
-          <div role="alert" className="mx-4 mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+          <div role="alert" className="mx-4 mt-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-sm font-medium">{pdfError}</p>
           </div>

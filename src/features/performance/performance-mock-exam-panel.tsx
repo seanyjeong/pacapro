@@ -71,7 +71,7 @@ export function MockExamPanel({
       <section className="rounded-md border border-border bg-card shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border px-4 py-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700">
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-success">
               <CheckCircle2 className="h-4 w-4" />
               정시엔진 연결됨
             </span>

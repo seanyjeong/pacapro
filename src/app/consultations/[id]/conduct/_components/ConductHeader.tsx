@@ -33,13 +33,12 @@ export function ConductHeader({
               {backLabel}
             </Button>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Consultation Desk</p>
               <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold tracking-normal text-foreground">
                 <span>{title}</span>
                 <span className="min-w-0 truncate">· {consultation.student_name}</span>
                 <span className="text-muted-foreground">({consultation.student_grade})</span>
                 {isLearning && consultation.learning_type && (
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                  <Badge variant="secondary" className="bg-success-soft text-success">
                     {LEARNING_TYPE_LABELS[consultation.learning_type]}
                   </Badge>
                 )}
@@ -82,7 +81,7 @@ export function ConductHeader({
           <div className="mt-3">
             <div className="h-2 w-full rounded-full bg-muted">
               <div
-                className="h-2 rounded-full bg-blue-600 transition-all duration-300"
+                className="h-2 rounded-full bg-primary transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

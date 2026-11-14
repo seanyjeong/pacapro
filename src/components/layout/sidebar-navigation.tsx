@@ -2,213 +2,99 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { SidebarTooltip } from './sidebar-tooltip';
-import { CollapsedCategoryMenu } from './collapsed-category-menu';
-
-interface NavItem {
-    title: string;
-    href: string;
-    icon: React.ComponentType<{ className?: string }>;
-    badge?: string;
-    permissionKey?: string;
-    ownerOnly?: boolean;
-}
-
-interface NavCategory {
-    title: string;
-    icon: React.ComponentType<{ className?: string }>;
-    items: NavItem[];
-    defaultOpen?: boolean;
-}
-
-interface ConsultationCounts {
-    newInquiry: number;
-    enrolled: number;
-}
+import {
+    adminNavItems,
+    canAccessNavItem,
+    dashboardItem,
+    findActiveHref,
+    isNavAdmin,
+    navCategories,
+    type NavItem,
+    type NavUser,
+} from './nav-config';
+import type { ConsultationCounts } from './use-nav-data';
 
 interface SidebarNavigationProps {
     collapsed: boolean;
     pathname: string;
     mounted: boolean;
-    isAdmin: boolean;
-    expandedCategories: Record<string, boolean>;
-    navCategories: NavCategory[];
-    dashboardItem: NavItem;
-    adminNavItems: NavItem[];
+    user: NavUser | null;
     consultationCounts: ConsultationCounts;
-    canAccessMenu: (item: NavItem) => boolean;
-    hasAccessibleItems: (category: NavCategory) => boolean;
-    toggleCategory: (title: string) => void;
 }
 
-export function SidebarNavigation({
-    collapsed,
-    pathname,
-    mounted,
-    isAdmin,
-    expandedCategories,
-    navCategories,
-    dashboardItem,
-    adminNavItems,
-    consultationCounts,
-    canAccessMenu,
-    hasAccessibleItems,
-    toggleCategory,
-}: SidebarNavigationProps) {
-    const DashboardIcon = dashboardItem.icon;
+export function countForItem(href: string, counts: ConsultationCounts): number {
+    if (href === '/consultations/new-inquiry') return counts.newInquiry;
+    if (href === '/consultations/enrolled') return counts.enrolled;
+    return 0;
+}
+
+function NavLink({ item, active, collapsed, count }: { item: NavItem; active: boolean; collapsed: boolean; count: number }) {
+    const Icon = item.icon;
+    return (
+        <SidebarTooltip label={item.title} collapsed={collapsed}>
+            <Link
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                    'relative flex items-center rounded-xl text-[15px] transition-colors',
+                    collapsed ? 'h-11 justify-center' : 'h-10 gap-3 px-3',
+                    active ? 'bg-muted font-bold text-foreground' : 'font-medium text-secondary-foreground hover:bg-muted/70 hover:text-foreground'
+                )}
+            >
+                <Icon className={cn('h-[18px] w-[18px] shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
+                {!collapsed && <span className="min-w-0 flex-1 truncate">{item.title}</span>}
+                {count > 0 && (
+                    <span className={cn(
+                        'rounded-full bg-destructive text-[11px] font-bold leading-none text-destructive-foreground',
+                        collapsed ? 'absolute right-1.5 top-1.5 h-2 w-2 p-0 text-[0px]' : 'px-1.5 py-1'
+                    )}>
+                        {count}
+                    </span>
+                )}
+                {!collapsed && item.badge && (
+                    <span className="rounded-full bg-destructive px-1.5 py-1 text-[11px] font-bold leading-none text-destructive-foreground">{item.badge}</span>
+                )}
+            </Link>
+        </SidebarTooltip>
+    );
+}
+
+export function SidebarNavigation({ collapsed, pathname, mounted, user, consultationCounts }: SidebarNavigationProps) {
+    const activeHref = findActiveHref(pathname);
+    const categories = navCategories
+        .map((category) => ({ ...category, items: category.items.filter((item) => canAccessNavItem(item, user, mounted)) }))
+        .filter((category) => category.items.length > 0);
 
     return (
-        <nav className={cn("flex-1 py-4 px-2", collapsed ? "overflow-visible" : "overflow-y-auto")}>
-            <ul className="space-y-1 mb-2">
-                <li>
-                    <SidebarTooltip label="대시보드" collapsed={collapsed}>
-                        <Link
-                            href={dashboardItem.href}
-                            className={cn(
-                                'flex items-center rounded-lg text-sm font-medium transition-colors',
-                                collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
-                                pathname === dashboardItem.href
-                                    ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                    : 'text-foreground hover:bg-muted/80'
-                            )}
-                        >
-                            <DashboardIcon className={cn('w-5 h-5 flex-shrink-0', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
-                            {!collapsed && <span>{dashboardItem.title}</span>}
-                        </Link>
-                    </SidebarTooltip>
-                </li>
-            </ul>
+        <nav className={cn('flex-1 overflow-y-auto pb-3', collapsed ? 'px-2' : 'px-3')}>
+            <NavLink item={dashboardItem} active={activeHref === dashboardItem.href} collapsed={collapsed} count={0} />
 
-            <div className="space-y-1">
-                {navCategories.filter(hasAccessibleItems).map((category) => {
-                    const CategoryIcon = category.icon;
-                    const isExpanded = expandedCategories[category.title];
-                    const hasActiveChild = category.items.some(
-                        item => pathname === item.href || pathname.startsWith(item.href + '/')
-                    );
-
-                    return (
-                        <div key={category.title}>
-                            {collapsed ? (
-                                <CollapsedCategoryMenu
-                                    category={category}
-                                    hasActiveChild={hasActiveChild}
-                                    pathname={pathname}
-                                    canAccessMenu={canAccessMenu}
-                                    consultationCounts={consultationCounts}
-                                />
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => toggleCategory(category.title)}
-                                        className={cn(
-                                            'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                            hasActiveChild
-                                                ? 'bg-primary/5 text-primary'
-                                                : 'text-foreground hover:bg-muted'
-                                        )}
-                                    >
-                                        <div className="flex items-center space-x-3">
-                                            <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
-                                            <span>{category.title}</span>
-                                        </div>
-                                        {isExpanded ? (
-                                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                        ) : (
-                                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                        )}
-                                    </button>
-
-                                    {isExpanded && (
-                                        <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
-                                            {category.items.filter(canAccessMenu).map((item) => {
-                                                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                                const Icon = item.icon;
-
-                                                return (
-                                                    <li key={item.href}>
-                                                        <Link
-                                                            href={item.href}
-                                                            className={cn(
-                                                                'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                                                                isActive
-                                                                    ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                                                    : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                                                            )}
-                                                        >
-                                                            <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                                            <span>{item.title}</span>
-                                                            {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                                <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                    {consultationCounts.newInquiry}
-                                                                </span>
-                                                            )}
-                                                            {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                                <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                    {consultationCounts.enrolled}
-                                                                </span>
-                                                            )}
-                                                            {item.badge && (
-                                                                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                    {item.badge}
-                                                                </span>
-                                                            )}
-                                                        </Link>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            {mounted && isAdmin && (
-                <div className="mt-6">
-                    {!collapsed && (
-                        <div className="px-3 mb-2">
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">개발자 전용</h3>
-                        </div>
-                    )}
-                    <ul className="space-y-1">
-                        {adminNavItems.map((item) => {
-                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                            const Icon = item.icon;
-
-                            return (
-                                <li key={item.href}>
-                                    <SidebarTooltip label={item.title} collapsed={collapsed}>
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                'flex items-center rounded-lg text-sm font-medium transition-colors',
-                                                collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
-                                                isActive
-                                                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                                                    : 'text-foreground hover:bg-muted'
-                                            )}
-                                        >
-                                            <Icon
-                                                className={cn('w-5 h-5', isActive ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}
-                                            />
-                                            {!collapsed && <span>{item.title}</span>}
-                                            {!collapsed && item.badge && (
-                                                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                    {item.badge}
-                                                </span>
-                                            )}
-                                        </Link>
-                                    </SidebarTooltip>
-                                </li>
-                            );
-                        })}
+            {categories.map((category) => (
+                <section key={category.title} className={cn(collapsed ? 'mt-2 border-t border-border/60 pt-2' : 'mt-5')}>
+                    {!collapsed && <h3 className="px-3 pb-1.5 text-xs font-semibold text-muted-foreground">{category.title}</h3>}
+                    <ul className="space-y-0.5">
+                        {category.items.map((item) => (
+                            <li key={item.href}>
+                                <NavLink item={item} active={activeHref === item.href} collapsed={collapsed} count={countForItem(item.href, consultationCounts)} />
+                            </li>
+                        ))}
                     </ul>
-                </div>
+                </section>
+            ))}
+
+            {mounted && isNavAdmin(user) && (
+                <section className={cn(collapsed ? 'mt-2 border-t border-border/60 pt-2' : 'mt-5')}>
+                    {!collapsed && <h3 className="px-3 pb-1.5 text-xs font-semibold text-muted-foreground">개발자 전용</h3>}
+                    <ul className="space-y-0.5">
+                        {adminNavItems.map((item) => (
+                            <li key={item.href}>
+                                <NavLink item={item} active={activeHref === item.href} collapsed={collapsed} count={0} />
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             )}
         </nav>
     );

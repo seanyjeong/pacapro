@@ -7,7 +7,7 @@ interface ProfitAnalysisPanelProps {
 }
 
 export function ProfitAnalysisPanel({ stats, computed }: ProfitAnalysisPanelProps) {
-  const profitTone = computed.netProfit >= 0 ? 'text-sky-700' : 'text-rose-700';
+  const profitTone = computed.netProfit >= 0 ? 'text-sky-700' : 'text-destructive';
 
   return (
     <section className="rounded-md border border-border bg-card p-5" aria-labelledby="profit-analysis-title">
@@ -19,10 +19,10 @@ export function ProfitAnalysisPanel({ stats, computed }: ProfitAnalysisPanelProp
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <div className="rounded-md border border-emerald-200 bg-emerald-50/70 p-4">
+        <div className="rounded-md border border-success/30 bg-success-soft/70 p-4">
           <div className="mb-3 flex items-center justify-between gap-4">
             <span className="font-medium text-foreground">총 수입</span>
-            <span className="text-lg font-semibold text-emerald-700">
+            <span className="text-lg font-semibold text-success">
               +{formatReportAmount(computed.totalIncome)}원
             </span>
           </div>
@@ -38,9 +38,9 @@ export function ProfitAnalysisPanel({ stats, computed }: ProfitAnalysisPanelProp
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 rounded-md border border-rose-200 bg-rose-50/70 p-4">
+        <div className="flex items-center justify-between gap-4 rounded-md border border-destructive/30 bg-destructive-soft/70 p-4">
           <span className="font-medium text-foreground">총 지출</span>
-          <span className="text-lg font-semibold text-rose-700">
+          <span className="text-lg font-semibold text-destructive">
             -{formatReportAmount(stats.expenses.totalAmount)}원
           </span>
         </div>

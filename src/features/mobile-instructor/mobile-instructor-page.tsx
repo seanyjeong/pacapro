@@ -11,14 +11,14 @@ export function MobileInstructorPage() {
 
   if (state.hasPermission === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <div className="text-sm text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50" data-testid="mobile-instructor-workspace">
+    <div className="min-h-screen bg-muted text-foreground" data-testid="mobile-instructor-workspace">
       <MobileInstructorHeader
         date={state.date}
         formattedDate={state.formattedDate}
@@ -48,7 +48,7 @@ export function MobileInstructorPage() {
       </main>
 
       {state.stats.total > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-4 backdrop-blur">
           <Button type="button" className="h-12 w-full" onClick={state.save} disabled={state.saving || state.submitCount === 0}>
             {state.saving ? '저장 중...' : `저장 (${state.submitCount}건 반영)`}
           </Button>

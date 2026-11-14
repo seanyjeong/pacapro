@@ -11,9 +11,9 @@ export function TabletSettingsNotice({ notice }: TabletSettingsNoticeProps) {
 
   const Icon = notice.tone === 'success' ? CheckCircle2 : notice.tone === 'error' ? AlertCircle : Info;
   const className = notice.tone === 'success'
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+    ? 'border-success/30 bg-success-soft text-success'
     : notice.tone === 'error'
-      ? 'border-rose-200 bg-rose-50 text-rose-900'
+      ? 'border-destructive/30 bg-destructive-soft text-destructive'
       : 'border-sky-200 bg-sky-50 text-sky-900';
 
   return (

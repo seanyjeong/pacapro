@@ -42,7 +42,7 @@ export function MobileUnpaidList({
     return (
       <div className="space-y-3" data-testid="mobile-unpaid-loading">
         {[0, 1, 2].map((key) => (
-          <div key={key} className="h-36 animate-pulse rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
+          <div key={key} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
         ))}
       </div>
     );
@@ -50,9 +50,9 @@ export function MobileUnpaidList({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
+      <div className="rounded-lg border border-destructive/30 bg-destructive-soft p-4 text-destructive">
         <p className="text-sm font-medium">{error}</p>
-        <Button variant="outline" className="mt-3 w-full border-rose-200 bg-white dark:border-rose-800 dark:bg-zinc-950" onClick={onRetry}>
+        <Button variant="outline" className="mt-3 w-full border-destructive/30 bg-card" onClick={onRetry}>
           다시 불러오기
         </Button>
       </div>
@@ -67,9 +67,9 @@ export function MobileUnpaidList({
         : '오늘 수업 미납자가 없습니다.';
 
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-12 text-center dark:border-zinc-700 dark:bg-zinc-950">
-        <CreditCard className="mx-auto h-10 w-10 text-zinc-400" />
-        <p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-12 text-center">
+        <CreditCard className="mx-auto h-10 w-10 text-muted-foreground" />
+        <p className="mt-3 text-sm font-medium text-secondary-foreground">
           {emptyMessage}
         </p>
       </div>
@@ -78,9 +78,9 @@ export function MobileUnpaidList({
 
   if (payments.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-10 text-center dark:border-zinc-700 dark:bg-zinc-950">
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">검색 결과가 없습니다.</p>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">학생명, 연락처, 수납 월을 다시 확인해주세요.</p>
+      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center">
+        <p className="text-sm font-medium text-secondary-foreground">검색 결과가 없습니다.</p>
+        <p className="mt-1 text-xs text-muted-foreground">학생명, 연락처, 수납 월을 다시 확인해주세요.</p>
       </div>
     );
   }

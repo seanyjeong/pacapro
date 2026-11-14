@@ -42,7 +42,7 @@ export function PendingStudentActionDialog({
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-red-600" />
+            <Trash2 className="h-5 w-5 text-destructive" />
             미등록 학생 삭제
           </AlertDialogTitle>
           <AlertDialogDescription>
@@ -53,7 +53,7 @@ export function PendingStudentActionDialog({
         {errorMessage ? (
           <div
             role="alert"
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive"
           >
             {errorMessage}
           </div>

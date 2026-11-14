@@ -31,12 +31,12 @@ export function SendModeSelector({ sendMode, onChange }: SendModeSelectorProps) 
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                'rounded-lg border bg-background p-3 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/40',
-                isSelected ? 'border-emerald-400 bg-emerald-50 text-emerald-950' : 'border-border text-foreground'
+                'rounded-lg border bg-background p-3 text-left transition-colors hover:border-success/30 hover:bg-success-soft/40',
+                isSelected ? 'border-success bg-success-soft text-success' : 'border-border text-foreground'
               )}
             >
               <span className="flex items-center gap-2 text-sm font-semibold">
-                <Icon className={cn('h-4 w-4', isSelected ? 'text-emerald-700' : 'text-muted-foreground')} />
+                <Icon className={cn('h-4 w-4', isSelected ? 'text-success' : 'text-muted-foreground')} />
                 {option.label}
               </span>
               <span className="mt-1 block text-xs text-muted-foreground">{option.detail}</span>

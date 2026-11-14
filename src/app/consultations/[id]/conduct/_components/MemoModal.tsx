@@ -17,9 +17,9 @@ export function MemoModal({ memoModal, onOpenChange }: MemoModalProps) {
       <DialogContent className="max-w-md py-6 px-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {memoModal.type === 'academic' && <GraduationCap className="h-5 w-5 text-blue-600" />}
-            {memoModal.type === 'physical' && <Sparkles className="h-5 w-5 text-orange-600" />}
-            {memoModal.type === 'general' && <Calendar className="h-5 w-5 text-green-600" />}
+            {memoModal.type === 'academic' && <GraduationCap className="h-5 w-5 text-primary" />}
+            {memoModal.type === 'physical' && <Sparkles className="h-5 w-5 text-warning" />}
+            {memoModal.type === 'general' && <Calendar className="h-5 w-5 text-success" />}
             {memoModal.type === 'target' && <Target className="h-5 w-5 text-purple-600" />}
             {memoModal.date} 상담 메모
           </DialogTitle>

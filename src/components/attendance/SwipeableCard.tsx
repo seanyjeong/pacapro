@@ -69,7 +69,7 @@ export function SwipeableCard({
         style={{ backgroundColor: backgroundColorLeft }}
       >
         <motion.div style={{ opacity: iconOpacityLeft }}>
-          <XCircle className="h-8 w-8 text-red-500" />
+          <XCircle className="h-8 w-8 text-destructive" />
         </motion.div>
       </motion.div>
 
@@ -78,7 +78,7 @@ export function SwipeableCard({
         style={{ backgroundColor: backgroundColorRight }}
       >
         <motion.div style={{ opacity: iconOpacityRight }}>
-          <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+          <CheckCircle2 className="h-8 w-8 text-success" />
         </motion.div>
       </motion.div>
 

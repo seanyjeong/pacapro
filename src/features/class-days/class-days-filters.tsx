@@ -98,12 +98,12 @@ export function ClassDaysFilters({
         ) : null}
       </div>
       {focusedStudentName ? (
-        <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+        <span className="rounded-md border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-semibold text-primary">
           {focusedStudentName} 집중 보기
         </span>
       ) : null}
       {showScheduledOnly ? (
-        <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700">
+        <span className="rounded-md border border-warning/30 bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">
           예약 변경만 보기
         </span>
       ) : null}

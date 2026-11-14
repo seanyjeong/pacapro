@@ -32,21 +32,21 @@ export default function SenderNumberManager({
   hint,
 }: Props) {
   const isGreen = colorScheme === 'green';
-  const ringCls = isGreen ? 'focus:ring-green-500 focus:border-green-500' : 'focus:ring-purple-500 focus:border-purple-500';
+  const ringCls = isGreen ? 'focus:ring-success focus:border-success' : 'focus:ring-purple-500 focus:border-purple-500';
   const btnCls = isGreen
-    ? 'bg-green-600 hover:bg-green-700'
+    ? 'bg-success hover:bg-success/90'
     : 'bg-purple-600 hover:bg-purple-700';
   const defaultBgCls = isGreen
-    ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
+    ? 'bg-success-soft border-success/30'
     : 'bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700';
   const starCls = isGreen
-    ? 'text-green-600 dark:text-green-400'
+    ? 'text-success'
     : 'text-purple-600 dark:text-purple-400';
   const defaultBadgeCls = isGreen
-    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+    ? 'bg-success-soft text-success'
     : 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300';
   const setDefaultBtnCls = isGreen
-    ? 'border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950'
+    ? 'border-success/30 text-success hover:bg-success-soft'
     : 'border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950';
 
   return (
@@ -89,7 +89,7 @@ export default function SenderNumberManager({
                 <button
                   aria-label={`${sender.phone} 발신번호 삭제`}
                   onClick={() => onDelete(sender.id)}
-                  className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
+                  className="p-1 text-destructive hover:bg-destructive-soft rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

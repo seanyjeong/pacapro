@@ -56,13 +56,13 @@ function AcademicScoresSection({ scores }: { scores: Consultation['academicScore
           {hasSchoolGradeAvg && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">내신 평균</span>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">{gradeDisplay(scores.schoolGradeAvg)}</span>
+              <span className="font-semibold text-primary">{gradeDisplay(scores.schoolGradeAvg)}</span>
             </div>
           )}
           {hasAdmissionType && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">입시 유형</span>
-              <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">{admissionTypeLabel}</span>
+              <span className="font-semibold px-2 py-0.5 rounded bg-primary-soft text-primary">{admissionTypeLabel}</span>
             </div>
           )}
         </div>
@@ -176,9 +176,9 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
             </div>
           </section>
 
-          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">상담 일정</h4>
-            <div className="flex items-center gap-4 text-blue-800 dark:text-blue-200">
+          <div className="bg-primary-soft rounded-lg p-4">
+            <h4 className="font-medium text-primary mb-2">상담 일정</h4>
+            <div className="flex items-center gap-4 text-primary">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 {format(parseISO(c.preferred_date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
@@ -229,7 +229,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
           {c.admin_notes && (
             <div>
               <h4 className="font-medium text-foreground mb-2">관리자 메모</h4>
-              <p className="text-sm bg-yellow-50 dark:bg-yellow-950 rounded p-3 whitespace-pre-wrap text-foreground">{c.admin_notes}</p>
+              <p className="text-sm bg-warning-soft rounded p-3 whitespace-pre-wrap text-foreground">{c.admin_notes}</p>
             </div>
           )}
 
@@ -238,8 +238,8 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
           </p>
 
           {c.linked_student_id && c.linked_student_is_trial && (
-            <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
-              <p className="text-green-800 dark:text-green-200 flex items-center gap-2">
+            <div className="bg-success-soft rounded-lg p-4">
+              <p className="text-success flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 체험 학생으로 등록 완료
                 {c.linked_student_name && <Badge variant="secondary">{c.linked_student_name}</Badge>}

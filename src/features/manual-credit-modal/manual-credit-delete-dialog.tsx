@@ -38,7 +38,7 @@ export function ManualCreditDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
           이미 적용된 크레딧은 삭제할 수 없습니다. 삭제 후에는 학생 납부 내역에서 다시 확인하세요.
         </div>
 

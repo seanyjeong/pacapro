@@ -19,9 +19,9 @@ export function PaymentStatCard({ label, value, icon, subValue, tone = 'default'
           <p
             className={cn(
               'mt-2 truncate text-2xl font-semibold leading-none tracking-normal tabular-nums text-foreground',
-              tone === 'success' && 'text-emerald-700 dark:text-emerald-300',
-              tone === 'danger' && 'text-red-600 dark:text-red-300',
-              tone === 'info' && 'text-blue-700 dark:text-blue-300'
+              tone === 'success' && 'text-success',
+              tone === 'danger' && 'text-destructive',
+              tone === 'info' && 'text-primary'
             )}
           >
             {value}
@@ -31,9 +31,9 @@ export function PaymentStatCard({ label, value, icon, subValue, tone = 'default'
         <div
           className={cn(
             'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/35 text-muted-foreground',
-            tone === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
-            tone === 'danger' && 'border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300',
-            tone === 'info' && 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300'
+            tone === 'success' && 'border-success/30 bg-success-soft text-success',
+            tone === 'danger' && 'border-destructive/30 bg-destructive-soft text-destructive',
+            tone === 'info' && 'border-primary/30 bg-primary-soft text-primary'
           )}
         >
           {icon}

@@ -46,13 +46,13 @@ export function DetailModal({ open, onOpenChange, consultation, onEditStudent }:
                 {consultation.status === 'completed' && consultation.matched_student_status && (
                   <>
                     {(consultation.matched_student_status === 'registered_with_trial' || consultation.matched_student_status === 'registered_direct') && (
-                      <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">등록완료</Badge>
+                      <Badge className="bg-success-soft text-success">등록완료</Badge>
                     )}
                     {consultation.matched_student_status === 'trial_ongoing' && (
-                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">체험중</Badge>
+                      <Badge className="bg-primary-soft text-primary">체험중</Badge>
                     )}
                     {(consultation.matched_student_status === 'trial_completed' || consultation.matched_student_status === 'no_trial') && (
-                      <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">미등록</Badge>
+                      <Badge className="bg-warning-soft text-warning">미등록</Badge>
                     )}
                   </>
                 )}

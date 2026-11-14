@@ -60,7 +60,7 @@ export function PaymentDetailHeader({
           </Button>
         ) : null}
         {canDelete ? (
-          <Button type="button" variant="outline" onClick={onDelete} disabled={deleting} className="text-rose-700 hover:text-rose-800">
+          <Button type="button" variant="outline" onClick={onDelete} disabled={deleting} className="text-destructive hover:text-destructive">
             <Trash2 className="mr-2 h-4 w-4" />
             {deleting ? '삭제 중' : '삭제'}
           </Button>

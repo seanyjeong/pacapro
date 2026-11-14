@@ -12,9 +12,9 @@ export function StudentDetailSummary({ payments, student }: StudentDetailSummary
   const outstanding = getOutstandingAmount(payments);
   const effectiveTuition = getEffectiveMonthlyTuition(student);
   const items = [
-    { label: '수업', value: getClassSummary(student), icon: CalendarDays, tone: 'bg-slate-50 text-slate-700' },
-    { label: '실납부', value: formatWon(effectiveTuition), icon: Banknote, tone: 'bg-emerald-50 text-emerald-700' },
-    { label: '미납', value: formatWon(outstanding), icon: ReceiptText, tone: outstanding > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-700' },
+    { label: '수업', value: getClassSummary(student), icon: CalendarDays, tone: 'bg-muted text-secondary-foreground' },
+    { label: '실납부', value: formatWon(effectiveTuition), icon: Banknote, tone: 'bg-success-soft text-success' },
+    { label: '미납', value: formatWon(outstanding), icon: ReceiptText, tone: outstanding > 0 ? 'bg-warning-soft text-warning' : 'bg-muted text-secondary-foreground' },
     { label: '입시 유형', value: ADMISSION_TYPE_LABELS[student.admission_type], icon: GraduationCap, tone: 'bg-sky-50 text-sky-700' },
   ];
 

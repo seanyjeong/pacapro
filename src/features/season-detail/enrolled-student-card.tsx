@@ -50,13 +50,13 @@ export function EnrolledStudentCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {[enrollment.student_grade, enrollment.student_number].filter(Boolean).join(' · ') || '학생 정보'}
           </p>
-          {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-blue-700">자동 졸업 완료</p>}
+          {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-primary">자동 졸업 완료</p>}
         </div>
         <SeasonPaymentStatusBadge status={enrollment.payment_status} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-muted p-3">
           <p className="text-xs text-muted-foreground">시즌비</p>
           {discountAmount > 0 ? (
             <div className="mt-1 space-y-0.5">
@@ -68,7 +68,7 @@ export function EnrolledStudentCard({
           )}
           <SeasonPaymentAmountSummary enrollment={enrollment} />
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-muted p-3">
           <p className="text-xs text-muted-foreground">등록일</p>
           <p className="mt-1 font-medium text-foreground">
             {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
@@ -90,13 +90,13 @@ export function EnrolledStudentCard({
       {!isCancelled ? (
         <div className="flex justify-end gap-2">
           {hasPaidAmount ? (
-            <Button className="text-orange-700 hover:text-orange-800" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
+            <Button className="text-warning hover:text-warning" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
               <Receipt className="mr-1 h-4 w-4" />
               환불
             </Button>
           ) : (
             <Button
-              className="text-rose-700 hover:text-rose-800"
+              className="text-destructive hover:text-destructive"
               disabled={cancelling}
               size="sm"
               type="button"

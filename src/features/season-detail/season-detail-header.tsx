@@ -28,7 +28,6 @@ export function SeasonDetailHeader({
           목록
         </Button>
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Season Detail</div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-2xl font-semibold tracking-normal text-foreground">{season.season_name}</h1>
             <SeasonStatusBadge label={SEASON_TYPE_LABELS[season.season_type]} tone="info" />
@@ -51,7 +50,7 @@ export function SeasonDetailHeader({
           <Edit2 className="mr-2 h-4 w-4" />
           수정
         </Button>
-        <Button className="text-rose-700 hover:text-rose-800" type="button" variant="outline" onClick={onDelete}>
+        <Button className="text-destructive hover:text-destructive" type="button" variant="outline" onClick={onDelete}>
           <Trash2 className="mr-2 h-4 w-4" />
           삭제
         </Button>

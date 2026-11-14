@@ -26,16 +26,16 @@ export function AttendanceReasonPanel({
       className={cn(
         'ml-0 sm:ml-11 mt-2 p-3 rounded-lg border space-y-2',
         isExcused
-          ? 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
-          : 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
+          ? 'bg-primary-soft border-primary/30'
+          : 'bg-destructive-soft border-destructive/30'
       )}
     >
       <div className="flex items-center gap-2">
-        <AlertCircle className={cn('h-4 w-4', isExcused ? 'text-blue-600' : 'text-red-600')} />
+        <AlertCircle className={cn('h-4 w-4', isExcused ? 'text-primary' : 'text-destructive')} />
         <span
           className={cn(
             'text-sm font-medium',
-            isExcused ? 'text-blue-800 dark:text-blue-300' : 'text-red-800 dark:text-red-300'
+            isExcused ? 'text-primary' : 'text-destructive'
           )}
         >
           {isExcused ? '공결' : '결석'} 사유
@@ -75,7 +75,7 @@ export function AttendanceReasonPanel({
         </Button>
         <Button
           size="sm"
-          className={cn('h-7 text-xs flex-1', isExcused ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700')}
+          className={cn('h-7 text-xs flex-1', isExcused ? 'bg-primary hover:bg-primary/90' : 'bg-destructive hover:bg-destructive/90')}
           onClick={onConfirm}
           disabled={!reasonInput.reason || (reasonInput.reason === '기타' && !reasonInput.customReason.trim())}
         >
@@ -102,8 +102,8 @@ function ReasonButton({ selected, isExcused, onClick, children }: ReasonButtonPr
         'px-2.5 py-1 rounded-full text-xs font-medium transition-all border',
         selected
           ? isExcused
-            ? 'bg-blue-500 text-white border-blue-500'
-            : 'bg-red-500 text-white border-red-500'
+            ? 'bg-primary text-white border-primary'
+            : 'bg-destructive text-white border-destructive'
           : 'bg-background border-border hover:border-muted-foreground/40'
       )}
     >

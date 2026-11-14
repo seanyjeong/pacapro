@@ -170,24 +170,24 @@ export default function ReservationChangePage({
   }
 
   return (
-    <section className="space-y-4 text-slate-950" data-testid="reservation-change-workspace">
+    <section className="space-y-4 text-foreground" data-testid="reservation-change-workspace">
       <HeaderCard academyName={reservation?.academyName} />
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-base font-semibold tracking-normal text-slate-950">현재 예약 정보</h2>
+      <section className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-base font-semibold tracking-normal text-foreground">현재 예약 정보</h2>
         </div>
         <div className="space-y-3 px-5 py-5 text-sm">
           <InfoRow label="예약번호" value={reservation?.reservationNumber || '-'} />
           <InfoRow label="학생" value={`${reservation?.studentName || '-'} (${reservation?.studentGrade || '-'})`} icon={<UserRound className="h-4 w-4" />} />
           <InfoRow label="현재 일정" value={reservation ? `${formatDisplayDate(reservation.preferredDate)} ${formatDisplayTime(reservation.preferredTime)}` : '-'} />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-slate-500">상태</span>
+            <span className="text-muted-foreground">상태</span>
             <span className={cn(
               'rounded-full border px-2.5 py-0.5 text-xs font-medium',
               reservation?.status === 'confirmed'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-amber-200 bg-amber-50 text-amber-700'
+                ? 'border-success/30 bg-success-soft text-success'
+                : 'border-warning/30 bg-warning-soft text-warning'
             )}>
               {reservation?.status === 'confirmed' ? '확정' : '대기중'}
             </span>
@@ -216,14 +216,14 @@ export default function ReservationChangePage({
 
       <SelectionCard icon={<Clock className="h-4 w-4" />} title="새로운 시간 선택">
         {loadingSlots ? (
-          <div className="flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+          <div className="flex items-center justify-center gap-2 rounded-md border border-border bg-muted px-4 py-5 text-sm text-secondary-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             가능한 시간을 확인하고 있습니다.
           </div>
         ) : slotsError ? (
           <SafeAlert tone="warning" message={slotsError} />
         ) : availableSlots.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">
+          <div className="rounded-md border border-dashed border-border bg-muted px-4 py-5 text-center text-sm text-muted-foreground">
             {selectedDate ? '선택한 날짜에 가능한 시간이 없습니다.' : '날짜를 먼저 선택해주세요.'}
           </div>
         ) : (
@@ -254,7 +254,7 @@ export default function ReservationChangePage({
       >
         {submitting ? '변경 중...' : '예약 변경하기'}
       </Button>
-      <p className="px-2 text-center text-sm leading-6 text-slate-500">
+      <p className="px-2 text-center text-sm leading-6 text-muted-foreground">
         예약 변경 후 담당자 확인을 거쳐 다시 확정 안내를 받게 됩니다.
       </p>
     </section>
@@ -277,18 +277,18 @@ function VerificationState({
   verifying: boolean;
 }) {
   return (
-    <section className="space-y-4 text-slate-950" data-testid="reservation-verification-workspace">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">예약자 확인</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-950">상담 예약 변경</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+    <section className="space-y-4 text-foreground" data-testid="reservation-verification-workspace">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약자 확인</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">상담 예약 변경</h1>
+        <p className="mt-2 text-sm leading-6 text-secondary-foreground">
           예약자 확인 후 상담 일정을 변경할 수 있습니다.
         </p>
       </section>
 
-      <form onSubmit={onSubmit} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={onSubmit} className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <div className="space-y-2">
-          <label htmlFor="phone-last4" className="text-sm font-medium text-slate-700">
+          <label htmlFor="phone-last4" className="text-sm font-medium text-secondary-foreground">
             예약자 연락처 끝 4자리
           </label>
           <input
@@ -299,11 +299,11 @@ function VerificationState({
             maxLength={4}
             value={phoneLast4}
             onChange={(event) => onPhoneLast4Change(event.target.value)}
-            className="h-12 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-medium tracking-normal text-slate-950 outline-none transition-colors focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+            className="h-12 w-full rounded-md border border-border bg-card px-3 text-base font-medium tracking-normal text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
             placeholder="예: 1234"
             autoComplete="tel-national"
           />
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-muted-foreground">
             예약번호 {reservationNumber}에 등록된 연락처로 확인합니다.
           </p>
         </div>
@@ -325,10 +325,10 @@ function VerificationState({
 
 function HeaderCard({ academyName }: { academyName?: string }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">예약 변경 데스크</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-950">상담 예약 변경</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약 변경 데스크</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">상담 예약 변경</h1>
+      <p className="mt-2 text-sm leading-6 text-secondary-foreground">
         {academyName || '담당 학원'} 상담 일정을 다시 선택할 수 있습니다. 변경 후 담당자가 한 번 더 확인합니다.
       </p>
     </section>
@@ -337,10 +337,10 @@ function HeaderCard({ academyName }: { academyName?: string }) {
 
 function SelectionCard({ children, icon, title }: { children: ReactNode; icon: ReactNode; title: string }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-600">{icon}</span>
-        <h2 className="text-base font-semibold tracking-normal text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-secondary-foreground">{icon}</span>
+        <h2 className="text-base font-semibold tracking-normal text-foreground">{title}</h2>
       </div>
       <div className="px-5 py-5">{children}</div>
     </section>
@@ -350,19 +350,19 @@ function SelectionCard({ children, icon, title }: { children: ReactNode; icon: R
 function InfoRow({ icon, label, value }: { icon?: ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="flex items-center gap-2 text-slate-500">
+      <span className="flex items-center gap-2 text-muted-foreground">
         {icon}
         {label}
       </span>
-      <span className="min-w-0 text-right font-medium text-slate-950">{value}</span>
+      <span className="min-w-0 text-right font-medium text-foreground">{value}</span>
     </div>
   );
 }
 
 function SafeAlert({ message, tone }: { message: string; tone: 'danger' | 'warning' }) {
   const classes = tone === 'danger'
-    ? 'border-red-200 bg-red-50 text-red-800'
-    : 'border-amber-200 bg-amber-50 text-amber-900';
+    ? 'border-destructive/30 bg-destructive-soft text-destructive'
+    : 'border-warning/30 bg-warning-soft text-warning';
   return (
     <div role="alert" className={cn('flex items-start gap-3 rounded-md border p-4 text-sm leading-6', classes)}>
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -381,24 +381,24 @@ function SuccessState({
   selectedTime: string;
 }) {
   return (
-    <section className="space-y-4 text-slate-950">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700">
+    <section className="space-y-4 text-foreground">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-success/30 bg-success-soft text-success">
           <CheckCircle2 className="h-6 w-6" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">예약 변경 완료</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-950">예약이 변경되었습니다</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약 변경 완료</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">예약이 변경되었습니다</h1>
+        <p className="mt-3 text-sm leading-6 text-secondary-foreground">
           담당자 확인 후 다시 확정 안내를 받으실 수 있습니다.
         </p>
       </section>
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <p className="text-sm font-medium text-slate-500">{reservation.academyName}</p>
-          <h2 className="mt-2 text-lg font-semibold tracking-normal text-slate-950">새로운 일정</h2>
+      <section className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 py-4">
+          <p className="text-sm font-medium text-muted-foreground">{reservation.academyName}</p>
+          <h2 className="mt-2 text-lg font-semibold tracking-normal text-foreground">새로운 일정</h2>
         </div>
         <div className="space-y-4 px-5 py-5">
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+          <div className="rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success">
             {formatDisplayDate(selectedDate)} {formatDisplayTime(selectedTime)}
           </div>
           <Link href={`/c/${reservation.academySlug}`} className={buttonVariants({ variant: 'outline', className: 'w-full gap-2' })}>
@@ -445,8 +445,8 @@ function formatDisplayTime(time: string) {
 function selectableClass(selected: boolean, disabled = false) {
   return cn(
     'min-h-10 rounded-md border px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30',
-    selected && 'border-blue-600 bg-blue-600 text-white',
-    !selected && !disabled && 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
-    disabled && 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-300 line-through'
+    selected && 'border-primary bg-primary text-white',
+    !selected && !disabled && 'border-border bg-muted text-secondary-foreground hover:bg-muted',
+    disabled && 'cursor-not-allowed border-border bg-muted text-muted-foreground/60 line-through'
   );
 }

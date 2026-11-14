@@ -43,11 +43,10 @@ export function ConsultationsPage() {
         <header className="rounded-md border border-border bg-card px-5 py-4 shadow-none">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary-soft text-primary">
                 <ClipboardList className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Consultation Desk</p>
                 <h1 className="text-2xl font-semibold tracking-normal text-foreground">상담 관리</h1>
                 <p className="mt-1 text-sm text-muted-foreground">신규 상담, 재원생 상담, 일정 변경과 후속 전환을 한 화면에서 관리합니다.</p>
               </div>
@@ -77,7 +76,7 @@ export function ConsultationsPage() {
         </header>
 
         {h.loadError ? (
-          <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-3">
                 <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />

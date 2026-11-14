@@ -27,7 +27,7 @@ export function ConsultationCalendarGrid({
           <div
             key={day}
             className={`py-2 text-center text-sm font-medium ${
-              index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-gray-600'
+              index === 0 ? 'text-destructive' : index === 6 ? 'text-primary' : 'text-secondary-foreground'
             }`}
           >
             {day}

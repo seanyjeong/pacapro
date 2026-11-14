@@ -142,8 +142,8 @@ export function AttendanceStudentRow({
               className={cn(
                 'flex items-center gap-2 px-3 py-2 rounded-md text-sm',
                 currentStatus === 'excused'
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                  : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  ? 'bg-primary-soft text-primary'
+                  : 'bg-destructive-soft text-destructive'
               )}
             >
               <AlertCircle className="h-4 w-4 flex-shrink-0" />

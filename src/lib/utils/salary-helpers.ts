@@ -152,11 +152,11 @@ export function calculateNetSalary(
 export function getPaymentStatusColor(status: string): string {
   switch (status) {
     case 'paid':
-      return 'text-green-700 dark:text-green-200 bg-green-100 dark:bg-green-900 border-green-200 dark:border-green-700';
+      return 'text-success bg-success-soft border-success/30';
     case 'pending':
-      return 'text-yellow-700 dark:text-yellow-200 bg-yellow-100 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700';
+      return 'text-warning bg-warning-soft border-warning/30';
     default:
-      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+      return 'text-secondary-foreground bg-muted border-border';
   }
 }
 
@@ -167,14 +167,14 @@ export function getTaxTypeColor(taxType: string): string {
   switch (taxType) {
     case '3.3%':
     case 'resident':
-      return 'text-blue-700 dark:text-blue-200 bg-blue-100 dark:bg-blue-900 border-blue-200 dark:border-blue-700';
+      return 'text-primary bg-primary-soft border-primary/30';
     case 'insurance':
     case 'freelancer':
       return 'text-purple-700 dark:text-purple-200 bg-purple-100 dark:bg-purple-900 border-purple-200 dark:border-purple-700';
     case 'none':
-      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+      return 'text-secondary-foreground bg-muted border-border';
     default:
-      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+      return 'text-secondary-foreground bg-muted border-border';
   }
 }
 

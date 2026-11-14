@@ -26,25 +26,25 @@ function DetailRow({
 }) {
   const content = (
     <>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="truncate text-base font-semibold text-zinc-950 dark:text-zinc-50">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="truncate text-base font-semibold text-foreground">{value}</p>
       </div>
     </>
   );
 
   if (href) {
     return (
-      <a href={href} className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <a href={href} className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3">
         {content}
       </a>
     );
   }
 
-  return <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">{content}</div>;
+  return <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">{content}</div>;
 }
 
 export function MobileConsultationDetailSheet({
@@ -61,26 +61,26 @@ export function MobileConsultationDetailSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55" onClick={onClose}>
       <div
-        className="max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white pb-8 shadow-2xl dark:bg-zinc-950"
+        className="max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-card pb-8 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
         data-testid="mobile-consultation-detail-sheet"
       >
         <div className="flex justify-center pt-3 pb-2">
-          <div className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <div className="h-1 w-10 rounded-full bg-muted-foreground/40" />
         </div>
 
         <div className="space-y-4 px-5 pb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate text-xl font-semibold text-zinc-950 dark:text-zinc-50">{consultation.student_name}</h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatTime(consultation.preferred_time)} 상담</p>
+              <h2 className="truncate text-xl font-semibold text-foreground">{consultation.student_name}</h2>
+              <p className="text-sm text-muted-foreground">{formatTime(consultation.preferred_time)} 상담</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="상담 정보 닫기">
               <X className="h-5 w-5" />
             </Button>
           </div>
 
-          <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
+          <section className="rounded-lg border border-border bg-muted p-3">
             <div className="flex items-center justify-between gap-2">
               <span className={`rounded-full border px-3 py-1 text-sm font-medium ${status.className}`}>{status.label}</span>
               <Button type="button" variant="outline" size="sm" onClick={onToggleStatusChange}>
@@ -100,7 +100,7 @@ export function MobileConsultationDetailSheet({
                       disabled={updatingStatus || selected}
                       onClick={() => onStatusChange(consultation, item)}
                       className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg border px-1 text-xs font-medium transition
-                        ${selected ? 'border-zinc-950 bg-zinc-950 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950' : 'border-zinc-200 bg-white text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300'}
+                        ${selected ? 'border-muted-foreground/40 bg-foreground text-white' : 'border-border bg-card text-secondary-foreground'}
                         ${updatingStatus ? 'opacity-60' : ''}`}
                     >
                       {updatingStatus && !selected ? <Loader2 className="h-3 w-3 animate-spin" /> : selected ? <Check className="h-3 w-3" /> : <span className={`h-2 w-2 rounded-full ${meta.dotClassName}`} />}
@@ -126,9 +126,9 @@ export function MobileConsultationDetailSheet({
           </section>
 
           {consultation.inquiry_content && (
-            <section className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">문의 내용</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-100">{consultation.inquiry_content}</p>
+            <section className="rounded-lg border border-border bg-card p-3">
+              <p className="text-xs text-muted-foreground">문의 내용</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{consultation.inquiry_content}</p>
             </section>
           )}
         </div>

@@ -11,7 +11,7 @@ export function PaymentDetailSummary({ payment }: { payment: Payment }) {
   const hasBalance = outstanding > 0;
   const focusLabel = hasBalance ? '남은 결제 금액' : '수납 완료 금액';
   const focusAmount = hasBalance ? outstanding : settled;
-  const focusTone = hasBalance ? 'text-rose-700' : 'text-emerald-700';
+  const focusTone = hasBalance ? 'text-destructive' : 'text-success';
 
   return (
     <section className="overflow-hidden rounded-md border border-border/70 bg-card">
@@ -60,8 +60,8 @@ export function PaymentDetailSummary({ payment }: { payment: Payment }) {
 function AmountCell({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'success' | 'danger' | 'muted' }) {
   const toneClass = {
     default: 'text-foreground',
-    success: 'text-emerald-700',
-    danger: 'text-rose-700',
+    success: 'text-success',
+    danger: 'text-destructive',
     muted: 'text-muted-foreground',
   }[tone];
 

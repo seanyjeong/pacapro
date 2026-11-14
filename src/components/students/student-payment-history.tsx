@@ -102,12 +102,12 @@ export function StudentPaymentHistory({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-foreground">{formatCurrency(payment.paid_amount)}</div>
                         {remaining > 0 && !upcomingSeason && (
-                          <div className="text-xs text-red-500 dark:text-red-400">
+                          <div className="text-xs text-destructive">
                             미납: {formatCurrency(remaining)}
                           </div>
                         )}
                         {remaining > 0 && upcomingSeason && (
-                          <div className="text-xs text-blue-600 dark:text-blue-300">
+                          <div className="text-xs text-primary">
                             예정: {formatCurrency(remaining)}
                           </div>
                         )}

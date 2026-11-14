@@ -107,8 +107,8 @@ export function AdditionalInfoSection({
 
         {/* 휴식 설정 (휴원 상태일 때만) */}
         {mode === 'edit' && formData.status === 'paused' && (
-          <div className="col-span-2 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg space-y-4">
-            <h4 className="font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+          <div className="col-span-2 p-4 bg-warning-soft border border-warning/30 rounded-lg space-y-4">
+            <h4 className="font-medium text-warning flex items-center gap-2">
               휴식 설정
             </h4>
 
@@ -116,11 +116,11 @@ export function AdditionalInfoSection({
               {/* 휴식 시작일 */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  휴식 시작일 <span className="text-red-500">*</span>
+                  휴식 시작일 <span className="text-destructive">*</span>
                 </label>
                 <input type="date" value={formData.rest_start_date || ''}
                   onChange={(e) => handleChange('rest_start_date', e.target.value)}
-                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning"
                   required />
               </div>
 
@@ -131,7 +131,7 @@ export function AdditionalInfoSection({
                   <input type="date" value={formData.rest_end_date || ''}
                     onChange={(e) => handleChange('rest_end_date', e.target.value)}
                     disabled={isIndefiniteRest}
-                    className={`flex-1 px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
+                    className={`flex-1 px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning ${
                       isIndefiniteRest ? 'opacity-50' : ''
                     }`} />
                 </div>
@@ -141,7 +141,7 @@ export function AdditionalInfoSection({
                       setIsIndefiniteRest(e.target.checked);
                       if (e.target.checked) handleChange('rest_end_date', '');
                     }}
-                    className="rounded border-border text-yellow-600 focus:ring-yellow-500" />
+                    className="rounded border-border text-warning focus:ring-warning" />
                   무기한 휴식
                 </label>
               </div>
@@ -153,10 +153,10 @@ export function AdditionalInfoSection({
               <input type="text" value={formData.rest_reason || ''}
                 onChange={(e) => handleChange('rest_reason', e.target.value)}
                 placeholder="예: 개인 사정, 부상, 여행 등"
-                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning" />
             </div>
 
-            <p className="text-xs text-yellow-700 dark:text-yellow-300">
+            <p className="text-xs text-warning">
               휴식 기간 동안 학원비 이월/환불 처리는 학생 상세 페이지에서 별도로 진행할 수 있습니다.
             </p>
           </div>

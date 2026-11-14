@@ -13,7 +13,7 @@ export function TabletStudentSummary({ attendanceSummary, student }: TabletStude
 
   return (
     <section className="grid gap-4 lg:grid-cols-3">
-      <SummaryPanel icon={<CheckCircle2 className="h-5 w-5 text-green-500" />} title="이번달 출석">
+      <SummaryPanel icon={<CheckCircle2 className="h-5 w-5 text-success" />} title="이번달 출석">
         {attendanceSummary ? (
           <div className="space-y-2">
             <Metric label="출석률" value={`${attendanceSummary.rate}%`} strong />
@@ -25,14 +25,14 @@ export function TabletStudentSummary({ attendanceSummary, student }: TabletStude
         )}
       </SummaryPanel>
 
-      <SummaryPanel icon={<Calendar className="h-5 w-5 text-blue-500" />} title="수업 정보">
+      <SummaryPanel icon={<Calendar className="h-5 w-5 text-primary" />} title="수업 정보">
         <div className="space-y-2">
           <Metric label="수업 요일" value={formatTabletClassDays(student.class_days)} />
           <Metric label="등록일" value={formatTabletEnrollmentDate(student.enrollment_date)} />
         </div>
       </SummaryPanel>
 
-      <SummaryPanel icon={<CreditCard className="h-5 w-5 text-emerald-500" />} title="결제 기준">
+      <SummaryPanel icon={<CreditCard className="h-5 w-5 text-success" />} title="결제 기준">
         <div className="space-y-2">
           <Metric label="실납부" value={formatTabletWon(effectiveTuition)} strong />
           <Metric label="할인율" value={`${Number(student.discount_rate || 0)}%`} />

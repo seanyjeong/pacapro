@@ -28,7 +28,7 @@ export function StudentFiltersComponent({
   onReset,
   hideStatusFilter = false,
 }: StudentFiltersComponentProps) {
-  const selectClassName = 'h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-slate-300';
+  const selectClassName = 'h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-border';
 
   const handleChange = (key: keyof StudentFilters, value: unknown) => {
     onFilterChange({

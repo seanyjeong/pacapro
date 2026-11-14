@@ -29,15 +29,15 @@ export function calculateUnpaidStats(payments: UnpaidPayment[]): MobileUnpaidSta
 
 export function getOverdueTone(daysOverdue: number) {
   if (daysOverdue >= 30) {
-    return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300';
+    return 'border-destructive/30 bg-destructive-soft text-destructive';
   }
   if (daysOverdue >= 14) {
-    return 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-300';
+    return 'border-warning/30 bg-warning-soft text-warning';
   }
   if (daysOverdue >= 7) {
-    return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300';
+    return 'border-warning/30 bg-warning-soft text-warning';
   }
-  return 'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300';
+  return 'border-border bg-muted text-secondary-foreground';
 }
 
 export function isEncryptedValue(value: unknown) {

@@ -138,7 +138,7 @@ export function PaymentRecordModal({
               {paidAmountInt > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">기납부 금액</span>
-                  <span className="font-medium text-green-600">{paidAmountInt.toLocaleString()}원</span>
+                  <span className="font-medium text-success">{paidAmountInt.toLocaleString()}원</span>
                 </div>
               )}
               <div className="flex justify-between text-sm mt-1 pt-1 border-t border-border">
@@ -170,8 +170,8 @@ export function PaymentRecordModal({
                 <p className="mt-2 text-sm">
                   <span className="text-muted-foreground">미납금: </span>
                   <span className="line-through text-muted-foreground/70 mr-1">{remainingAmount.toLocaleString()}원</span>
-                  <span className="text-red-500 mr-1">-{formData.discount_amount.toLocaleString()}원</span>
-                  <span className="font-bold text-blue-600">→ {actualRemainingAmount.toLocaleString()}원</span>
+                  <span className="text-destructive mr-1">-{formData.discount_amount.toLocaleString()}원</span>
+                  <span className="font-bold text-primary">→ {actualRemainingAmount.toLocaleString()}원</span>
                 </p>
               )}
             </div>
@@ -179,7 +179,7 @@ export function PaymentRecordModal({
             {/* 납부 금액 */}
             <div>
               <label htmlFor="payment-record-paid-amount" className="block text-sm font-medium text-foreground mb-2">
-                납부 금액 <span className="text-red-500">*</span>
+                납부 금액 <span className="text-destructive">*</span>
               </label>
               <MoneyInput
                 id="payment-record-paid-amount"
@@ -220,7 +220,7 @@ export function PaymentRecordModal({
             {/* 납부 방법 */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                납부 방법 <span className="text-red-500">*</span>
+                납부 방법 <span className="text-destructive">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {PAYMENT_METHOD_OPTIONS.map((option) => (
@@ -244,7 +244,7 @@ export function PaymentRecordModal({
             {/* 납부일 */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                납부일 <span className="text-red-500">*</span>
+                납부일 <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />

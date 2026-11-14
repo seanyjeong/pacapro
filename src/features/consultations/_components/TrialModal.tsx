@@ -88,7 +88,7 @@ export function TrialModal({
                     variant="ghost"
                     size="sm"
                     onClick={() => removeTrialDate(index)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -97,7 +97,7 @@ export function TrialModal({
             ))}
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+          <div className="bg-primary-soft rounded-lg p-3 text-sm text-primary">
             체험 학생으로 등록되면:
             <ul className="mt-1 ml-4 list-disc">
               <li>학생 관리에 체험생으로 추가됩니다</li>

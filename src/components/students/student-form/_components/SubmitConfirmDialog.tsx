@@ -47,7 +47,7 @@ export function SubmitConfirmDialog({
         </AlertDialogHeader>
 
         {isImmediateClassDays ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+          <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
             다음 달부터 바꾸려면 취소 후 수업 정보의 적용 시작월을 선택하세요.
           </div>
         ) : null}

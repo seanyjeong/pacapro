@@ -271,7 +271,7 @@ export function ManualCreditModal({
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
+              <CreditCard className="w-5 h-5 text-primary" />
               크레딧 관리
             </DialogTitle>
             <DialogDescription>

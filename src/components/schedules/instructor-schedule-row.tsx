@@ -44,7 +44,7 @@ export function InstructorScheduleRow({
           <div
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-              isSelected ? 'bg-white dark:bg-gray-800' : 'bg-muted'
+              isSelected ? 'bg-card' : 'bg-muted'
             )}
           >
             {isSelected ? (
@@ -56,7 +56,7 @@ export function InstructorScheduleRow({
           <div>
             <span className="font-medium">{instructor.name}</span>
             {isHourly && (
-              <Badge variant="outline" className="ml-2 border-orange-200 bg-orange-50 text-xs text-orange-700">
+              <Badge variant="outline" className="ml-2 border-warning/30 bg-warning-soft text-xs text-warning">
                 시급제
               </Badge>
             )}

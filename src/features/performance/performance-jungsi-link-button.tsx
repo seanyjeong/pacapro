@@ -146,7 +146,7 @@ export function PerformanceJungsiLinkButton({ status, onRefresh }: PerformanceJu
 
   return (
     <>
-      <div className="grid gap-2 rounded-md border border-slate-200 bg-white p-3">
+      <div className="grid gap-2 rounded-md border border-border bg-card p-3">
         <Button className="gap-2" type="button" onClick={() => setOpen(true)} disabled={linking}>
           {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
           {getButtonText(status)}
@@ -168,7 +168,7 @@ export function PerformanceJungsiLinkButton({ status, onRefresh }: PerformanceJu
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          <div className="space-y-3 rounded-md border border-border bg-muted p-3 text-sm text-secondary-foreground">
             <p>로그인 성공 후 PACA가 학생 이름과 학교를 기준으로 정시엔진 성적을 조회합니다.</p>
             <p>비밀번호는 PACA에 저장하지 않고, 정시엔진이 발급한 연동 토큰만 확인합니다.</p>
           </div>

@@ -21,9 +21,9 @@ export function EnrolledStatCard({ label, helper, icon, tone = 'default', value 
         <div
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/35 text-muted-foreground',
-            tone === 'pending' && 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-300',
+            tone === 'pending' && 'border-warning/30 bg-warning-soft text-warning',
             tone === 'confirmed' && 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/45 dark:text-sky-300',
-            tone === 'completed' && 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/45 dark:text-emerald-300',
+            tone === 'completed' && 'border-success/30 bg-success-soft text-success',
           )}
         >
           {icon}

@@ -44,7 +44,7 @@ export function SenderNumberSelect({
           <p className="mt-2 text-xs text-muted-foreground">설정의 알림톡 및 SMS 메뉴에서 관리합니다.</p>
         </>
       ) : (
-        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+        <div className="mt-3 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
           <p>{errorMessage || '등록된 발신번호를 확인하지 못했습니다. 설정을 확인한 뒤 발송해주세요.'}</p>
           <Link href="/settings/notifications" className="mt-1 inline-flex font-semibold underline">
             알림톡 및 SMS 설정으로 이동

@@ -24,7 +24,7 @@ export function TabletStudentDetailHeader({ onBack, student }: TabletStudentDeta
       <div className="flex items-center gap-4">
         <div className={cn(
           'flex h-16 w-16 shrink-0 items-center justify-center rounded-md text-xl font-bold text-white',
-          student.gender === 'male' ? 'bg-blue-600' : 'bg-pink-600'
+          student.gender === 'male' ? 'bg-primary' : 'bg-pink-600'
         )}>
           {student.name.charAt(0)}
         </div>

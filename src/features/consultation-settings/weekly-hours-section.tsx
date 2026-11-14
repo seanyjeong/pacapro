@@ -50,17 +50,17 @@ export function WeeklyHoursSection({
       <CardContent className="space-y-4">
         {!hasSavedWeeklyHours ? (
           <section
-            className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+            className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
             data-testid="weekly-hours-recovery-panel"
           >
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
               <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-semibold">빠른 운영시간 복구</h3>
-                <p className="mt-1 text-sm text-amber-800 dark:text-amber-100">
+                <p className="mt-1 text-sm text-warning">
                   상담 시간이 비어 있습니다. 우선 평일 10:00-20:00으로 열어두고, 지점 운영에 맞게 조정하세요.
                 </p>
-                <p className="mt-2 text-xs font-semibold text-amber-900 dark:text-amber-100">
+                <p className="mt-2 text-xs font-semibold text-warning">
                   권장 시간: 평일 10:00-20:00
                 </p>
                 <Button className="mt-3 gap-2" size="sm" type="button" variant="outline" onClick={onApplyRecommendedWeekdays}>
@@ -72,8 +72,8 @@ export function WeeklyHoursSection({
           </section>
         ) : null}
 
-        <div className="space-y-3 rounded-md border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/60 dark:bg-blue-950/40">
-          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">기본 시간 일괄 설정</p>
+        <div className="space-y-3 rounded-md border border-primary/30 bg-primary-soft p-4">
+          <p className="text-sm font-medium text-primary">기본 시간 일괄 설정</p>
           <div className="flex flex-wrap items-center gap-3">
             <Select value={defaultStartTime} onValueChange={onDefaultStartTimeChange}>
               <SelectTrigger className="w-28">

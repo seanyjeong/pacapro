@@ -12,8 +12,8 @@ export function SmsTypeBadge({ type }: SmsTypeBadgeProps) {
       className={cn(
         'inline-flex rounded-md border px-2 py-1 text-xs font-semibold',
         normalizedType === 'MMS' && 'border-violet-200 bg-violet-50 text-violet-700',
-        normalizedType === 'LMS' && 'border-amber-200 bg-amber-50 text-amber-700',
-        normalizedType === 'SMS' && 'border-slate-200 bg-slate-50 text-slate-700'
+        normalizedType === 'LMS' && 'border-warning/30 bg-warning-soft text-warning',
+        normalizedType === 'SMS' && 'border-border bg-muted text-secondary-foreground'
       )}
     >
       {normalizedType}

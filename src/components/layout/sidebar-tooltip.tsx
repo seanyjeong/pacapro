@@ -31,11 +31,11 @@ export function SidebarTooltip({ children, label, collapsed }: SidebarTooltipPro
       {children}
       {collapsed && showTooltip && (
         <div
-          className="fixed left-[68px] pl-2 z-[100] -translate-y-1/2"
+          className="fixed left-[76px] pl-2 z-[100] -translate-y-1/2"
           style={{ top: position.top }}
         >
-          <div className="px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap">
-            <span className="text-sm font-medium text-foreground">{label}</span>
+          <div className="whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-[13px] font-semibold text-background shadow-lg">
+            {label}
           </div>
         </div>
       )}

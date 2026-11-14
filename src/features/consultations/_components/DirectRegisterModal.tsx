@@ -199,7 +199,7 @@ export function DirectRegisterModal({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm text-orange-600 py-2">휴무일</p>
+                    <p className="text-sm text-warning py-2">휴무일</p>
                   )
                 ) : (
                   <p className="text-sm text-muted-foreground py-2">날짜 먼저 선택</p>

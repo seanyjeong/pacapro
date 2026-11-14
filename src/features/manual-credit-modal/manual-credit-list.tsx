@@ -177,7 +177,7 @@ function CreditSummary({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+              className="h-7 px-2 text-xs text-primary border-primary/30 hover:bg-primary-soft"
               onClick={() => onApply(credit)}
             >
               적용
@@ -197,7 +197,7 @@ function CreditSummary({
                 aria-label="크레딧 삭제"
                 size="sm"
                 variant="ghost"
-                className="text-red-600 hover:text-red-700"
+                className="text-destructive hover:text-destructive"
                 onClick={() => onDelete(credit)}
               >
                 <Trash2 className="w-4 h-4" />

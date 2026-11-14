@@ -51,7 +51,7 @@ export function ParentInfoSection({ formData, errors, handleChange, formatPhoneN
                   aria-invalid={Boolean(errors[phoneField])}
                   aria-describedby={errors[phoneField] ? `${phoneField}-error` : undefined}
                   className="min-h-11 w-full rounded-md border border-border bg-background px-4 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                {errors[phoneField] && <p id={`${phoneField}-error`} className="text-sm text-red-500">{errors[phoneField]}</p>}
+                {errors[phoneField] && <p id={`${phoneField}-error`} className="text-sm text-destructive">{errors[phoneField]}</p>}
                 <button type="button" disabled={!formData[phoneField]}
                   aria-pressed={Boolean(formData[phoneField] && formData.parent_phone === formData[phoneField])}
                   onClick={() => handleChange('parent_phone', formData[phoneField] || '')}
@@ -70,7 +70,7 @@ export function ParentInfoSection({ formData, errors, handleChange, formatPhoneN
               placeholder="010-9876-5432" maxLength={13} aria-invalid={Boolean(errors.parent_phone)}
               aria-describedby={errors.parent_phone ? 'parent-phone-error' : 'parent-phone-help'}
               className="min-h-11 w-full rounded-md border border-border bg-background px-4 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-            {errors.parent_phone && <p id="parent-phone-error" className="text-sm text-red-500">{errors.parent_phone}</p>}
+            {errors.parent_phone && <p id="parent-phone-error" className="text-sm text-destructive">{errors.parent_phone}</p>}
             <p id="parent-phone-help" className="text-sm leading-relaxed text-muted-foreground">
               문자·알림을 받을 번호입니다. 부모님 번호 중 하나를 선택하거나 직접 입력해주세요.
             </p>

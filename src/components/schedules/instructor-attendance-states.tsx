@@ -22,8 +22,8 @@ export function InstructorAttendanceErrorState({ message, onRetry }: ErrorProps)
   return (
     <Card>
       <CardContent className="p-12 text-center">
-        <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-        <p className="text-red-600" role="alert">{message}</p>
+        <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+        <p className="text-destructive" role="alert">{message}</p>
         <Button onClick={onRetry} className="mt-4">다시 시도</Button>
       </CardContent>
     </Card>

@@ -27,7 +27,6 @@ export function PaymentsHeader({
     <header className="space-y-4 border-b border-border/70 pb-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</div>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">
             {viewOnly ? '미납 학원비' : '학원비 관리'}
           </h1>

@@ -72,7 +72,7 @@ export function ReasonBottomSheet({
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <AlertCircle className={`h-5 w-5 ${isExcused ? 'text-blue-500' : 'text-red-500'}`} />
+                <AlertCircle className={`h-5 w-5 ${isExcused ? 'text-primary' : 'text-destructive'}`} />
                 {isExcused ? '공결 사유' : '결석 사유'}
               </h3>
               <button onClick={handleClose} className="p-2 text-muted-foreground hover:text-foreground transition">
@@ -85,8 +85,8 @@ export function ReasonBottomSheet({
               <p className="font-semibold text-xl">{studentName}</p>
               <span className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium ${
                 isExcused
-                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
-                  : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'
+                  ? 'bg-primary-soft text-primary'
+                  : 'bg-destructive-soft text-destructive'
               }`}>
                 {isExcused ? '공결' : '결석'}
               </span>
@@ -94,12 +94,12 @@ export function ReasonBottomSheet({
 
             {/* Info Box */}
             {isExcused && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+              <div className="bg-primary-soft border border-primary/30 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-2">
-                  <HelpCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-800 dark:text-blue-300">
+                  <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-primary">
                     <p className="font-semibold mb-1">공결이란?</p>
-                    <p className="text-blue-700 dark:text-blue-400">
+                    <p className="text-primary">
                       공식적 결석으로, 원장님의 승인이 필요합니다.
                     </p>
                   </div>
@@ -123,8 +123,8 @@ export function ReasonBottomSheet({
                     className={`p-4 border-2 rounded-xl text-sm font-medium transition-all ${
                       selectedReason === option.value
                         ? isExcused
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 shadow-md'
-                          : 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 shadow-md'
+                          ? 'border-primary bg-primary-soft text-primary shadow-md'
+                          : 'border-destructive bg-destructive-soft text-destructive shadow-md'
                         : 'border-border bg-secondary text-foreground hover:border-muted-foreground'
                     }`}
                   >

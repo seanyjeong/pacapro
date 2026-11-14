@@ -47,13 +47,13 @@ export function ConsultationCalendarLearningDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-600" />
+            <UserCheck className="h-5 w-5 text-success" />
             재원생 상담 등록
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-4">
-          <div className="rounded-lg bg-emerald-50 p-3">
-            <p className="flex items-center gap-2 text-sm text-emerald-800">
+          <div className="rounded-lg bg-success-soft p-3">
+            <p className="flex items-center gap-2 text-sm text-success">
               <CalendarIcon className="h-4 w-4" />
               {date && format(date, 'yyyy년 M월 d일 (EEE)', { locale: ko })}
             </p>
@@ -62,7 +62,7 @@ export function ConsultationCalendarLearningDialog({
           <div className="space-y-2">
             <Label>학생 선택 *</Label>
             {studentsLoading ? (
-              <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 학생 목록 로딩중...
               </div>
@@ -124,7 +124,7 @@ export function ConsultationCalendarLearningDialog({
           <Button
             onClick={onSubmit}
             disabled={submitting || !form.studentId}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-success hover:bg-success/90"
           >
             {submitting ? (
               <>

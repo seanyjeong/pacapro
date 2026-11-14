@@ -43,7 +43,7 @@ export function DashboardRestEndedDialog({
                                             {student.grade || '학년 미등록'} · 종료일 {student.rest_end_date}
                                         </div>
                                     </div>
-                                    <span className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+                                    <span className="rounded border border-warning/30 bg-warning-soft px-2 py-1 text-xs font-medium text-warning">
                                         {student.days_overdue}일 경과
                                     </span>
                                 </div>

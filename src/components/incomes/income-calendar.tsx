@@ -229,10 +229,10 @@ export function IncomeCalendar({
               </CardTitle>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <span className="whitespace-nowrap text-muted-foreground">
-                  총 수입: <span className="font-semibold text-green-600">{monthlyTotal.total.toLocaleString()}원</span>
+                  총 수입: <span className="font-semibold text-success">{monthlyTotal.total.toLocaleString()}원</span>
                 </span>
                 <span className="whitespace-nowrap text-muted-foreground">
-                  학원비: <span className="font-medium text-blue-600">{monthlyTotal.tuition.toLocaleString()}원</span>
+                  학원비: <span className="font-medium text-primary">{monthlyTotal.tuition.toLocaleString()}원</span>
                 </span>
                 <span className="whitespace-nowrap text-muted-foreground">
                   기타: <span className="font-medium text-purple-600">{monthlyTotal.other.toLocaleString()}원</span>
@@ -260,8 +260,8 @@ export function IncomeCalendar({
                 key={day}
                 className={cn(
                   'text-center text-sm font-semibold py-2',
-                  index === 0 && 'text-red-600',
-                  index === 6 && 'text-blue-600'
+                  index === 0 && 'text-destructive',
+                  index === 6 && 'text-primary'
                 )}
               >
                 {day}
@@ -293,8 +293,8 @@ export function IncomeCalendar({
                     <div
                       className={cn(
                         'text-sm font-medium mb-1',
-                        index % 7 === 0 && 'text-red-600',
-                        index % 7 === 6 && 'text-blue-600',
+                        index % 7 === 0 && 'text-destructive',
+                        index % 7 === 6 && 'text-primary',
                         !inMonth && 'text-muted-foreground'
                       )}
                     >
@@ -306,8 +306,8 @@ export function IncomeCalendar({
                       <div className="flex-1 space-y-0.5">
                         {daySummary.tuitionCount > 0 && (
                           <div className="flex items-center gap-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                            <span className="text-[10px] text-blue-600">{daySummary.tuitionCount}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            <span className="text-[10px] text-primary">{daySummary.tuitionCount}</span>
                           </div>
                         )}
                         {daySummary.otherCount > 0 && (
@@ -316,7 +316,7 @@ export function IncomeCalendar({
                             <span className="text-[10px] text-purple-600">{daySummary.otherCount}</span>
                           </div>
                         )}
-                        <div className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">
+                        <div className="text-xs sm:text-sm font-medium text-success">
                           {formatAmount(daySummary.totalAmount)}원
                         </div>
                       </div>
@@ -330,7 +330,7 @@ export function IncomeCalendar({
           {/* 범례 */}
           <div className="flex items-center gap-4 mt-4 pt-4 border-t text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="w-2 h-2 rounded-full bg-primary" />
               <span>학원비 수납</span>
             </div>
             <div className="flex items-center gap-1">
@@ -346,7 +346,7 @@ export function IncomeCalendar({
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-green-600" />
+              <Banknote className="h-5 w-5 text-success" />
               {selectedDate && new Date(selectedDate).toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
@@ -359,15 +359,15 @@ export function IncomeCalendar({
           <div className="py-6 px-6 space-y-4">
             {/* 일일 총계 */}
             {selectedSummary && (
-              <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+              <div className="p-3 bg-success-soft rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-muted-foreground">총 수입</span>
-                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                  <span className="text-lg font-bold text-success">
                     {selectedSummary.totalAmount.toLocaleString()}원
                   </span>
                 </div>
                 <div className="flex gap-4 text-sm">
-                  <span className="text-blue-600">학원비 {selectedSummary.tuitionCount}건 ({selectedSummary.tuitionAmount.toLocaleString()}원)</span>
+                  <span className="text-primary">학원비 {selectedSummary.tuitionCount}건 ({selectedSummary.tuitionAmount.toLocaleString()}원)</span>
                   <span className="text-purple-600">기타 {selectedSummary.otherCount}건 ({selectedSummary.otherAmount.toLocaleString()}원)</span>
                 </div>
               </div>
@@ -377,7 +377,7 @@ export function IncomeCalendar({
             {selectedSummary && selectedSummary.tuitionPayments.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
-                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <CreditCard className="w-4 h-4 text-primary" />
                   학원비 수납
                 </h4>
                 <div className="space-y-2">
@@ -390,7 +390,7 @@ export function IncomeCalendar({
                             {payment.year_month} · {PAYMENT_METHOD_MAP[payment.payment_method] || payment.payment_method}
                           </div>
                         </div>
-                        <div className="font-semibold text-blue-600">
+                        <div className="font-semibold text-primary">
                           {Math.floor(parseFloat(String(payment.final_amount))).toLocaleString()}원
                         </div>
                       </div>

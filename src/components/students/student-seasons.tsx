@@ -130,9 +130,9 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">시즌 등록 대상이 아닙니다</h3>
-          <p className="text-gray-500">
+          <Trophy className="w-12 h-12 text-muted-foreground/60 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">시즌 등록 대상이 아닙니다</h3>
+          <p className="text-muted-foreground">
             성인/공무원 학생은 시즌 시스템 대신 연중 월회비로 관리됩니다.
           </p>
         </CardContent>
@@ -305,8 +305,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">시즌 정보 로딩 중...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">시즌 정보 로딩 중...</p>
         </CardContent>
       </Card>
     );
@@ -316,9 +316,9 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-          <p className="text-gray-500 mb-4">{error}</p>
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={loadData}>다시 시도</Button>
         </CardContent>
       </Card>

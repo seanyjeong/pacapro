@@ -37,7 +37,7 @@ export function InstructorAttendanceRow({
           <div
             className={cn(
               'flex h-10 w-10 items-center justify-center rounded-full font-medium',
-              isChecked ? 'bg-primary text-primary-foreground' : 'bg-gray-400 text-white'
+              isChecked ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/40 text-white'
             )}
           >
             {instructor.name.charAt(0)}

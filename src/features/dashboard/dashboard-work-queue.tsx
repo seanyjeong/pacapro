@@ -25,9 +25,9 @@ interface DashboardWorkQueueProps {
 
 const toneClass: Record<DashboardTone, string> = {
     accent: 'border-teal-200 bg-teal-50 text-teal-900 dark:border-teal-900/70 dark:bg-teal-950/30 dark:text-teal-100',
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-100',
-    warning: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100',
-    danger: 'border-red-200 bg-red-50 text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100',
+    success: 'border-success/30 bg-success-soft text-success',
+    warning: 'border-warning/30 bg-warning-soft text-warning',
+    danger: 'border-destructive/30 bg-destructive-soft text-destructive',
     neutral: 'border-border bg-muted/40 text-foreground',
 };
 
@@ -110,7 +110,7 @@ export function DashboardWorkQueue(props: DashboardWorkQueueProps) {
             </div>
 
             {props.todayDataError && (
-                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+                <div className="mx-4 mt-4 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
                     {props.todayDataError}
                 </div>
             )}

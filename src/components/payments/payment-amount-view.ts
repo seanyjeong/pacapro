@@ -9,7 +9,7 @@ export function getAmountView(payment: Payment, paidAmount: number, remainingAmo
     return {
       label: '완납 금액',
       amount: paidAmount,
-      tone: 'text-emerald-700 dark:text-emerald-300',
+      tone: 'text-success',
       detail: payment.final_amount !== paidAmount ? `총 청구 ${formatPaymentAmount(payment.final_amount)}` : null,
     };
   }
@@ -18,7 +18,7 @@ export function getAmountView(payment: Payment, paidAmount: number, remainingAmo
     return {
       label: '남은 금액',
       amount: remainingAmount,
-      tone: 'text-rose-700 dark:text-rose-300',
+      tone: 'text-destructive',
       detail: settledAmount > 0
         ? `총 청구 ${formatPaymentAmount(payment.final_amount)} · 납부 ${formatPaymentAmount(settledAmount)}`
         : `총 청구 ${formatPaymentAmount(payment.final_amount)} · 납부액 확인 필요`,

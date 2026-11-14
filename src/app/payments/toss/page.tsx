@@ -179,13 +179,13 @@ export default function TossPaymentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">대기중</Badge>;
+        return <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">대기중</Badge>;
       case 'matched':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">매칭완료</Badge>;
+        return <Badge variant="outline" className="bg-success-soft text-success border-success/30">매칭완료</Badge>;
       case 'ignored':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">무시됨</Badge>;
+        return <Badge variant="outline" className="bg-muted text-secondary-foreground border-border">무시됨</Badge>;
       case 'error':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">오류</Badge>;
+        return <Badge variant="outline" className="bg-destructive-soft text-destructive border-destructive/30">오류</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -226,8 +226,8 @@ export default function TossPaymentsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-success-soft rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-success" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">자동 매칭</p>
@@ -240,8 +240,8 @@ export default function TossPaymentsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">총 결제액</p>
@@ -254,12 +254,12 @@ export default function TossPaymentsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="w-12 h-12 bg-warning-soft rounded-full flex items-center justify-center">
+                <Clock className="w-6 h-6 text-warning" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">매칭 대기</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pendingCount}건</p>
+                <p className="text-2xl font-bold text-warning">{stats.pendingCount}건</p>
               </div>
             </div>
           </CardContent>
@@ -360,7 +360,7 @@ export default function TossPaymentsPage() {
                                 href={item.receipt_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center text-blue-600 hover:underline"
+                                className="inline-flex items-center text-primary hover:underline"
                               >
                                 <ExternalLink className="w-4 h-4" />
                               </a>
@@ -390,7 +390,7 @@ export default function TossPaymentsPage() {
             <CardContent>
               {queue.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50 text-green-500" />
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50 text-success" />
                   <p>매칭 대기 중인 결제가 없습니다.</p>
                 </div>
               ) : (

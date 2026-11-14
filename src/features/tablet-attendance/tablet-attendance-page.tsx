@@ -32,7 +32,7 @@ export function TabletAttendancePage() {
       <ClassRosterSelect
         branches={branches}
         classId={state.classId}
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-base text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        className="w-full rounded-lg border border-border bg-card px-3 py-3 text-base text-foreground"
         onChange={state.setClassId}
       />
 
@@ -42,12 +42,12 @@ export function TabletAttendancePage() {
             <TabletAttendanceStats stats={state.stats} />
             <TabletAttendanceFilters filters={state.filters} onChange={state.setFilters} />
           </div>
-          <aside className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">현재 표시</p>
-            <p className="mt-2 font-mono text-4xl font-semibold text-zinc-950 dark:text-zinc-50">
+          <aside className="rounded-lg border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">현재 표시</p>
+            <p className="mt-2 font-mono text-4xl font-semibold text-foreground">
               {state.filteredStudents.length}
             </p>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">전체 {state.students.length}명 중 조건에 맞는 학생</p>
+            <p className="mt-1 text-sm text-muted-foreground">전체 {state.students.length}명 중 조건에 맞는 학생</p>
             <Button className="mt-4 h-12 w-full" onClick={state.markAllPresent} disabled={!hasStudents || state.savingId !== null}>
               전체 출석
             </Button>
@@ -66,7 +66,7 @@ export function TabletAttendancePage() {
       />
 
       {state.savingId !== null && (
-        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-zinc-950 px-5 py-3 text-sm font-medium text-white shadow-lg dark:bg-zinc-50 dark:text-zinc-950">
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-white shadow-lg">
           저장 중...
         </div>
       )}

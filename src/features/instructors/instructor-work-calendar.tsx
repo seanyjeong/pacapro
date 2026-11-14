@@ -19,7 +19,7 @@ const SLOT_LABELS: Record<InstructorWorkSchedule['time_slot'], string> = {
   evening: '저녁',
 };
 const SLOT_STYLES: Record<InstructorWorkSchedule['time_slot'], string> = {
-  morning: 'border-amber-200 bg-amber-50 text-amber-800',
+  morning: 'border-warning/30 bg-warning-soft text-warning',
   afternoon: 'border-sky-200 bg-sky-50 text-sky-800',
   evening: 'border-violet-200 bg-violet-50 text-violet-800',
 };
@@ -110,8 +110,8 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
                     key={weekday}
                     className={cn(
                       'min-w-0 border-b border-r border-border bg-muted/60 py-2 text-center text-xs font-medium text-muted-foreground',
-                      index === 0 && 'text-red-600',
-                      index === 6 && 'text-blue-600'
+                      index === 0 && 'text-destructive',
+                      index === 6 && 'text-primary'
                     )}
                     role="columnheader"
                   >
@@ -135,8 +135,8 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
                     >
                       <div className={cn(
                         'mb-1 text-xs font-medium',
-                        index % 7 === 0 && day.isCurrentMonth && 'text-red-600',
-                        index % 7 === 6 && day.isCurrentMonth && 'text-blue-600'
+                        index % 7 === 0 && day.isCurrentMonth && 'text-destructive',
+                        index % 7 === 6 && day.isCurrentMonth && 'text-primary'
                       )}>
                         {day.dayOfMonth}
                         {day.isToday && <span className="ml-1 hidden text-[10px] text-primary sm:inline">오늘</span>}

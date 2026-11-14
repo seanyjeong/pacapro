@@ -22,7 +22,7 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
         <label htmlFor="instructor-salary-type" className="mb-2 block text-sm font-medium text-foreground">
-          급여타입 <span className="text-red-500">*</span>
+          급여타입 <span className="text-destructive">*</span>
         </label>
         <select
           id="instructor-salary-type"
@@ -36,12 +36,12 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
             </option>
           ))}
         </select>
-        {errors.salary_type && <p className="text-red-500 text-sm mt-1">{errors.salary_type}</p>}
+        {errors.salary_type && <p className="text-destructive text-sm mt-1">{errors.salary_type}</p>}
       </div>
 
       <div>
         <label htmlFor="instructor-tax-type" className="mb-2 block text-sm font-medium text-foreground">
-          세금타입 <span className="text-red-500">*</span>
+          세금타입 <span className="text-destructive">*</span>
         </label>
         <select
           id="instructor-tax-type"
@@ -60,7 +60,7 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
       {formData.salary_type === 'hourly' && (
         <div>
           <label htmlFor="instructor-type" className="mb-2 block text-sm font-medium text-foreground">
-            강사 유형 <span className="text-red-500">*</span>
+            강사 유형 <span className="text-destructive">*</span>
           </label>
           <select
             id="instructor-type"
@@ -83,32 +83,32 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
       {showHourlyRate && (
         <div>
           <label htmlFor="instructor-hourly-rate" className="mb-2 block text-sm font-medium text-foreground">
-            {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-red-500">*</span>
+            {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-destructive">*</span>
           </label>
           <MoneyInput
             id="instructor-hourly-rate"
             value={formData.hourly_rate || 0}
             onChange={(value) => onChange('hourly_rate', value)}
-            className={errors.hourly_rate ? 'border-red-500' : ''}
+            className={errors.hourly_rate ? 'border-destructive' : ''}
           />
           <p className="text-xs text-muted-foreground mt-1">100원 단위로 입력</p>
-          {errors.hourly_rate && <p className="text-red-500 text-sm mt-1">{errors.hourly_rate}</p>}
+          {errors.hourly_rate && <p className="text-destructive text-sm mt-1">{errors.hourly_rate}</p>}
         </div>
       )}
 
       {showBaseSalary && (
         <div>
           <label htmlFor="instructor-base-salary" className="mb-2 block text-sm font-medium text-foreground">
-            월급 <span className="text-red-500">*</span>
+            월급 <span className="text-destructive">*</span>
           </label>
           <MoneyInput
             id="instructor-base-salary"
             value={formData.base_salary || 0}
             onChange={(value) => onChange('base_salary', value)}
-            className={errors.base_salary ? 'border-red-500' : ''}
+            className={errors.base_salary ? 'border-destructive' : ''}
           />
           <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
-          {errors.base_salary && <p className="text-red-500 text-sm mt-1">{errors.base_salary}</p>}
+          {errors.base_salary && <p className="text-destructive text-sm mt-1">{errors.base_salary}</p>}
         </div>
       )}
     </div>

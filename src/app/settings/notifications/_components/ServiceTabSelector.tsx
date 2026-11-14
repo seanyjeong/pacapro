@@ -35,9 +35,9 @@ interface Props {
 
 export default function ServiceTabSelector({ settings, activeTab, showPriceModal, setShowPriceModal, onServiceTypeChange }: Props) {
   const baseServiceButton = 'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors';
-  const selectedServiceButton = 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500 dark:text-white';
+  const selectedServiceButton = 'border-primary bg-primary text-white dark:text-white';
   const idleServiceButton = 'border-border bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground';
-  const selectedBadge = <span aria-hidden="true" className="rounded bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold text-white">선택됨</span>;
+  const selectedBadge = <span aria-hidden="true" className="rounded bg-card/20 px-1.5 py-0.5 text-[11px] font-semibold text-white">선택됨</span>;
 
   return (
     <>
@@ -48,7 +48,7 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
             type="button"
             onClick={() => setShowPriceModal(true)}
             aria-haspopup="dialog"
-            className="flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+            className="flex items-center gap-1 rounded-md bg-primary-soft px-3 py-1.5 text-sm text-primary transition-colors hover:bg-primary-soft"
           >
             <DollarSign className="w-4 h-4" />
             가격 비교
@@ -77,7 +77,7 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
         <p className="text-sm text-muted-foreground">
           현재 사용 중: <strong className="text-foreground">{settings.service_type === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
           {settings.service_type !== activeTab && (
-            <span className="text-amber-600 ml-2">(변경 후 저장 필요)</span>
+            <span className="text-warning ml-2">(변경 후 저장 필요)</span>
           )}
         </p>
       </div>
@@ -95,7 +95,6 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
           >
             <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Notification Cost</p>
                 <h3 id="notification-price-title" className="mt-1 text-lg font-semibold text-foreground">발송 단가 비교</h3>
               </div>
               <button
@@ -119,7 +118,7 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
                   </thead>
                   <tbody className="divide-y divide-border">
                     {PRICE_ROWS.map((row) => (
-                      <tr key={row.type} className={row.highlight ? 'bg-amber-50/70 dark:bg-amber-950/30' : undefined}>
+                      <tr key={row.type} className={row.highlight ? 'bg-warning-soft/70' : undefined}>
                         <td className="px-3 py-3 font-medium text-foreground">{row.type}</td>
                         <td className="px-3 py-3 text-foreground">{row.sens}</td>
                         <td className="px-3 py-3 text-foreground">{row.solapi}</td>
@@ -142,7 +141,7 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
                 ))}
               </div>
 
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
+              <div className="rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-xs leading-5 text-warning">
                 가격은 변동될 수 있고 대량 발송 할인 기준도 계정마다 다를 수 있습니다. 최종 비용은 각 공식 사이트에서 확인하세요.
               </div>
 

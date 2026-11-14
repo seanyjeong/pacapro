@@ -218,7 +218,7 @@ export function StudentResumeModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-emerald-600" />
+            <Calendar className="w-5 h-5 text-success" />
             휴원 복귀 처리
           </DialogTitle>
           <DialogDescription>
@@ -240,7 +240,7 @@ export function StudentResumeModal({
               <div className="text-sm text-muted-foreground">
                 휴원 시작: {student.rest_start_date}
                 {isIndefinite ? (
-                  <span className="ml-2 text-orange-600 dark:text-orange-400 font-medium">(무기한)</span>
+                  <span className="ml-2 text-warning font-medium">(무기한)</span>
                 ) : (
                   <span> ~ {student.rest_end_date}</span>
                 )}
@@ -251,7 +251,7 @@ export function StudentResumeModal({
                 </div>
               )}
               {!isIndefinite && student.days_overdue !== undefined && student.days_overdue > 0 && (
-                <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                <div className="flex items-center gap-1 text-sm text-warning">
                   <Clock className="w-4 h-4" />
                   종료일로부터 {student.days_overdue}일 경과
                 </div>
@@ -266,7 +266,7 @@ export function StudentResumeModal({
                 type="date"
                 value={resumeDate}
                 onChange={(e) => setResumeDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-success"
                 min={student.rest_start_date || undefined}
                 required
                 disabled={processing}
@@ -275,14 +275,14 @@ export function StudentResumeModal({
 
             {/* 예상 처리 내용 - 미리보기 */}
             {preview && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-sm space-y-3">
-                <div className="font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+              <div className="p-3 bg-success-soft rounded-lg text-sm space-y-3">
+                <div className="font-medium text-success flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4" />
                   복귀 시 처리 내용
                 </div>
 
                 {/* 스케줄 정보 */}
-                <div className="flex items-start gap-2 text-emerald-600 dark:text-emerald-500">
+                <div className="flex items-start gap-2 text-success">
                   <CalendarDays className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
                     <div>수업 요일: <span className="font-medium">{preview.classDays}</span> (주 {preview.weeklyCount}회)</div>
@@ -293,20 +293,20 @@ export function StudentResumeModal({
                 </div>
 
                 {/* 학원비 정보 */}
-                <div className="flex items-start gap-2 text-emerald-600 dark:text-emerald-500">
+                <div className="flex items-start gap-2 text-success">
                   <Banknote className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
                     <div>청구가 없을 때 예상 학원비 (일할계산)</div>
-                    <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+                    <div className="text-lg font-bold text-success">
                       {formatCurrency(preview.proRatedAmount)}
                     </div>
-                    <div className="text-xs text-emerald-500 dark:text-emerald-600">
+                    <div className="text-xs text-success">
                       월 {formatCurrency(preview.discountedTuition)} × {preview.remainingDays}회/{preview.monthlyTotal}회
                     </div>
                   </div>
                 </div>
 
-                <div className="text-xs text-emerald-600 dark:text-emerald-500">
+                <div className="text-xs text-success">
                   휴식 크레딧은 복귀 전날까지의 실제 휴식일수로 자동 재계산됩니다.
                 </div>
                 <p className="text-xs">기존 월 청구가 있으면 중복 생성하지 않으며, 같은 달 휴원으로 줄어든 청구는 복귀 기간을 반영합니다.</p>
@@ -314,7 +314,7 @@ export function StudentResumeModal({
             )}
 
             {error && (
-              <div role="alert" className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+              <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
               </div>
@@ -328,7 +328,7 @@ export function StudentResumeModal({
             <Button
               type="submit"
               disabled={processing}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-success hover:bg-success/90 text-white"
             >
               {processing ? '처리 중...' : '복귀 처리'}
             </Button>

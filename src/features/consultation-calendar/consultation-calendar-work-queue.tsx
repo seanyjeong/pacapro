@@ -28,7 +28,7 @@ export function ConsultationCalendarWorkQueue({
     <aside className="space-y-4" data-testid="consultation-calendar-work-queue">
       <section className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
             <CalendarPlus className="h-4 w-4" />
           </span>
           <div className="min-w-0">

@@ -79,7 +79,7 @@ export function ManualCreditApplyDialog({
           <Button
             onClick={onApply}
             disabled={applying || !applyYearMonth}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {applying ? '적용 중...' : '적용'}
           </Button>

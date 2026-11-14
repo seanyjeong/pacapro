@@ -20,7 +20,7 @@ export function StepClassTime({ formData, updateFormData }: StepClassTimeProps) 
         return (
           <section key={slot.key} className="rounded-md border border-border bg-background p-4">
             <div className="mb-4 flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-secondary-foreground">
                 <Clock3 className="h-4 w-4" />
               </span>
               <div>

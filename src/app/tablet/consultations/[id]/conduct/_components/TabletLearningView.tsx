@@ -41,7 +41,7 @@ export function TabletLearningView({
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('학업')} className="w-full flex items-center justify-between">
             <CardTitle className="text-lg flex items-center">
-              <GraduationCap className="h-5 w-5 mr-2 text-blue-600" />
+              <GraduationCap className="h-5 w-5 mr-2 text-primary" />
               학업
             </CardTitle>
             {expandedSections['학업'] ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -147,7 +147,7 @@ export function TabletLearningView({
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('실기')} className="w-full flex items-center justify-between">
             <CardTitle className="text-lg flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-orange-600" />
+              <Sparkles className="h-5 w-5 mr-2 text-warning" />
               실기 (P-EAK)
             </CardTitle>
             {expandedSections['실기'] ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -274,7 +274,7 @@ export function TabletLearningView({
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('기타')} className="w-full flex items-center justify-between">
             <CardTitle className="text-lg flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-green-600" />
+              <Calendar className="h-5 w-5 mr-2 text-success" />
               기타
             </CardTitle>
             {expandedSections['기타'] ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}

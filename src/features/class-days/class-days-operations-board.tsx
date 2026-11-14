@@ -41,13 +41,12 @@ export function ClassDaysOperationsBoard({
   return (
     <aside
       aria-label="수업일 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="class-days-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Class Day Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">수업일 작업 보드</h2>
-        <p className="text-sm text-slate-600">선택, 일괄 변경, 적용월을 한 번에 확인합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">수업일 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">선택, 일괄 변경, 적용월을 한 번에 확인합니다.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -64,16 +63,16 @@ export function ClassDaysOperationsBoard({
         />
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+      <div className="rounded-md border border-border bg-muted p-3">
         <div className="flex items-start gap-2">
-          <CalendarClock className="mt-0.5 h-4 w-4 text-slate-500" />
+          <CalendarClock className="mt-0.5 h-4 w-4 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-xs font-medium text-slate-500">적용 시작</p>
-            <p className="mt-1 text-sm font-semibold text-slate-950">{effectiveFromLabel}</p>
+            <p className="text-xs font-medium text-muted-foreground">적용 시작</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">{effectiveFromLabel}</p>
           </div>
         </div>
         {focusedStudentName ? (
-          <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700">
+          <div className="mt-3 rounded-md border border-primary/30 bg-primary-soft px-2 py-1.5 text-xs font-semibold text-primary">
             집중 학생 {focusedStudentName}
           </div>
         ) : null}
@@ -138,14 +137,14 @@ interface MetricProps {
 
 function Metric({ ariaLabel, label, onClick, pressed = false, value }: MetricProps) {
   const className = cn(
-    'rounded-md border border-slate-200 bg-slate-50 p-3',
-    onClick && 'w-full text-left transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
-    pressed && 'border-orange-300 bg-orange-50 hover:bg-orange-50'
+    'rounded-md border border-border bg-muted p-3',
+    onClick && 'w-full text-left transition hover:border-border hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground/40',
+    pressed && 'border-warning/30 bg-warning-soft hover:bg-warning-soft'
   );
   const content = (
     <>
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold tracking-normal text-foreground">{value}</p>
     </>
   );
 

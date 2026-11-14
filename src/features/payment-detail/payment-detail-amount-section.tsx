@@ -13,7 +13,7 @@ export function PaymentDetailAmountSection({ payment }: { payment: Payment }) {
       </div>
       <div className="space-y-3 p-4 text-sm">
         {hasPartialPayment ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+          <div className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-warning">
             <p className="font-semibold">부분납부 진행 중</p>
             <p className="mt-1 text-xs">총 청구 {getAmountLabel(payment.final_amount)} 중 {getAmountLabel(settled)} 수납, {getAmountLabel(outstanding)} 남음</p>
           </div>
@@ -27,7 +27,7 @@ export function PaymentDetailAmountSection({ payment }: { payment: Payment }) {
         </div>
         <div className="mt-3 flex justify-between rounded-md bg-muted/40 px-3 py-3">
           <span className="font-semibold text-foreground">남은 납부 금액</span>
-          <span className={outstanding > 0 ? 'text-xl font-bold text-rose-700' : 'text-xl font-bold text-emerald-700'}>{getAmountLabel(outstanding)}</span>
+          <span className={outstanding > 0 ? 'text-xl font-bold text-destructive' : 'text-xl font-bold text-success'}>{getAmountLabel(outstanding)}</span>
         </div>
       </div>
     </section>
@@ -35,7 +35,7 @@ export function PaymentDetailAmountSection({ payment }: { payment: Payment }) {
 }
 
 function Line({ label, value, strong = false, danger = false, info = false, success = false }: { label: string; value: string; strong?: boolean; danger?: boolean; info?: boolean; success?: boolean }) {
-  const color = danger ? 'text-rose-700' : info ? 'text-blue-700' : success ? 'text-emerald-700' : 'text-foreground';
+  const color = danger ? 'text-destructive' : info ? 'text-primary' : success ? 'text-success' : 'text-foreground';
   return (
     <div className="flex justify-between border-b border-border/70 py-2">
       <span className={strong ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{label}</span>

@@ -19,11 +19,10 @@ export function ConsultationCalendarHeader({
     <header className="rounded-md border border-border bg-card px-5 py-4 shadow-none">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary-soft text-primary">
             <CalendarDays className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Consultation Calendar</p>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground">상담 달력</h1>
             <p className="mt-1 text-sm text-muted-foreground">월별 신규 상담, 재원생 상담, 상담 메모를 날짜 기준으로 확인합니다.</p>
           </div>

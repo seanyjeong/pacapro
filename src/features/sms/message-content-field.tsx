@@ -34,7 +34,7 @@ export function MessageContentField({
             </Badge>
           )}
           {isLMS && !isMMS && (
-            <Badge variant="outline" className="gap-1 border-amber-200 bg-amber-50 text-amber-700">
+            <Badge variant="outline" className="gap-1 border-warning/30 bg-warning-soft text-warning">
               <AlertCircle className="h-3 w-3" />
               LMS
             </Badge>

@@ -124,7 +124,7 @@ function SeasonRowActions({ season, onDelete }: Pick<SeasonListTableProps, 'onDe
       </Link>
       <Button
         aria-label="삭제"
-        className="h-8 shrink-0 gap-1.5 whitespace-nowrap px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+        className="h-8 shrink-0 gap-1.5 whitespace-nowrap px-2 text-destructive hover:bg-destructive-soft hover:text-destructive"
         variant="ghost"
         size="sm"
         onClick={() => onDelete(season.id, season.season_name)}

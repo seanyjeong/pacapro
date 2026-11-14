@@ -39,13 +39,12 @@ export function SeasonListOperationsBoard({
   return (
     <aside
       aria-label="시즌 작업 보드"
-      className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-4 rounded-md border border-border bg-card p-4 shadow-sm"
       data-testid="season-list-operations-board"
     >
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Season Desk</p>
-        <h2 className="text-lg font-semibold tracking-normal text-slate-950">시즌 작업 보드</h2>
-        <p className="text-sm text-slate-600">시즌 등록, 학생 배정, 필터 상태를 한곳에서 정리합니다.</p>
+        <h2 className="text-lg font-semibold tracking-normal text-foreground">시즌 작업 보드</h2>
+        <p className="text-sm text-secondary-foreground">시즌 등록, 학생 배정, 필터 상태를 한곳에서 정리합니다.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -83,15 +82,15 @@ export function SeasonListOperationsBoard({
         />
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <p className="text-xs font-medium text-slate-500">대표 시즌</p>
+      <div className="rounded-md border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">대표 시즌</p>
         {primarySeason ? (
           <div className="mt-2 min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-950">{primarySeason.season_name}</p>
-            <p className="mt-1 text-xs text-slate-600">기본 시즌비 {formatSeasonFee(primarySeason.default_season_fee)}</p>
+            <p className="truncate text-sm font-semibold text-foreground">{primarySeason.season_name}</p>
+            <p className="mt-1 text-xs text-secondary-foreground">기본 시즌비 {formatSeasonFee(primarySeason.default_season_fee)}</p>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-slate-600">등록된 시즌이 없습니다.</p>
+          <p className="mt-2 text-sm text-secondary-foreground">등록된 시즌이 없습니다.</p>
         )}
       </div>
 
@@ -147,14 +146,14 @@ function Metric({ active, icon, label, testId, value, onClick }: MetricProps) {
     <button
       className={`rounded-md border p-3 text-left transition-colors ${
         active
-          ? 'border-blue-200 bg-blue-50 text-blue-950'
-          : 'border-slate-200 bg-slate-50 text-slate-950 hover:border-slate-300 hover:bg-white'
+          ? 'border-primary/30 bg-primary-soft text-primary'
+          : 'border-border bg-muted text-foreground hover:border-border hover:bg-card'
       }`}
       data-testid={testId}
       type="button"
       onClick={onClick}
     >
-      <div className={`mb-2 flex items-center gap-2 ${active ? 'text-blue-600' : 'text-slate-500'}`}>
+      <div className={`mb-2 flex items-center gap-2 ${active ? 'text-primary' : 'text-muted-foreground'}`}>
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>

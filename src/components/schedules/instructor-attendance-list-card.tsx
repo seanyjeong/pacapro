@@ -49,7 +49,7 @@ export function InstructorAttendanceListCard({
       <CardContent>
         {saveError && (
           <div
-            className="mb-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive"
             role="alert"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />

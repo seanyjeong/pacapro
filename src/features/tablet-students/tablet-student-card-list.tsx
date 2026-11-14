@@ -39,7 +39,7 @@ export function TabletStudentCardList({ loading, students }: TabletStudentCardLi
           className="rounded-lg border border-border bg-card p-4 shadow-none"
         >
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-slate-900 text-sm font-bold text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-foreground text-sm font-bold text-white">
               {student.name.charAt(0)}
             </div>
             <div className="min-w-0 flex-1">

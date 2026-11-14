@@ -12,11 +12,10 @@ export function SmsHeader({ messageType, recipientCount, senderCount }: SmsHeade
   return (
     <header className="grid gap-4 border-b border-border/70 pb-5 lg:grid-cols-12 lg:items-end">
       <div className="flex items-start gap-3 lg:col-span-8">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-success/30 bg-success-soft text-success">
           <MessageSquare className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Messaging Desk</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">문자 보내기</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             수신자, 발신번호, 이미지 첨부 상태를 확인한 뒤 발송합니다.

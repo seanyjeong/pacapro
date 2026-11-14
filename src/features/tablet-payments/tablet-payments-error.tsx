@@ -12,7 +12,7 @@ export function TabletPaymentsError({ detail, message, onRetry }: TabletPayments
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
       <section className="rounded-md border border-border bg-background px-6 py-10 text-center shadow-none">
-        <AlertCircle className="mx-auto h-10 w-10 text-rose-600 dark:text-rose-300" />
+        <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
         <h1 className="mt-4 text-xl font-semibold text-foreground">{message}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">

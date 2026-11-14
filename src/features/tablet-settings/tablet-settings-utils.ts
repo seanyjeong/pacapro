@@ -23,9 +23,9 @@ export function getTabletRoleLabel(role?: string): string {
 export function getTabletRoleTone(role?: string): string {
   const tones: Record<string, string> = {
     admin: 'border-sky-200 bg-sky-50 text-sky-800',
-    instructor: 'border-amber-200 bg-amber-50 text-amber-800',
+    instructor: 'border-warning/30 bg-warning-soft text-warning',
     owner: 'border-violet-200 bg-violet-50 text-violet-800',
-    staff: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    staff: 'border-success/30 bg-success-soft text-success',
   };
   return role ? tones[role] || 'border-border bg-muted text-foreground' : 'border-border bg-muted text-foreground';
 }

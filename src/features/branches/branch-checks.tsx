@@ -31,30 +31,33 @@ interface BranchChecksProps {
   onChange: (selected: number[]) => void;
 }
 
-/** 학원비 매출·미납을 지점별로 보는 체크 상자. 지점이 없는 학원에는 나오지 않는다. */
+/** 지점별로 보는 칩. 아무것도 고르지 않으면(전체) 모든 지점이다. 지점이 없는 학원에는 나오지 않는다. */
 export function BranchChecks({ branches, selected, className, withoutNone, onChange }: BranchChecksProps) {
   if (branches.length === 0) return null;
 
   const toggle = (id: number) => onChange(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]);
   const options = [...branches.map((branch) => ({ id: branch.id, label: branch.name })), ...(withoutNone ? [] : [{ id: 0, label: '지점 없음' }])];
+  const chip = (active: boolean) => cn(
+    'inline-flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold transition-colors',
+    active ? 'bg-foreground text-background' : 'bg-card text-secondary-foreground hover:bg-muted hover:text-foreground'
+  );
 
   return (
-    <section className={cn('flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card p-3 text-sm', className)} aria-label="지점별 보기">
-      <span className="font-medium">지점</span>
+    <section className={cn('-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 py-0.5', className)} aria-label="지점별 보기">
+      <button type="button" aria-pressed={selected.length === 0} className={chip(selected.length === 0)} onClick={() => onChange([])}>
+        전체 지점
+      </button>
       {options.map((option) => (
-        <label key={option.id} className="inline-flex cursor-pointer items-center gap-1.5">
-          <input
-            type="checkbox"
-            className="h-4 w-4"
-            checked={selected.includes(option.id)}
-            onChange={() => toggle(option.id)}
-          />
+        <button
+          key={option.id}
+          type="button"
+          aria-pressed={selected.includes(option.id)}
+          className={chip(selected.includes(option.id))}
+          onClick={() => toggle(option.id)}
+        >
           {option.label}
-        </label>
+        </button>
       ))}
-      <span className="text-muted-foreground">
-        {selected.length === 0 ? '체크하지 않으면 전체 지점' : '체크한 지점만 합쳐서 봅니다'}
-      </span>
     </section>
   );
 }

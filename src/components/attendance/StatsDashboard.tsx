@@ -58,40 +58,40 @@ export function StatsDashboard({ stats, layout = 'grid', className = '' }: Stats
       label: '전체', 
       value: stats.total, 
       icon: Users,
-      color: 'text-slate-700 dark:text-slate-300',
-      bg: 'bg-slate-100 dark:bg-slate-800'
+      color: 'text-secondary-foreground',
+      bg: 'bg-muted'
     },
     { 
       key: 'present', 
       label: '출석', 
       value: stats.present, 
       icon: CheckCircle2,
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950'
+      color: 'text-success',
+      bg: 'bg-success-soft'
     },
     { 
       key: 'absent', 
       label: '결석', 
       value: stats.absent, 
       icon: XCircle,
-      color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-50 dark:bg-red-950'
+      color: 'text-destructive',
+      bg: 'bg-destructive-soft'
     },
     { 
       key: 'late', 
       label: '지각', 
       value: stats.late, 
       icon: Clock,
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950'
+      color: 'text-warning',
+      bg: 'bg-warning-soft'
     },
     { 
       key: 'notMarked', 
       label: '미체크', 
       value: stats.notMarked, 
       icon: AlertCircle,
-      color: 'text-slate-600 dark:text-slate-400',
-      bg: 'bg-slate-50 dark:bg-slate-900'
+      color: 'text-secondary-foreground',
+      bg: 'bg-muted'
     },
   ];
 

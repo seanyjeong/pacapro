@@ -51,7 +51,7 @@ export function ConsultationList({
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : consultations.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
@@ -119,7 +119,7 @@ export function ConsultationList({
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-destructive"
                             onClick={(e) => { e.stopPropagation(); onOpenDeleteModal(c); }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />삭제

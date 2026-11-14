@@ -92,9 +92,9 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
           <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setField('additional_amount', value)} />
         </div>
         <div className="border-t border-border/70 p-4">
-          <div className="flex items-center justify-between rounded-md bg-blue-50 px-3 py-3">
-            <span className="text-sm font-semibold text-blue-900">최종 청구 금액</span>
-            <span className="text-xl font-bold text-blue-800">{finalAmount.toLocaleString()}원</span>
+          <div className="flex items-center justify-between rounded-md bg-primary-soft px-3 py-3">
+            <span className="text-sm font-semibold text-primary">최종 청구 금액</span>
+            <span className="text-xl font-bold text-primary">{finalAmount.toLocaleString()}원</span>
           </div>
         </div>
       </section>

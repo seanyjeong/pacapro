@@ -28,16 +28,16 @@ export function OnboardingStepRail({ currentStep }: OnboardingStepRailProps) {
               key={step.id}
               className={[
                 'min-w-0 rounded-md border px-2 py-3 transition lg:px-3',
-                active ? 'border-slate-900 bg-slate-50' : 'border-transparent',
-                completed ? 'bg-emerald-50 text-emerald-800' : 'text-muted-foreground',
+                active ? 'border-muted-foreground/40 bg-muted' : 'border-transparent',
+                completed ? 'bg-success-soft text-success' : 'text-muted-foreground',
               ].join(' ')}
             >
               <div className="flex flex-col items-center gap-2 text-center lg:flex-row lg:text-left">
                 <span
                   className={[
                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border',
-                    active ? 'border-slate-900 bg-slate-900 text-white' : 'border-border bg-background',
-                    completed ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : '',
+                    active ? 'border-muted-foreground/40 bg-foreground text-white' : 'border-border bg-background',
+                    completed ? 'border-success/30 bg-success-soft text-success' : '',
                   ].join(' ')}
                 >
                   {completed ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}

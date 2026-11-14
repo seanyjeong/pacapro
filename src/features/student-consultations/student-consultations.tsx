@@ -169,7 +169,7 @@ function StudentConsultationsErrorState({
     return (
         <Card>
             <CardContent className="py-7 text-center">
-                <AlertCircle className="mx-auto mb-3 h-9 w-9 text-red-500" />
+                <AlertCircle className="mx-auto mb-3 h-9 w-9 text-destructive" />
                 <h3 className="mb-2 text-base font-semibold text-foreground">상담 기록을 불러오지 못했습니다</h3>
                 <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">{message}</p>
                 <Button variant="outline" onClick={onRetry}>

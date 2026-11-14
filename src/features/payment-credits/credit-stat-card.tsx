@@ -10,9 +10,9 @@ interface CreditStatCardProps {
 
 const toneClasses = {
   default: { value: 'text-foreground', iconBg: 'bg-muted', icon: 'text-muted-foreground' },
-  orange: { value: 'text-orange-700 dark:text-orange-300', iconBg: 'bg-orange-50', icon: 'text-orange-600 dark:text-orange-300' },
-  green: { value: 'text-emerald-700 dark:text-emerald-300', iconBg: 'bg-emerald-50', icon: 'text-emerald-600 dark:text-emerald-300' },
-  blue: { value: 'text-blue-700 dark:text-blue-300', iconBg: 'bg-blue-50', icon: 'text-blue-600 dark:text-blue-300' },
+  orange: { value: 'text-warning', iconBg: 'bg-warning-soft', icon: 'text-warning' },
+  green: { value: 'text-success', iconBg: 'bg-success-soft', icon: 'text-success' },
+  blue: { value: 'text-primary', iconBg: 'bg-primary-soft', icon: 'text-primary' },
 };
 
 export function CreditStatCard({ label, value, detail, icon: Icon, tone = 'default' }: CreditStatCardProps) {

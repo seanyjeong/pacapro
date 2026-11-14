@@ -10,10 +10,10 @@ export function SalaryAttendanceSection({ attendanceSummary }: SalaryAttendanceS
 
   return (
     <section className="print-section overflow-hidden rounded-lg border border-border/70 bg-card">
-      <div className="border-b border-border/70 bg-blue-50 p-3 print-compact">
+      <div className="border-b border-border/70 bg-primary-soft p-3 print-compact">
         <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-sm font-semibold text-blue-900">{attendanceSummary.work_year_month} 출근 내역</h2>
-          <p className="text-xs text-blue-800">
+          <h2 className="text-sm font-semibold text-primary">{attendanceSummary.work_year_month} 출근 내역</h2>
+          <p className="text-xs text-primary">
             출근 {attendanceSummary.attendance_days}일 / 총 {attendanceSummary.total_classes}회
           </p>
         </div>
@@ -31,7 +31,7 @@ export function SalaryAttendanceSection({ attendanceSummary }: SalaryAttendanceS
         <tbody className="divide-y divide-border">
           {Object.entries(attendanceSummary.daily_breakdown).sort(([a], [b]) => a.localeCompare(b)).flatMap(([date, data]) =>
             data.details.map((detail, index) => (
-              <tr key={`${date}-${index}`} className={isWeekend(date) ? 'bg-red-50' : ''}>
+              <tr key={`${date}-${index}`} className={isWeekend(date) ? 'bg-destructive-soft' : ''}>
                 {index === 0 ? (
                   <>
                     <td className="px-2 py-1 font-medium" rowSpan={data.details.length}>{formatShortDate(date)}</td>

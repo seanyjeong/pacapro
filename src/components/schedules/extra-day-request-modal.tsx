@@ -35,8 +35,8 @@ const INSTRUCTORS_LOAD_ERROR_MESSAGE = '강사 목록을 불러오지 못했습�
 const EXTRA_DAY_REQUEST_ERROR_MESSAGE = '출근 요청을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; defaultStart: string; defaultEnd: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600', defaultStart: '09:00', defaultEnd: '12:00' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600', defaultStart: '13:00', defaultEnd: '17:00' },
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-warning', defaultStart: '09:00', defaultEnd: '12:00' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-primary', defaultStart: '13:00', defaultEnd: '17:00' },
   { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600', defaultStart: '18:00', defaultEnd: '21:00' },
 ];
 
@@ -163,7 +163,7 @@ export function ExtraDayRequestModal({
 
         <div className="space-y-4 py-4 px-1">
           {error && (
-            <div role="alert" className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div role="alert" className="flex items-center gap-2 p-3 bg-destructive-soft border border-destructive/30 rounded-lg text-destructive text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
@@ -171,19 +171,19 @@ export function ExtraDayRequestModal({
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <>
               {/* 강사 선택 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-foreground mb-2">
                   강사 선택
                 </label>
                 <select
                   value={selectedInstructorId || ''}
                   onChange={(e) => setSelectedInstructorId(Number(e.target.value) || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="">강사를 선택하세요</option>
                   {instructors.map((instructor) => (
@@ -197,7 +197,7 @@ export function ExtraDayRequestModal({
 
               {/* 시간대 선택 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-foreground mb-2">
                   시간대
                 </label>
                 <div className="flex gap-2">
@@ -209,11 +209,11 @@ export function ExtraDayRequestModal({
                       className={cn(
                         'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-sm font-medium transition-colors',
                         selectedTimeSlot === slot
-                          ? 'bg-blue-50 border-blue-500 text-blue-700'
-                          : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                          ? 'bg-primary-soft border-primary text-primary'
+                          : 'bg-card border-border text-secondary-foreground hover:bg-muted'
                       )}
                     >
-                      <Icon className={cn('w-4 h-4', selectedTimeSlot === slot ? 'text-blue-600' : color)} />
+                      <Icon className={cn('w-4 h-4', selectedTimeSlot === slot ? 'text-primary' : color)} />
                       {label}
                     </button>
                   ))}
@@ -223,18 +223,18 @@ export function ExtraDayRequestModal({
               {/* 시급제 강사: 시간 입력 */}
               {isHourly && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-foreground mb-2">
                     예정 근무 시간
                   </label>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                    <Clock className="w-4 h-4 text-muted-foreground" />
                     <Input
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
                       className="w-28"
                     />
-                    <span className="text-gray-400">~</span>
+                    <span className="text-muted-foreground">~</span>
                     <Input
                       type="time"
                       value={endTime}
@@ -247,7 +247,7 @@ export function ExtraDayRequestModal({
 
               {/* 사유 입력 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-foreground mb-2">
                   사유 (선택)
                 </label>
                 <Textarea

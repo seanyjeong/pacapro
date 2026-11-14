@@ -25,8 +25,8 @@ export const CONSULTATION_STATUS_META: Record<
 > = {
   pending: {
     label: '대기',
-    className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
-    dotClassName: 'bg-amber-500',
+    className: 'border-warning/30 bg-warning-soft text-warning',
+    dotClassName: 'bg-warning',
   },
   confirmed: {
     label: '확정',
@@ -35,18 +35,18 @@ export const CONSULTATION_STATUS_META: Record<
   },
   completed: {
     label: '완료',
-    className: 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-    dotClassName: 'bg-zinc-400',
+    className: 'border-border bg-muted text-secondary-foreground',
+    dotClassName: 'bg-muted-foreground/40',
   },
   cancelled: {
     label: '취소',
-    className: 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-    dotClassName: 'bg-zinc-400',
+    className: 'border-border bg-muted text-secondary-foreground',
+    dotClassName: 'bg-muted-foreground/40',
   },
   no_show: {
     label: '노쇼',
-    className: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300',
-    dotClassName: 'bg-rose-500',
+    className: 'border-destructive/30 bg-destructive-soft text-destructive',
+    dotClassName: 'bg-destructive',
   },
 };
 

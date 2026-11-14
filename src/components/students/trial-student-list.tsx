@@ -200,8 +200,8 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                           variant="outline"
                           className={`text-xs flex items-center gap-1 ${
                             td.attended
-                              ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
-                              : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                              ? 'bg-success-soft text-success border-success/30'
+                              : 'bg-muted text-secondary-foreground border-border'
                           }`}
                         >
                           <Calendar className="w-3 h-3" />
@@ -254,7 +254,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         aria-label="미등록관리로 이동"
                         size="sm"
                         variant="outline"
-                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950"
+                        className="text-warning hover:text-warning hover:bg-warning-soft"
                         onClick={() => handleMoveToPending(student)}
                         disabled={movingToPendingId === student.id}
                         title="미등록관리로 이동"
@@ -277,7 +277,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         aria-label="체험 종료"
                         size="sm"
                         variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                        className="text-destructive hover:text-destructive hover:bg-destructive-soft"
                         onClick={() => handleDelete(student)}
                         disabled={deletingId === student.id}
                       >

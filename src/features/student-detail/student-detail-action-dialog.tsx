@@ -93,7 +93,7 @@ export function StudentDetailActionDialog({
 
         <div className="space-y-3 text-sm">
           {action === 'withdraw' && unpaidPaymentCount > 0 ? (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-950">
+            <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-warning">
               미납 학원비 {unpaidPaymentCount}건이 있습니다. 퇴원 전 납부 상태를 확인해 주세요.
             </div>
           ) : null}
@@ -142,7 +142,7 @@ export function StudentDetailActionDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>취소</AlertDialogCancel>
           <Button
-            className={action === 'delete' ? 'bg-rose-600 text-white hover:bg-rose-700' : undefined}
+            className={action === 'delete' ? 'bg-destructive text-white hover:bg-destructive/90' : undefined}
             disabled={confirmDisabled}
             type="button"
             onClick={handleConfirm}

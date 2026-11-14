@@ -63,7 +63,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                 </div>
               </div>
               {member.is_active ? (
-                <span className="inline-flex shrink-0 items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                <span className="inline-flex shrink-0 items-center rounded-md bg-success-soft px-2 py-1 text-xs font-medium text-success">
                   <CheckCircle className="mr-1 h-3 w-3" />
                   활성
                 </span>
@@ -108,7 +108,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                 size="sm"
                 aria-label={`${member.name} 삭제`}
                 onClick={() => onDelete(member)}
-                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                className="border-destructive/30 text-destructive hover:bg-destructive-soft hover:text-destructive"
               >
                 삭제
               </Button>
@@ -161,7 +161,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                    <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-secondary-foreground">
                       {member.position || '미지정'}
                     </span>
                   </td>
@@ -172,7 +172,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     {member.is_active ? (
-                      <span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                      <span className="inline-flex items-center rounded-md bg-success-soft px-2.5 py-1 text-xs font-medium text-success">
                         <CheckCircle className="mr-1 h-3 w-3" />
                         활성
                       </span>
@@ -208,7 +208,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                         size="sm"
                         aria-label={`${member.name} 삭제`}
                         onClick={() => onDelete(member)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-destructive hover:bg-destructive-soft"
                         title="삭제"
                       >
                         <Trash2 className="w-4 h-4" />

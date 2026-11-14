@@ -15,10 +15,10 @@ interface Props {
 }
 
 const COLOR_MAP: Record<string, { btn: string; border: string }> = {
-  orange: { btn: 'bg-orange-600 hover:bg-orange-700', border: 'border-orange-200 dark:border-orange-800' },
-  green:  { btn: 'bg-green-600 hover:bg-green-700',   border: 'border-green-200 dark:border-green-800' },
-  blue:   { btn: 'bg-blue-600 hover:bg-blue-700',     border: 'border-blue-200 dark:border-blue-800' },
-  red:    { btn: 'bg-red-600 hover:bg-red-700',       border: 'border-red-200 dark:border-red-800' },
+  orange: { btn: 'bg-warning hover:bg-warning/90', border: 'border-warning/30' },
+  green:  { btn: 'bg-success hover:bg-success/90',   border: 'border-success/30' },
+  blue:   { btn: 'bg-primary hover:bg-primary/90',     border: 'border-primary/30' },
+  red:    { btn: 'bg-destructive hover:bg-destructive/90',       border: 'border-destructive/30' },
   purple: { btn: 'bg-purple-600 hover:bg-purple-700', border: 'border-purple-200 dark:border-purple-800' },
 };
 
@@ -53,7 +53,7 @@ export default function ButtonEditor({ buttons, onAdd, onRemove, onUpdate, color
                 <button
                   type="button"
                   onClick={() => onRemove(index)}
-                  className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                  className="p-1 text-destructive hover:bg-destructive-soft rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

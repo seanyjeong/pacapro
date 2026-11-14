@@ -23,7 +23,7 @@ export function PerformanceScoreCard({ examTitle, scores }: PerformanceScoreCard
     <section className="rounded-md border border-border bg-background px-4 py-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">{examTitle}</h3>
-        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+        <span className="rounded-md border border-success/30 bg-success-soft px-2 py-1 text-xs font-medium text-success">
           조회됨
         </span>
       </div>

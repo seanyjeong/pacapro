@@ -83,10 +83,10 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
 
   // 상태 필터 버튼
   const filterButtons = [
-    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600' },
+    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-success' },
     { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600' },
-    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-orange-600' },
-    { id: 'all' as const, label: '전체', icon: Users, color: 'text-blue-600' },
+    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-warning' },
+    { id: 'all' as const, label: '전체', icon: Users, color: 'text-primary' },
   ];
 
   if (loading) {
@@ -144,7 +144,7 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <School className="w-5 h-5 text-blue-600" />
+                    <School className="w-5 h-5 text-primary" />
                     <span className="font-medium text-foreground truncate">{school}</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -156,7 +156,7 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
                     {statusFilter === 'all' && (
                       <>
                         {schoolStudents.filter(s => s.status === 'active').length > 0 && (
-                          <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                          <Badge variant="outline" className="text-xs text-success border-success/30">
                             재원 {schoolStudents.filter(s => s.status === 'active').length}
                           </Badge>
                         )}
@@ -166,7 +166,7 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
                           </Badge>
                         )}
                         {schoolStudents.filter(s => s.status === 'pending').length > 0 && (
-                          <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
+                          <Badge variant="outline" className="text-xs text-warning border-warning/30">
                             미등록 {schoolStudents.filter(s => s.status === 'pending').length}
                           </Badge>
                         )}
@@ -197,7 +197,7 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
           학교 목록
         </Button>
         <div className="flex items-center gap-2">
-          <School className="w-5 h-5 text-blue-600" />
+          <School className="w-5 h-5 text-primary" />
           <h3 className="text-lg font-semibold text-foreground">{selectedSchool}</h3>
           <Badge variant="secondary">{selectedSchoolStudents.length}명</Badge>
         </div>
@@ -231,16 +231,16 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
                   <td className="p-3 text-muted-foreground">{student.grade || '-'}</td>
                   <td className="p-3">
                     {student.status === 'active' && (
-                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">재원</Badge>
+                      <Badge className="bg-success-soft text-success">재원</Badge>
                     )}
                     {student.status === 'trial' && (
                       <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">체험</Badge>
                     )}
                     {student.status === 'pending' && (
-                      <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">미등록</Badge>
+                      <Badge className="bg-warning-soft text-warning">미등록</Badge>
                     )}
                     {student.status === 'paused' && (
-                      <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">휴원</Badge>
+                      <Badge className="bg-warning-soft text-warning">휴원</Badge>
                     )}
                     {student.status === 'withdrawn' && (
                       <Badge variant="secondary">퇴원</Badge>

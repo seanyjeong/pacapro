@@ -18,7 +18,7 @@ export function StaffWorkQueue({ availableInstructors, staff, onAddStaff }: Prop
     <aside className="space-y-4" data-testid="staff-work-queue">
       <section className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
             <Shield className="h-4 w-4" />
           </span>
           <div className="min-w-0">
@@ -50,7 +50,7 @@ export function StaffWorkQueue({ availableInstructors, staff, onAddStaff }: Prop
         <div className="mt-3 space-y-3 text-sm text-muted-foreground">
           {['보기 권한 없이 수정 권한만 줄 수 없습니다.', '퇴사 또는 휴직 계정은 즉시 삭제합니다.', '원장 권한 작업 전 계정 소유자를 다시 확인합니다.'].map((text) => (
             <div key={text} className="flex gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span>{text}</span>
             </div>
           ))}

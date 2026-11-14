@@ -81,7 +81,7 @@ export function ExpenseDetailDialog({
                   onClose();
                   onCompleteRefund(expense.id);
                 }}
-                className="bg-green-600 text-white hover:bg-green-700"
+                className="bg-success text-white hover:bg-success/90"
               >
                 <CheckCircle className="mr-1.5 h-4 w-4" />
                 환불 완료

@@ -104,7 +104,7 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                     key={payment.id}
                     onClick={() => onPaymentClick(payment.id)}
                     className={`cursor-pointer transition-colors hover:bg-muted/35 ${
-                      overdue ? 'bg-red-50 dark:bg-red-950' : ''
+                      overdue ? 'bg-destructive-soft' : ''
                     }`}
                   >
                     <td className="px-3 py-3 align-middle">
@@ -182,19 +182,19 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                     </td>
                     {!hideDueDate && (
                       <td className="px-3 py-3 align-middle">
-                        <div className={cn('text-sm tabular-nums', overdue ? 'font-semibold text-red-600 dark:text-red-400' : 'text-foreground')}>
+                        <div className={cn('text-sm tabular-nums', overdue ? 'font-semibold text-destructive' : 'text-foreground')}>
                           {formatDate(payment.due_date)}
                         </div>
                         {payment.paid_date ? (
-                          <div className="text-[11px] text-green-600 dark:text-green-400">
+                          <div className="text-[11px] text-success">
                             납부 {formatDate(payment.paid_date)}
                           </div>
                         ) : null}
                         {overdue ? (
-                          <div className="mt-0.5 text-[11px] font-medium text-red-600 dark:text-red-400">연체</div>
+                          <div className="mt-0.5 text-[11px] font-medium text-destructive">연체</div>
                         ) : null}
                         {upcomingSeason ? (
-                          <div className="mt-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-300">납부예정</div>
+                          <div className="mt-0.5 text-[11px] font-medium text-primary">납부예정</div>
                         ) : null}
                       </td>
                     )}

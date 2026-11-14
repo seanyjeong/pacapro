@@ -64,7 +64,7 @@ export function ConsultationListSection({
           </div>
         ) : errorMessage ? (
           <div className="flex flex-col items-center justify-center gap-3 px-5 py-12 text-center">
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-rose-50 text-rose-700">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-destructive-soft text-destructive">
               <AlertCircle className="h-5 w-5" />
             </span>
             <div className="space-y-1">
@@ -170,25 +170,25 @@ function ConsultationRow({
                   </Badge>
                 )}
                 {(c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct') && (
-                  <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
+                  <Badge className="bg-success-soft text-success border-success/30 flex items-center gap-1">
                     <UserCheck className="h-3 w-3" />
                     등록
                   </Badge>
                 )}
                 {c.matched_student_status === 'trial_ongoing' && (
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
+                  <Badge className="bg-primary-soft text-primary border-primary/30 flex items-center gap-1">
                     <Dumbbell className="h-3 w-3" />
                     체험중
                   </Badge>
                 )}
                 {(c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status) && (
-                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800 flex items-center gap-1">
+                  <Badge className="bg-warning-soft text-warning border-warning/30 flex items-center gap-1">
                     <UserX className="h-3 w-3" />
                     미등록
                   </Badge>
                 )}
                 {c.matched_student_status === 'no_trial' && (
-                  <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
+                  <Badge className="bg-muted text-secondary-foreground border-border flex items-center gap-1">
                     미체험
                   </Badge>
                 )}
@@ -212,7 +212,7 @@ function ConsultationRow({
             )}
           </div>
           {c.admin_notes && (
-            <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-1 rounded mt-1">
+            <div className="text-sm text-warning bg-warning-soft px-2 py-1 rounded mt-1">
               <span className="font-medium">메모:</span> {c.admin_notes}
             </div>
           )}
@@ -244,7 +244,7 @@ function ConsultationRow({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-red-600"
+              className="text-destructive"
               onClick={(e) => { e.stopPropagation(); onDeleteModal(c); }}
             >
               <Trash2 className="h-4 w-4 mr-2" />

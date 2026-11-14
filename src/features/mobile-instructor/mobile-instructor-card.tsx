@@ -21,20 +21,20 @@ export function MobileInstructorCard({
 
   return (
     <article
-      className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+      className="rounded-lg border border-border bg-card p-4 shadow-sm"
       data-testid="mobile-instructor-card"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
           <UserRound className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h3 className="truncate text-base font-semibold text-zinc-950 dark:text-zinc-50">{instructor.name}</h3>
+            <h3 className="truncate text-base font-semibold text-foreground">{instructor.name}</h3>
             {activeMeta && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${activeMeta.badgeClassName}`}>{activeMeta.label}</span>}
-            {cleared && <span className="shrink-0 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">해제</span>}
+            {cleared && <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">해제</span>}
           </div>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             {instructor.source === 'approved' ? '승인된 추가 출근' : '배정된 강사'}
           </p>
         </div>

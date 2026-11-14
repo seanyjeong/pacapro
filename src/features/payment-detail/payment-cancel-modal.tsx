@@ -95,7 +95,7 @@ export function PaymentCancelModal({
         <CardHeader className="border-b">
           <div className="flex items-center justify-between gap-3">
             <CardTitle id="payment-cancel-title" className="flex items-center gap-2 text-xl">
-              <RotateCcw className="h-5 w-5 text-rose-600" />
+              <RotateCcw className="h-5 w-5 text-destructive" />
               결제 취소
             </CardTitle>
             <button
@@ -120,26 +120,26 @@ export function PaymentCancelModal({
               </div>
               <div className="mt-1 flex justify-between border-t border-border pt-1 text-sm">
                 <span className="font-medium text-foreground">취소 후 납부액</span>
-                <span className="font-bold text-rose-600">{afterCancelPaidAmount.toLocaleString()}원</span>
+                <span className="font-bold text-destructive">{afterCancelPaidAmount.toLocaleString()}원</span>
               </div>
             </div>
 
             <div>
               <label htmlFor="payment-cancel-amount" className="mb-2 block text-sm font-medium text-foreground">
-                취소 금액 <span className="text-rose-500">*</span>
+                취소 금액 <span className="text-destructive">*</span>
               </label>
               <MoneyInput
                 id="payment-cancel-amount"
                 value={cancelAmount}
                 onChange={setCancelAmount}
                 disabled={canceling}
-                className="rounded-lg py-3 text-lg font-semibold focus:ring-2 focus:ring-rose-500"
+                className="rounded-lg py-3 text-lg font-semibold focus:ring-2 focus:ring-destructive"
               />
             </div>
 
             <div>
               <label htmlFor="payment-cancel-date" className="mb-2 block text-sm font-medium text-foreground">
-                취소일 <span className="text-rose-500">*</span>
+                취소일 <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -149,7 +149,7 @@ export function PaymentCancelModal({
                   value={cancelDate}
                   onChange={(event) => setCancelDate(event.target.value)}
                   disabled={canceling}
-                  className="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-4 focus:border-rose-500 focus:ring-2 focus:ring-rose-500"
+                  className="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-4 focus:border-destructive focus:ring-2 focus:ring-destructive"
                   required
                 />
               </div>
@@ -157,7 +157,7 @@ export function PaymentCancelModal({
 
             <div>
               <label htmlFor="payment-cancel-reason" className="mb-2 block text-sm font-medium text-foreground">
-                취소 사유 <span className="text-rose-500">*</span>
+                취소 사유 <span className="text-destructive">*</span>
               </label>
               <Textarea
                 id="payment-cancel-reason"
@@ -174,7 +174,7 @@ export function PaymentCancelModal({
               <Button type="button" variant="outline" onClick={handleClose} disabled={canceling} className="flex-1">
                 닫기
               </Button>
-              <Button type="submit" disabled={canceling} className="flex-1 bg-rose-600 text-white hover:bg-rose-700">
+              <Button type="submit" disabled={canceling} className="flex-1 bg-destructive text-white hover:bg-destructive/90">
                 {canceling ? '취소 처리 중' : '결제 취소하기'}
               </Button>
             </div>

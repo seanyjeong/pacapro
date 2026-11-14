@@ -110,7 +110,7 @@ export function EnrolledConsultationRow({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-red-600"
+                className="text-destructive"
                 onClick={() => onOpenDelete(consultation)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />

@@ -59,7 +59,7 @@ export function AdmissionReviewDetail({admissions}:{admissions:ReturnType<typeof
     {cancelOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="admission-cancel-title">
       <div className="mx-4 w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-xl">
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-900/30"><AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-300"/></div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-warning-soft"><AlertTriangle className="h-5 w-5 text-warning"/></div>
           <div><h3 id="admission-cancel-title" className="font-semibold">{profile.name} 원서 취소</h3><p className="text-sm text-muted-foreground">취소한 원서는 다시 승인할 수 없습니다.</p></div>
         </div>
         <p className="mb-4 text-sm leading-6 text-muted-foreground">학생과 청구서는 생성되지 않습니다. 다시 등록하려면 새 원서를 받아야 합니다.</p>
@@ -77,9 +77,9 @@ function Info({label,value,tag}:{label:string;value:string;tag?:boolean}) {
     <dd className="mt-0.5 flex flex-wrap items-center gap-1.5 break-all">{value}{tag && <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">학원 안내</span>}</dd></div>;
 }
 function Banner({tone,children}:{tone:'ok'|'warn'|'error';children:React.ReactNode}) {
-  const styles={ok:'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200',
-    warn:'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100',
-    error:'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200'}[tone];
+  const styles={ok:'border-success/30 bg-success-soft text-success',
+    warn:'border-warning/30 bg-warning-soft text-warning',
+    error:'border-destructive/30 bg-destructive-soft text-destructive'}[tone];
   const Icon=tone==='ok'?CheckCircle2:AlertTriangle;
   return <p role={tone==='ok'?'status':'alert'} className={`flex items-start gap-2 rounded-md border px-4 py-3 text-sm font-medium leading-6 ${styles}`}><Icon className="mt-0.5 h-4 w-4 shrink-0"/>{children}</p>;
 }

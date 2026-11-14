@@ -35,7 +35,7 @@ function SummaryRow({
   return (
     <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
       <div className="flex min-w-0 items-start gap-2">
-        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${ready ? 'text-emerald-600' : 'text-amber-600'}`} />
+        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${ready ? 'text-success' : 'text-warning'}`} />
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="mt-1 break-words text-sm font-semibold text-foreground">{value}</p>
@@ -53,13 +53,12 @@ export function InstructorFormSummary({ errors, formData }: InstructorFormSummar
   return (
     <aside className="rounded-md border border-border bg-card" data-testid="instructor-form-summary">
       <div className="border-b border-border px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Instructor Profile</p>
         <h2 className="mt-1 text-sm font-semibold text-foreground">입력 체크</h2>
         <p className="mt-1 text-xs text-muted-foreground">저장 전 확인</p>
       </div>
 
       <div className="space-y-3 p-4">
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-3 text-blue-950 dark:border-blue-900/70 dark:bg-blue-950/30 dark:text-blue-100">
+        <div className="rounded-md border border-primary/30 bg-primary-soft px-3 py-3 text-primary">
           <div className="flex items-start gap-2">
             <WalletCards className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-xs leading-5">
@@ -90,7 +89,7 @@ export function InstructorFormSummary({ errors, formData }: InstructorFormSummar
         ) : null}
 
         {hasSubmitError ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100">
+          <div className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
             저장에 실패했습니다. 입력값을 유지한 상태에서 다시 시도할 수 있습니다.
           </div>
         ) : null}

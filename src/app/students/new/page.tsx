@@ -140,7 +140,7 @@ function NewStudentContent() {
       {/* Form */}
       {existingStudentId && !initialData ? (
         loadError ? (
-          <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <p role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive">
             학생 정보를 불러오지 못했습니다. 학생 목록에서 다시 시도해주세요.
           </p>
         ) : (

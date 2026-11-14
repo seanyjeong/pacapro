@@ -67,11 +67,11 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
             <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-4">
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground">지급완료:</span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalPaid)}</span>
+                <span className="font-semibold text-success">{formatCurrency(totalPaid)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground">미지급:</span>
-                <span className="font-semibold text-amber-700 dark:text-amber-300">{formatCurrency(totalPending)}</span>
+                <span className="font-semibold text-warning">{formatCurrency(totalPending)}</span>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
                     {/* 세금 */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       {parseFloat(salary.tax_amount || '0') > 0 ? (
-                        <div className="flex items-center space-x-1 text-red-600">
+                        <div className="flex items-center space-x-1 text-destructive">
                           <TrendingDown className="w-3.5 h-3.5" />
                           <span className="text-sm">
                             {formatCurrency(parseFloat(salary.tax_amount || '0'))}
@@ -223,7 +223,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
                 {parseFloat(selectedSalary.incentive_amount || '0') > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">인센티브</span>
-                    <span className="text-green-600">
+                    <span className="text-success">
                       +{formatCurrency(parseFloat(selectedSalary.incentive_amount || '0'))}
                     </span>
                   </div>
@@ -232,7 +232,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
                 {parseFloat(selectedSalary.total_deduction || '0') > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">공제</span>
-                    <span className="text-red-600">
+                    <span className="text-destructive">
                       -{formatCurrency(parseFloat(selectedSalary.total_deduction || '0'))}
                     </span>
                   </div>
@@ -241,7 +241,7 @@ export function InstructorSalaries({ salaries, loading }: InstructorSalariesProp
                 {parseFloat(selectedSalary.tax_amount || '0') > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">세금 (3.3%)</span>
-                    <span className="text-red-600">
+                    <span className="text-destructive">
                       -{formatCurrency(parseFloat(selectedSalary.tax_amount || '0'))}
                     </span>
                   </div>

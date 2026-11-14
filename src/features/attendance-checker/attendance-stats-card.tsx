@@ -20,10 +20,10 @@ export function AttendanceStatsCard({ stats }: AttendanceStatsCardProps) {
       <CardContent>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
           <StatCell label="전체" value={stats.total} />
-          <StatCell label="출석" value={stats.present} className="text-green-600" />
-          <StatCell label="결석" value={stats.absent} className="text-red-600" />
-          <StatCell label="지각" value={stats.late} className="text-yellow-600" />
-          <StatCell label="공결" value={stats.excused} className="text-blue-600" />
+          <StatCell label="출석" value={stats.present} className="text-success" />
+          <StatCell label="결석" value={stats.absent} className="text-destructive" />
+          <StatCell label="지각" value={stats.late} className="text-warning" />
+          <StatCell label="공결" value={stats.excused} className="text-primary" />
           <StatCell label="보충" value={stats.makeup} className="text-purple-600" />
         </div>
         <div className="mt-4 pt-4 border-t text-center">

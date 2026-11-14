@@ -144,12 +144,12 @@ function SeasonEnrollmentRow({
               시즌비: {formatEnrollmentFee(enrollment)}
             </span>
             {Number.parseFloat(String(enrollment.discount_amount || 0)) > 0 ? (
-              <span className="text-rose-700">
+              <span className="text-destructive">
                 할인 {Math.floor(Number.parseFloat(String(enrollment.discount_amount))).toLocaleString()}원
               </span>
             ) : null}
             {enrollment.is_continuous ? (
-              <span className="inline-flex items-center text-emerald-700">
+              <span className="inline-flex items-center text-success">
                 <Check className="mr-1 h-4 w-4" />
                 연속등록
               </span>
@@ -170,7 +170,7 @@ function SeasonEnrollmentRow({
             </Button>
             {hasPaidSeasonAmount(enrollment) ? (
               <Button
-                className="text-orange-700 hover:text-orange-800"
+                className="text-warning hover:text-warning"
                 disabled={refundLoading}
                 size="sm"
                 type="button"
@@ -188,7 +188,7 @@ function SeasonEnrollmentRow({
               </Button>
             ) : (
               <Button
-                className="text-rose-700 hover:text-rose-800"
+                className="text-destructive hover:text-destructive"
                 size="sm"
                 type="button"
                 variant="outline"
@@ -229,17 +229,17 @@ function PaymentStatusBadge({ status }: { status: StudentSeason['payment_status'
 }
 
 function statusTone(status: StudentSeason['status']) {
-  if (status === 'active') return 'bg-emerald-100 text-emerald-800';
-  if (status === 'registered') return 'bg-blue-100 text-blue-800';
+  if (status === 'active') return 'bg-success-soft text-success';
+  if (status === 'registered') return 'bg-primary-soft text-primary';
   if (status === 'completed') return 'bg-muted text-muted-foreground';
-  return 'bg-rose-100 text-rose-800';
+  return 'bg-destructive-soft text-destructive';
 }
 
 function paymentTone(status: StudentSeason['payment_status']) {
-  if (status === 'paid') return 'bg-emerald-100 text-emerald-800';
-  if (status === 'partial') return 'bg-amber-100 text-amber-800';
+  if (status === 'paid') return 'bg-success-soft text-success';
+  if (status === 'partial') return 'bg-warning-soft text-warning';
   if (status === 'cancelled') return 'bg-muted text-muted-foreground';
-  return 'bg-rose-100 text-rose-800';
+  return 'bg-destructive-soft text-destructive';
 }
 
 function paymentStatusLabel(status: StudentSeason['payment_status']) {

@@ -97,8 +97,8 @@ export const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
 };
 
 export const TIME_SLOT_COLORS: Record<TimeSlot, string> = {
-  morning: 'bg-blue-100 text-blue-800 border-blue-200',
-  afternoon: 'bg-green-100 text-green-800 border-green-200',
+  morning: 'bg-primary-soft text-primary border-primary/30',
+  afternoon: 'bg-success-soft text-success border-success/30',
   evening: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
@@ -112,10 +112,10 @@ export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
 };
 
 export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
-  present: 'bg-green-100 text-green-800',
-  absent: 'bg-red-100 text-red-800',
-  late: 'bg-yellow-100 text-yellow-800',
-  excused: 'bg-blue-100 text-blue-800',
+  present: 'bg-success-soft text-success',
+  absent: 'bg-destructive-soft text-destructive',
+  late: 'bg-warning-soft text-warning',
+  excused: 'bg-primary-soft text-primary',
   makeup: 'bg-purple-100 text-purple-800',
   none: '',
 };

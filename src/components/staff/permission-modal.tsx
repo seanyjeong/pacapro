@@ -135,8 +135,8 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
       <Card className="flex h-[90vh] max-h-[760px] w-full max-w-3xl flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-card">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 bg-primary-soft rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
               <CardTitle className="text-lg">{staff.name} 권한 설정</CardTitle>
@@ -229,7 +229,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                   if (el) el.indeterminate = categoryViewIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'view', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 보기</span>
                             </label>
@@ -241,7 +241,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                   if (el) el.indeterminate = categoryEditIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'edit', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 수정</span>
                             </label>
@@ -269,7 +269,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'view', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                                     />
                                   </td>
                                   <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
@@ -280,7 +280,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'edit', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                                     />
                                   </td>
                                 </tr>
@@ -299,7 +299,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
             <div className="flex flex-col gap-3 border-t border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
                 {permissionChanged ? (
-                  <span className="font-medium text-blue-700 dark:text-blue-300">저장하지 않은 변경사항이 있습니다.</span>
+                  <span className="font-medium text-primary">저장하지 않은 변경사항이 있습니다.</span>
                 ) : (
                   <span>저장된 권한과 동일합니다.</span>
                 )}

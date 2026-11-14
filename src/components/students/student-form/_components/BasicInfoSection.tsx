@@ -21,15 +21,15 @@ export function BasicInfoSection({ mode, formData, errors, handleChange, formatP
           {/* 이름 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              이름 <span className="text-red-500">*</span>
+              이름 <span className="text-destructive">*</span>
             </label>
             <input type="text" id="field-name" value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="홍길동"
               className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                errors.name ? 'border-red-500' : 'border-border'
+                errors.name ? 'border-destructive' : 'border-border'
               }`} />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
           </div>
 
           {/* 성별 */}
@@ -62,16 +62,16 @@ export function BasicInfoSection({ mode, formData, errors, handleChange, formatP
           {/* 전화번호 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              전화번호 <span className="text-red-500">*</span>
+              전화번호 <span className="text-destructive">*</span>
             </label>
             <input type="tel" id="field-phone" value={formData.phone}
               onChange={(e) => handleChange('phone', formatPhoneNumber(e.target.value))}
               placeholder="010-1234-5678" maxLength={13}
               className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                errors.phone ? 'border-red-500' : 'border-border'
+                errors.phone ? 'border-destructive' : 'border-border'
               }`} />
             <p className="text-xs text-muted-foreground mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
           </div>
 
           {/* 학교 - 입시생일 때만 */}

@@ -13,11 +13,11 @@ function getStatusBadge(status: string) {
   switch (status) {
     case 'sent':
     case 'delivered':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs text-green-800"><CheckCircle className="h-3 w-3" /> 발송</span>;
+      return <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-1 text-xs text-success"><CheckCircle className="h-3 w-3" /> 발송</span>;
     case 'failed':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs text-red-800"><XCircle className="h-3 w-3" /> 실패</span>;
+      return <span className="inline-flex items-center gap-1 rounded-full bg-destructive-soft px-2 py-1 text-xs text-destructive"><XCircle className="h-3 w-3" /> 실패</span>;
     default:
-      return <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800"><Clock className="h-3 w-3" /> 대기</span>;
+      return <span className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-1 text-xs text-warning"><Clock className="h-3 w-3" /> 대기</span>;
   }
 }
 
@@ -31,7 +31,6 @@ export default function SendLogs({ logs }: Props) {
     <div className="rounded-md border border-border bg-card p-5 shadow-none">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Send History</p>
           <h2 className="text-lg font-semibold text-foreground">최근 발송 내역</h2>
         </div>
         <span className="rounded-md border border-border bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground">

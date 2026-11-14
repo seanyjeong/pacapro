@@ -25,7 +25,7 @@ export default function SetupGuide({ activeTab, openGuides, toggleGuide }: Props
               </button>
               {openGuides['naver'] && (
                 <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
-                  <p>1. <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Naver Cloud Platform <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
+                  <p>1. <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Naver Cloud Platform <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
                   <p>2. 콘솔 → Products & Services → SENS 선택</p>
                   <p>3. 프로젝트 생성 후 Service ID 확인</p>
                   <p>4. 마이페이지 → 인증키 관리 → Access Key/Secret Key 발급</p>
@@ -40,7 +40,7 @@ export default function SetupGuide({ activeTab, openGuides, toggleGuide }: Props
               </button>
               {openGuides['kakao'] && (
                 <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
-                  <p>1. <a href="https://center-pf.kakao.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">카카오 비즈니스 센터 <ExternalLink className="w-3 h-3" /></a> 접속</p>
+                  <p>1. <a href="https://center-pf.kakao.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">카카오 비즈니스 센터 <ExternalLink className="w-3 h-3" /></a> 접속</p>
                   <p>2. 카카오톡 채널 생성 (비즈니스 채널)</p>
                   <p>3. 채널 ID 확인 (예: @학원이름)</p>
                   <p>4. Naver Cloud SENS에서 KakaoTalk 채널 연동</p>
@@ -87,7 +87,7 @@ export default function SetupGuide({ activeTab, openGuides, toggleGuide }: Props
               </button>
               {openGuides['solapi-signup'] && (
                 <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
-                  <p>1. <a href="https://solapi.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">솔라피 <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
+                  <p>1. <a href="https://solapi.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">솔라피 <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
                   <p>2. 사업자등록증 인증 (알림톡 발송에 필요)</p>
                   <p>3. 콘솔 → API Key 메뉴에서 API Key/Secret 발급</p>
                   <p>4. 발신번호 등록 (문자 발송용)</p>

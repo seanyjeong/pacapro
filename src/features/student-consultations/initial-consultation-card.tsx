@@ -53,7 +53,7 @@ export function InitialConsultationCard({
                     {consultation.preferred_time && (
                         <span className="text-sm text-muted-foreground">{consultation.preferred_time.slice(0, 5)}</span>
                     )}
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    <Badge variant="secondary" className="bg-primary-soft text-primary">
                         신규상담
                     </Badge>
                     <Badge variant="outline" className={getInitialStatusClassName(consultation.status)}>
@@ -69,9 +69,9 @@ export function InitialConsultationCard({
 
             {isExpanded && (
                 <CardContent className="border-t border-border pt-4 space-y-4">
-                    <TextSection icon={<MessageSquare className="h-4 w-4 text-blue-600" />} title="문의 내용" text={consultation.inquiry_content} />
-                    <TextSection icon={<FileText className="h-4 w-4 text-green-600" />} title="상담 메모" text={consultation.consultation_memo} />
-                    <TextSection icon={<ClipboardList className="h-4 w-4 text-amber-600" />} title="관리자 메모" text={consultation.admin_notes} />
+                    <TextSection icon={<MessageSquare className="h-4 w-4 text-primary" />} title="문의 내용" text={consultation.inquiry_content} />
+                    <TextSection icon={<FileText className="h-4 w-4 text-success" />} title="상담 메모" text={consultation.consultation_memo} />
+                    <TextSection icon={<ClipboardList className="h-4 w-4 text-warning" />} title="관리자 메모" text={consultation.admin_notes} />
                     <TargetSchoolSection targetSchool={consultation.target_school} />
                     {academicScores && <InitialAcademicSection academicScores={academicScores} />}
                     {checklist && checklist.length > 0 && <ChecklistSection checklist={checklist} />}
@@ -83,9 +83,9 @@ export function InitialConsultationCard({
 }
 
 function getInitialStatusClassName(status: string): string {
-    if (status === 'completed') return 'border-green-300 text-green-700';
-    if (status === 'confirmed') return 'border-blue-300 text-blue-700';
-    if (status === 'cancelled' || status === 'no_show') return 'border-red-300 text-red-700';
+    if (status === 'completed') return 'border-success/30 text-success';
+    if (status === 'confirmed') return 'border-primary/30 text-primary';
+    if (status === 'cancelled' || status === 'no_show') return 'border-destructive/30 text-destructive';
     return '';
 }
 
@@ -123,7 +123,7 @@ function InitialAcademicSection({ academicScores }: { academicScores: Record<str
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <BookOpen className="h-4 w-4 text-indigo-600" />
+                <BookOpen className="h-4 w-4 text-primary" />
                 학업 성적
             </div>
             <div className="pl-6 space-y-2">
@@ -190,7 +190,7 @@ function ApplicantSection({ consultation }: { consultation: InitialConsultation 
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <PhoneCall className="h-4 w-4 text-gray-600" />
+                <PhoneCall className="h-4 w-4 text-secondary-foreground" />
                 신청자 정보
             </div>
             <div className="pl-6 space-y-1">

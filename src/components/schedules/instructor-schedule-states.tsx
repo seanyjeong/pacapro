@@ -21,19 +21,19 @@ export function InstructorScheduleNoDateState() {
 export function InstructorScheduleLoadingState() {
   return (
     <div className="flex items-center justify-center py-12">
-      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   );
 }
 
 export function InstructorScheduleErrorState({ message, onRetry }: ErrorProps) {
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
+    <div className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive" role="alert">
       <div className="flex items-start gap-2">
         <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
         <div className="min-w-0 flex-1">
           <p>{message}</p>
-          <Button variant="outline" size="sm" className="mt-3 bg-white" onClick={onRetry}>
+          <Button variant="outline" size="sm" className="mt-3 bg-card" onClick={onRetry}>
             다시 시도
           </Button>
         </div>

@@ -32,10 +32,10 @@ interface SummaryItemProps {
 
 function SummaryItem({ icon: Icon, label, value, tone = 'default' }: SummaryItemProps) {
   const toneClass = {
-    default: 'text-slate-950 dark:text-slate-50',
-    success: 'text-emerald-700 dark:text-emerald-300',
-    danger: 'text-rose-700 dark:text-rose-300',
-    warning: 'text-amber-700 dark:text-amber-300',
+    default: 'text-foreground',
+    success: 'text-success',
+    danger: 'text-destructive',
+    warning: 'text-warning',
     muted: 'text-muted-foreground',
   }[tone];
 

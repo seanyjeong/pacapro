@@ -47,7 +47,7 @@ export function PaymentDetailMetaSection({ payment, canEditPaidDate, onUpdatePai
           {isEditing ? (
             <div className="mt-2 flex items-center gap-2">
               <input type="date" value={paidDate} onChange={(event) => setPaidDate(event.target.value)} disabled={saving} className="min-w-0 rounded-md border border-border bg-background px-2 py-1 text-sm" />
-              <button type="button" onClick={savePaidDate} disabled={saving} className="rounded p-1 text-emerald-700 hover:bg-emerald-50" aria-label="납부일 저장" title="납부일 저장">
+              <button type="button" onClick={savePaidDate} disabled={saving} className="rounded p-1 text-success hover:bg-success-soft" aria-label="납부일 저장" title="납부일 저장">
                 <Check className="h-4 w-4" />
               </button>
               <button type="button" onClick={cancelEdit} disabled={saving} className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="납부일 수정 취소" title="납부일 수정 취소">

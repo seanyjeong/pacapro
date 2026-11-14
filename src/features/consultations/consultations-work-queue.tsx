@@ -30,7 +30,7 @@ export function ConsultationsWorkQueue({
     <aside className="space-y-4" data-testid="consultations-work-queue">
       <section className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-warning-soft text-warning">
             <Clock3 className="h-4 w-4" />
           </span>
           <div className="min-w-0">

@@ -92,7 +92,7 @@ export function TabletTrialModal({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveDate(index)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -109,7 +109,7 @@ export function TabletTrialModal({
           <Button
             onClick={onConfirm}
             disabled={converting}
-            className="bg-green-600/80 dark:bg-green-600 hover:bg-green-700"
+            className="bg-success/80 hover:bg-success/90"
           >
             {converting ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

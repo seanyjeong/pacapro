@@ -14,7 +14,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
         <label htmlFor="instructor-name" className="mb-2 block text-sm font-medium text-foreground">
-          이름 <span className="text-red-500">*</span>
+          이름 <span className="text-destructive">*</span>
         </label>
         <input
           id="instructor-name"
@@ -24,12 +24,12 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
           placeholder="홍길동"
           className={inputClassName(errors.name)}
         />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+        {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
       </div>
 
       <div>
         <label htmlFor="instructor-phone" className="mb-2 block text-sm font-medium text-foreground">
-          전화번호 <span className="text-red-500">*</span>
+          전화번호 <span className="text-destructive">*</span>
         </label>
         <input
           id="instructor-phone"
@@ -39,7 +39,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
           placeholder="010-1234-5678"
           className={inputClassName(errors.phone)}
         />
-        {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+        {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
       </div>
 
       <div>
@@ -86,7 +86,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
 
       <div>
         <label htmlFor="instructor-hire-date" className="mb-2 block text-sm font-medium text-foreground">
-          입사일 <span className="text-red-500">*</span>
+          입사일 <span className="text-destructive">*</span>
         </label>
         <input
           id="instructor-hire-date"
@@ -95,7 +95,7 @@ export function BasicInfoSection({ formData, errors, onChange }: BasicInfoSectio
           onChange={(event) => onChange('hire_date', event.target.value)}
           className={inputClassName(errors.hire_date)}
         />
-        {errors.hire_date && <p className="text-red-500 text-sm mt-1">{errors.hire_date}</p>}
+        {errors.hire_date && <p className="text-destructive text-sm mt-1">{errors.hire_date}</p>}
       </div>
 
       <div className="md:col-span-2">

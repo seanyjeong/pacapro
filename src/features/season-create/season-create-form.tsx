@@ -55,7 +55,7 @@ export function SeasonCreateForm({
         <SectionHeader title="기본 정보" />
         <div className="grid gap-3 p-4 md:grid-cols-4">
           <label className="grid gap-1 text-sm font-medium text-foreground md:col-span-2">
-            시즌명 <span className="text-rose-500">*</span>
+            시즌명 <span className="text-destructive">*</span>
             <input
               className={inputClass}
               placeholder="예: 2027 정시 집중반"
@@ -94,11 +94,11 @@ export function SeasonCreateForm({
             />
           </label>
           <label className="grid gap-1 text-sm font-medium text-foreground">
-            시즌 시작일 <span className="text-rose-500">*</span>
+            시즌 시작일 <span className="text-destructive">*</span>
             <input className={inputClass} type="date" value={formData.start_date} onChange={(event) => onChange('start_date', event.target.value)} />
           </label>
           <label className="grid gap-1 text-sm font-medium text-foreground">
-            시즌 종료일 <span className="text-rose-500">*</span>
+            시즌 종료일 <span className="text-destructive">*</span>
             <input className={inputClass} type="date" value={formData.end_date} onChange={(event) => onChange('end_date', event.target.value)} />
           </label>
         </div>
@@ -110,7 +110,7 @@ export function SeasonCreateForm({
         <SectionHeader title="운영 설정" />
         <div className="space-y-4 p-4">
           <div>
-            <p className="text-sm font-medium text-foreground">운영 요일 <span className="text-rose-500">*</span></p>
+            <p className="text-sm font-medium text-foreground">운영 요일 <span className="text-destructive">*</span></p>
             <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {OPERATING_DAY_OPTIONS.map((day) => {
                 const selected = formData.operating_days.includes(day.value);

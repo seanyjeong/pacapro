@@ -17,7 +17,7 @@ export function PaymentDetailError({ message, onBack, onRetry }: PaymentDetailEr
         <h1 className="text-2xl font-semibold text-foreground">학원비 상세</h1>
       </header>
       <section
-        className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+        className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
         role="alert"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -187,9 +187,9 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                   {/* 시간대 */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      attendance.time_slot === 'morning' ? 'bg-yellow-100 text-yellow-800' :
-                      attendance.time_slot === 'afternoon' ? 'bg-orange-100 text-orange-800' :
-                      'bg-blue-100 text-blue-800'
+                      attendance.time_slot === 'morning' ? 'bg-warning-soft text-warning' :
+                      attendance.time_slot === 'afternoon' ? 'bg-warning-soft text-warning' :
+                      'bg-primary-soft text-primary'
                     }`}>
                       {TIME_SLOT_LABELS[attendance.time_slot] || attendance.time_slot}
                     </span>
@@ -198,10 +198,10 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                   {/* 상태 */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      attendance.attendance_status === 'present' ? 'bg-green-100 text-green-800' :
-                      attendance.attendance_status === 'absent' ? 'bg-red-100 text-red-800' :
-                      attendance.attendance_status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      attendance.attendance_status === 'present' ? 'bg-success-soft text-success' :
+                      attendance.attendance_status === 'absent' ? 'bg-destructive-soft text-destructive' :
+                      attendance.attendance_status === 'late' ? 'bg-warning-soft text-warning' :
+                      'bg-muted text-foreground'
                     }`}>
                       {STATUS_LABELS[attendance.attendance_status || 'present']}
                     </span>
@@ -211,7 +211,7 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                   <td className="px-4 py-3 whitespace-nowrap">
                     {attendance.check_in_time ? (
                       <div className="flex items-center space-x-2">
-                        <LogIn className="w-4 h-4 text-green-500" />
+                        <LogIn className="w-4 h-4 text-success" />
                       <span className="text-sm text-foreground">
                           {formatTime(attendance.check_in_time)}
                         </span>
@@ -225,7 +225,7 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                   <td className="px-4 py-3 whitespace-nowrap">
                     {attendance.check_out_time ? (
                       <div className="flex items-center space-x-2">
-                        <LogOut className="w-4 h-4 text-red-500" />
+                        <LogOut className="w-4 h-4 text-destructive" />
                         <span className="text-sm text-foreground">
                           {formatTime(attendance.check_out_time)}
                         </span>

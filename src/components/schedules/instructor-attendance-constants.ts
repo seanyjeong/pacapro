@@ -18,10 +18,10 @@ export const INSTRUCTOR_ATTENDANCE_STATUS_LABELS: Record<InstructorAttendanceSta
 };
 
 export const INSTRUCTOR_ATTENDANCE_STATUS_COLORS: Record<InstructorAttendanceStatus, string> = {
-  present: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700',
-  absent: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700',
-  late: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700',
-  half_day: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
+  present: 'bg-success-soft text-success border-success/30',
+  absent: 'bg-destructive-soft text-destructive border-destructive/30',
+  late: 'bg-warning-soft text-warning border-warning/30',
+  half_day: 'bg-primary-soft text-primary border-primary/30',
 };
 
 export const INSTRUCTOR_ATTENDANCE_LOAD_ERROR =

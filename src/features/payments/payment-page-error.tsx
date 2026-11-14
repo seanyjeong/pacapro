@@ -11,7 +11,6 @@ export function PaymentPageError({ viewOnly, message, onRetry }: PaymentPageErro
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
       <div className="border-b border-border/70 pb-4">
-        <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</div>
         <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">
           {viewOnly ? '미납 학원비' : '학원비 관리'}
         </h1>
@@ -20,7 +19,7 @@ export function PaymentPageError({ viewOnly, message, onRetry }: PaymentPageErro
         </p>
       </div>
       <section
-        className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+        className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
         role="alert"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

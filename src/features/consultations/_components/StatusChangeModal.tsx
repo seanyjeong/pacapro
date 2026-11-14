@@ -95,7 +95,7 @@ export function StatusChangeModal({
                 <div>
                   <Label className="text-xs">시간</Label>
                   {loadingEditBookedTimes ? (
-                    <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />예약 현황 확인 중...
                     </div>
                   ) : editTimeOptions.length > 0 ? (
@@ -112,21 +112,21 @@ export function StatusChangeModal({
                             size="sm"
                             variant={isSelected ? 'default' : isBooked ? 'secondary' : 'outline'}
                             onClick={() => setNewTime(time)}
-                            className={`${isCurrent ? 'ring-2 ring-blue-300' : ''} ${isBooked ? 'border-orange-300 dark:border-orange-700' : ''}`}
+                            className={`${isCurrent ? 'ring-2 ring-primary/30' : ''} ${isBooked ? 'border-warning/30' : ''}`}
                           >
                             {time}
-                            {isBooked && <span className="ml-1 text-xs text-orange-600 dark:text-orange-400">●</span>}
+                            {isBooked && <span className="ml-1 text-xs text-warning">●</span>}
                             {isCurrent && <span className="ml-1 text-xs">(현재)</span>}
                           </Button>
                         );
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-orange-600 dark:text-orange-400 py-2">해당 요일은 휴무입니다</p>
+                    <p className="text-sm text-warning py-2">해당 요일은 휴무입니다</p>
                   )}
                   {editBookedTimes.length > 0 && editTimeOptions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      * <span className="text-orange-600 dark:text-orange-400">●</span> 표시: 기존 상담 있음 (동시 상담 가능)
+                      * <span className="text-warning">●</span> 표시: 기존 상담 있음 (동시 상담 가능)
                     </p>
                   )}
                 </div>

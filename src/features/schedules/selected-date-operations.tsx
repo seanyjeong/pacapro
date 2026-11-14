@@ -10,8 +10,8 @@ import { cn } from '@/lib/utils';
 import { formatDateKorean, getScheduleTitle } from '@/lib/utils/schedule-helpers';
 
 const SLOT_META: Array<{ slot: TimeSlot; icon: typeof Sun; tone: string }> = [
-  { slot: 'morning', icon: Sunrise, tone: 'text-orange-700 bg-orange-50 border-orange-200' },
-  { slot: 'afternoon', icon: Sun, tone: 'text-blue-700 bg-blue-50 border-blue-200' },
+  { slot: 'morning', icon: Sunrise, tone: 'text-warning bg-warning-soft border-warning/30' },
+  { slot: 'afternoon', icon: Sun, tone: 'text-primary bg-primary-soft border-primary/30' },
   { slot: 'evening', icon: Moon, tone: 'text-violet-700 bg-violet-50 border-violet-200' },
 ];
 
@@ -41,16 +41,16 @@ export function SelectedDateOperations({
 
   return (
     <section
-      className="rounded-md border border-slate-200 bg-card px-4 py-4 shadow-sm"
+      className="rounded-md border border-border bg-card px-4 py-4 shadow-sm"
       data-testid="selected-date-operations"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-slate-500">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <CalendarCheck className="h-4 w-4" />
             선택일 운영
           </div>
-          <h2 className="mt-1 text-base font-semibold tracking-normal text-slate-950">
+          <h2 className="mt-1 text-base font-semibold tracking-normal text-foreground">
             {formatDateKorean(selectedDate)}
           </h2>
         </div>
@@ -81,16 +81,16 @@ export function SelectedDateOperations({
           const scheduled = stats?.scheduled || 0;
 
           return (
-            <div key={slot} className="rounded-md border border-slate-200 bg-slate-50/60 p-3">
+            <div key={slot} className="rounded-md border border-border bg-muted p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={cn('inline-flex h-7 w-7 items-center justify-center rounded-md border', tone)}>
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span className="text-sm font-semibold text-slate-950">{TIME_SLOT_LABELS[slot]}반</span>
+                    <span className="text-sm font-semibold text-foreground">{TIME_SLOT_LABELS[slot]}반</span>
                   </div>
-                  <p className="mt-2 truncate text-sm font-medium text-slate-800">{title}</p>
+                  <p className="mt-2 truncate text-sm font-medium text-foreground">{title}</p>
                 </div>
                 <Button
                   size="sm"
@@ -102,7 +102,7 @@ export function SelectedDateOperations({
                 </Button>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-secondary-foreground">
                 <span>학생 {schedule?.student_count || 0}명</span>
                 <span>체험 {schedule?.trial_count || 0}명</span>
                 <span className="inline-flex items-center gap-1">

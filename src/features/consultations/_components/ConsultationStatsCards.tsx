@@ -18,12 +18,12 @@ const STAT_ITEMS: Array<{
   icon: typeof UsersRound;
   tone: string;
 }> = [
-  { status: '', label: '전체', helper: '전체 상담', icon: UsersRound, tone: 'bg-slate-50 text-slate-700' },
-  { status: 'pending', label: CONSULTATION_STATUS_LABELS.pending, helper: '확인 필요', icon: Clock3, tone: 'bg-amber-50 text-amber-700' },
+  { status: '', label: '전체', helper: '전체 상담', icon: UsersRound, tone: 'bg-muted text-secondary-foreground' },
+  { status: 'pending', label: CONSULTATION_STATUS_LABELS.pending, helper: '확인 필요', icon: Clock3, tone: 'bg-warning-soft text-warning' },
   { status: 'confirmed', label: CONSULTATION_STATUS_LABELS.confirmed, helper: '일정 확정', icon: CalendarCheck2, tone: 'bg-sky-50 text-sky-700' },
-  { status: 'completed', label: CONSULTATION_STATUS_LABELS.completed, helper: '상담 완료', icon: CheckCircle2, tone: 'bg-emerald-50 text-emerald-700' },
-  { status: 'cancelled', label: CONSULTATION_STATUS_LABELS.cancelled, helper: '취소 처리', icon: Ban, tone: 'bg-rose-50 text-rose-700' },
-  { status: 'no_show', label: CONSULTATION_STATUS_LABELS.no_show, helper: '미방문', icon: UserRoundCheck, tone: 'bg-zinc-50 text-zinc-700' },
+  { status: 'completed', label: CONSULTATION_STATUS_LABELS.completed, helper: '상담 완료', icon: CheckCircle2, tone: 'bg-success-soft text-success' },
+  { status: 'cancelled', label: CONSULTATION_STATUS_LABELS.cancelled, helper: '취소 처리', icon: Ban, tone: 'bg-destructive-soft text-destructive' },
+  { status: 'no_show', label: CONSULTATION_STATUS_LABELS.no_show, helper: '미방문', icon: UserRoundCheck, tone: 'bg-muted text-secondary-foreground' },
 ];
 
 export function ConsultationStatsCards({ stats, statusFilter, onStatusFilter }: Props) {
@@ -43,7 +43,7 @@ export function ConsultationStatsCards({ stats, statusFilter, onStatusFilter }: 
             aria-pressed={active}
             className={cn(
               'rounded-md border border-border bg-card p-4 text-left transition-colors hover:bg-muted/40',
-              active && 'border-blue-500 ring-2 ring-blue-500/20'
+              active && 'border-primary ring-2 ring-primary/20'
             )}
             onClick={() => onStatusFilter(item.status && statusFilter !== item.status ? item.status : '')}
           >

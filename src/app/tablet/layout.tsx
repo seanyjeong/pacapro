@@ -142,7 +142,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   if (orientation === 'landscape') {
     return (
       <OrientationContext.Provider value={orientation}>
-        <div className="min-h-screen flex bg-slate-50/50 dark:bg-background">
+        <div className="min-h-screen flex bg-muted dark:bg-background">
           {/* 축소형 사이드바 - PC 스타일 */}
           <aside className="w-20 bg-card border-r border-border flex flex-col fixed h-screen z-20">
             {/* 로고 */}
@@ -206,7 +206,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             <div className="border-t border-border p-1.5 shrink-0 pb-4 space-y-1">
 	              <button
 	                onClick={() => { void openPeakSso(); }}
-                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 transition"
+                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-warning hover:text-warning hover:bg-warning/10 transition"
                 title="P-EAK 실기관리"
               >
                 <Mountain size={18} />
@@ -257,7 +257,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   // 세로 모드 레이아웃
   return (
     <OrientationContext.Provider value={orientation}>
-      <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-background">
+      <div className="min-h-screen flex flex-col bg-muted dark:bg-background">
         {/* 헤더 - PC 스타일 */}
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 	                    setShowMoreMenu(false);
 	                    void openPeakSso();
 	                  }}
-                  className="flex flex-col items-center p-4 rounded-xl bg-orange-500/10 text-orange-500"
+                  className="flex flex-col items-center p-4 rounded-xl bg-warning/10 text-warning"
                 >
                   <Mountain size={28} />
                   <span className="text-xs mt-2">P-EAK</span>

@@ -12,10 +12,10 @@ interface ReportsHeaderProps {
 }
 
 const EXPORT_OPTIONS: Array<{ type: ReportExportType; label: string; icon: typeof TrendingUp; tone: string }> = [
-  { type: 'revenue', label: '수입 내역', icon: TrendingUp, tone: 'text-emerald-600' },
-  { type: 'expenses', label: '지출 내역', icon: TrendingDown, tone: 'text-rose-600' },
+  { type: 'revenue', label: '수입 내역', icon: TrendingUp, tone: 'text-success' },
+  { type: 'expenses', label: '지출 내역', icon: TrendingDown, tone: 'text-destructive' },
   { type: 'payments', label: '납부 내역', icon: Banknote, tone: 'text-sky-600' },
-  { type: 'financial', label: '연간 재무 리포트', icon: Download, tone: 'text-slate-700' },
+  { type: 'financial', label: '연간 재무 리포트', icon: Download, tone: 'text-secondary-foreground' },
 ];
 
 export function ReportsHeader({
@@ -31,7 +31,6 @@ export function ReportsHeader({
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</p>
         <h1 className="text-2xl font-semibold tracking-normal text-foreground">리포트</h1>
       </div>
 

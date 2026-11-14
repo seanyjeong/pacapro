@@ -55,10 +55,10 @@ export function InstructorAttendanceSummaryCard({
 
         <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted p-4 md:grid-cols-5">
           <AttendanceStat label="전체" value={stats.total} className="text-foreground" />
-          <AttendanceStat label="출근" value={stats.present} className="text-green-600 dark:text-green-400" />
-          <AttendanceStat label="결근" value={stats.absent} className="text-red-600 dark:text-red-400" />
-          <AttendanceStat label="지각" value={stats.late} className="text-yellow-600 dark:text-yellow-400" />
-          <AttendanceStat label="반차" value={stats.halfDay} className="text-blue-600 dark:text-blue-400" />
+          <AttendanceStat label="출근" value={stats.present} className="text-success" />
+          <AttendanceStat label="결근" value={stats.absent} className="text-destructive" />
+          <AttendanceStat label="지각" value={stats.late} className="text-warning" />
+          <AttendanceStat label="반차" value={stats.halfDay} className="text-primary" />
         </div>
       </CardContent>
     </Card>

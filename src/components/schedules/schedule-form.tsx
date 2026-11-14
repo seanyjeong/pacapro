@@ -110,7 +110,7 @@ export function ScheduleForm({
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
           {loadError && (
             <div
-              className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+              className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
               role="alert"
             >
               <div className="flex items-start gap-3">
@@ -125,22 +125,22 @@ export function ScheduleForm({
 
           <div className="space-y-2">
             <Label htmlFor="class_date">
-              수업 날짜 <span className="text-red-500">*</span>
+              수업 날짜 <span className="text-destructive">*</span>
             </Label>
             <Input
               id="class_date"
               type="date"
               {...register('class_date')}
-              className={errors.class_date ? 'border-red-500' : ''}
+              className={errors.class_date ? 'border-destructive' : ''}
             />
             {errors.class_date && (
-              <p className="text-sm text-red-500">{errors.class_date.message}</p>
+              <p className="text-sm text-destructive">{errors.class_date.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="time_slot">
-              시간대 <span className="text-red-500">*</span>
+              시간대 <span className="text-destructive">*</span>
             </Label>
             <div id="time_slot" className="grid grid-cols-3 gap-2" role="group" aria-label="시간대 선택">
               {TIME_SLOT_OPTIONS.map((slot) => (
@@ -148,7 +148,7 @@ export function ScheduleForm({
                   key={slot}
                   type="button"
                   variant={timeSlot === slot ? 'default' : 'outline'}
-                  className={cn('h-10', errors.time_slot && 'border-red-500')}
+                  className={cn('h-10', errors.time_slot && 'border-destructive')}
                   aria-pressed={timeSlot === slot}
                   onClick={() => setValue('time_slot', slot, { shouldDirty: true, shouldValidate: true })}
                 >
@@ -157,13 +157,13 @@ export function ScheduleForm({
               ))}
             </div>
             {errors.time_slot && (
-              <p className="text-sm text-red-500">{errors.time_slot.message}</p>
+              <p className="text-sm text-destructive">{errors.time_slot.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="instructor">
-              강사 <span className="text-red-500">*</span>
+              강사 <span className="text-destructive">*</span>
             </Label>
             <Select
               value={instructorId?.toString()}
@@ -171,7 +171,7 @@ export function ScheduleForm({
             >
               <SelectTrigger
                 id="instructor"
-                className={errors.instructor_id ? 'border-red-500' : ''}
+                className={errors.instructor_id ? 'border-destructive' : ''}
               >
                 <SelectValue placeholder="강사를 선택하세요" />
               </SelectTrigger>
@@ -184,7 +184,7 @@ export function ScheduleForm({
               </SelectContent>
             </Select>
             {errors.instructor_id && (
-              <p className="text-sm text-red-500">{errors.instructor_id.message}</p>
+              <p className="text-sm text-destructive">{errors.instructor_id.message}</p>
             )}
           </div>
 
@@ -222,7 +222,7 @@ export function ScheduleForm({
 
           {submitError && (
             <div
-              className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+              className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
               role="alert"
             >
               <div className="flex items-start gap-3">

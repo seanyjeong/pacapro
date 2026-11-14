@@ -43,6 +43,6 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 
 export function inputClassName(error?: string) {
   return `w-full px-4 py-2 border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-    error ? 'border-red-500' : 'border-border'
+    error ? 'border-destructive' : 'border-border'
   }`;
 }

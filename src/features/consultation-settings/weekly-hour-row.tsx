@@ -15,7 +15,7 @@ export function WeeklyHourRow({ hour, timeOptions, onUpdateHour }: WeeklyHourRow
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/40 p-3 sm:flex-row sm:items-center sm:gap-4">
-      <div className={`w-12 text-center font-medium ${isWeekend ? 'text-red-600' : 'text-foreground'}`}>
+      <div className={`w-12 text-center font-medium ${isWeekend ? 'text-destructive' : 'text-foreground'}`}>
         {DAY_LABELS[hour.dayOfWeek]}
       </div>
       <Switch

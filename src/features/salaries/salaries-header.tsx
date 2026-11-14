@@ -23,7 +23,6 @@ export function SalariesHeader({
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</div>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">급여 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">강사 출근 기록 기반 급여와 지급 상태를 확인합니다.</p>
       </div>

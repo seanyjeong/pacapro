@@ -16,7 +16,7 @@ export function SeasonAftercareControl({ formData, onChange, required = false }:
       </div>
       <div className="grid gap-4 p-4 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-medium text-foreground">
-          무료 수업 종료일 {required && <span className="text-rose-500">*</span>}
+          무료 수업 종료일 {required && <span className="text-destructive">*</span>}
           <input
             className={inputClass}
             min={formData.end_date || undefined}
@@ -30,7 +30,7 @@ export function SeasonAftercareControl({ formData, onChange, required = false }:
           <span className="text-xs font-normal text-muted-foreground">시즌 종료일 이후 이 날짜까지 월 수강료를 청구하지 않습니다.</span>
         </label>
         <label className="grid gap-1 text-sm font-medium text-foreground">
-          무료 수업 종료 후 {required && <span className="text-rose-500">*</span>}
+          무료 수업 종료 후 {required && <span className="text-destructive">*</span>}
           <select
             className={inputClass}
             disabled={!formData.free_lesson_end_date}

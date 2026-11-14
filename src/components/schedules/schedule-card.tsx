@@ -49,7 +49,7 @@ export function ScheduleCard({
           <CardTitle className="text-lg tracking-normal">{getScheduleTitle(schedule)}</CardTitle>
           <div className="flex items-center gap-2">
             {schedule.attendance_taken ? (
-              <Badge variant="default" className="bg-emerald-600">
+              <Badge variant="default" className="bg-success">
                 <CheckCircle className="mr-1 h-3 w-3" />
                 출석 완료
               </Badge>

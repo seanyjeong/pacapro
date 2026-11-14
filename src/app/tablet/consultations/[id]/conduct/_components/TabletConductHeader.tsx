@@ -34,11 +34,10 @@ export function TabletConductHeader({
               {backLabel}
             </Button>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Tablet Consultation Desk</p>
               <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-normal text-foreground">
                 {consultation.consultation_type === 'learning' ? '재원생 상담' : '상담 진행'} · {consultation.student_name}
                 {consultation.consultation_type === 'learning' && consultation.learning_type && (
-                  <Badge variant="secondary" className="text-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                  <Badge variant="secondary" className="text-sm bg-success-soft text-success">
                     {LEARNING_TYPE_LABELS[consultation.learning_type]}
                   </Badge>
                 )}
@@ -68,7 +67,7 @@ export function TabletConductHeader({
             </div>
             <div className="h-2 w-full rounded-full bg-muted">
               <div
-                className="h-2 rounded-full bg-blue-600 transition-all duration-300"
+                className="h-2 rounded-full bg-primary transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

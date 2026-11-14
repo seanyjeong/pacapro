@@ -13,10 +13,10 @@ interface RadialMenuProps {
 }
 
 const menuItems = [
-  { status: 'present' as AttendanceStatus, icon: CheckCircle2, label: '출석', color: 'bg-emerald-500' },
-  { status: 'late' as AttendanceStatus, icon: Clock, label: '지각', color: 'bg-amber-500' },
-  { status: 'absent' as AttendanceStatus, icon: XCircle, label: '결석', color: 'bg-red-500' },
-  { status: 'excused' as AttendanceStatus, icon: AlertCircle, label: '공결', color: 'bg-blue-500' },
+  { status: 'present' as AttendanceStatus, icon: CheckCircle2, label: '출석', color: 'bg-success' },
+  { status: 'late' as AttendanceStatus, icon: Clock, label: '지각', color: 'bg-warning' },
+  { status: 'absent' as AttendanceStatus, icon: XCircle, label: '결석', color: 'bg-destructive' },
+  { status: 'excused' as AttendanceStatus, icon: AlertCircle, label: '공결', color: 'bg-primary' },
 ];
 
 export function RadialMenu({ isOpen, onClose, onSelect, position }: RadialMenuProps) {

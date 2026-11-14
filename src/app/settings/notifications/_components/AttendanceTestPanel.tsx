@@ -44,7 +44,7 @@ export default function AttendanceTestPanel({
         </button>
       </div>
       {!enabled && (
-        <p className="mt-1 text-sm text-amber-600">알림톡 활성화와 출결 템플릿 설정이 필요합니다.</p>
+        <p className="mt-1 text-sm text-warning">알림톡 활성화와 출결 템플릿 설정이 필요합니다.</p>
       )}
     </div>
   );

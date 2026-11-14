@@ -165,7 +165,7 @@ export function EventCalendar({
                                     <button
                                         type="button"
                                         onClick={() => onEventDelete(event)}
-                                        className="rounded-md p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                                        className="rounded-md p-2 text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
                                         aria-label={`${event.title} 삭제`}
                                     >
                                         <Trash2 className="h-4 w-4" />
@@ -183,7 +183,7 @@ export function EventCalendar({
                     <div
                         key={day}
                         className={`p-2 text-center text-sm font-medium
-                            ${index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}
+                            ${index === 0 ? 'text-destructive' : index === 6 ? 'text-primary' : 'text-muted-foreground'}`}
                     >
                         {day}
                     </div>
@@ -207,7 +207,7 @@ export function EventCalendar({
                             key={index}
                             className={`min-h-[100px] border-b border-r border-border p-1 transition-colors
                                 ${canEditEvents ? 'cursor-pointer hover:bg-muted/50' : ''}
-                                ${hasHoliday ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                                ${hasHoliday ? 'bg-destructive-soft' : ''}`}
                             onClick={() => {
                                 if (canEditEvents) onDateClick(dateStr);
                             }}
@@ -216,7 +216,7 @@ export function EventCalendar({
                                 <span
                                     className={`text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full
                                         ${isToday ? 'bg-primary text-primary-foreground' : ''}
-                                        ${dayOfWeek === 0 || hasHoliday ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-foreground'}`}
+                                        ${dayOfWeek === 0 || hasHoliday ? 'text-destructive' : dayOfWeek === 6 ? 'text-primary' : 'text-foreground'}`}
                                 >
                                     {cell.date.getDate()}
                                 </span>
@@ -251,10 +251,10 @@ export function EventCalendar({
                                                     e.stopPropagation();
                                                     onEventDelete(event);
                                                 }}
-                                                className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900"
+                                                className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive-soft"
                                                 aria-label={`${event.title} 삭제`}
                                             >
-                                                <Trash2 className="w-3 h-3 text-red-500" />
+                                                <Trash2 className="w-3 h-3 text-destructive" />
                                             </button>
                                         ) : null}
                                     </div>

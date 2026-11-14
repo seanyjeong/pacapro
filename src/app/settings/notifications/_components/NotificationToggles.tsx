@@ -33,7 +33,7 @@ export default function NotificationToggles({
           <Bell className="w-5 h-5 text-purple-600" />
           <span className="font-semibold text-foreground">알림톡 발송 설정</span>
           {isEnabled && (
-            <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">활성화됨</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-success-soft text-success">활성화됨</span>
           )}
           <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
             {settings.service_type === 'solapi' ? '솔라피' : 'SENS'}
@@ -63,9 +63,9 @@ export default function NotificationToggles({
                     setSettings(prev => ({ ...prev, is_enabled: !prev.is_enabled }));
                   }
                 }}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${isEnabled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${isEnabled ? 'bg-purple-600' : 'bg-muted-foreground/40'}`}
               >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
@@ -73,11 +73,11 @@ export default function NotificationToggles({
             {isEnabled && (
               <div className="space-y-3">
                 {/* 납부 안내 + 미납자 (같은 시간) */}
-                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="p-3 bg-warning-soft rounded-lg border border-warning/30">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      <span className="font-medium text-orange-900 dark:text-orange-100">납부 안내</span>
+                      <DollarSign className="w-4 h-4 text-warning" />
+                      <span className="font-medium text-warning">납부 안내</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <select
@@ -91,7 +91,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_auto_enabled : !settings.sens_auto_enabled}
-                        className="px-2 py-1 text-sm border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-warning/30 bg-card text-foreground rounded focus:ring-1 focus:ring-warning disabled:opacity-50"
                       >
                         {[...Array(24)].map((_, hour) => (
                           <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}시</option>
@@ -107,10 +107,10 @@ export default function NotificationToggles({
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           (settings.service_type === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
-                            ? 'bg-orange-600' : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-warning' : 'bg-muted-foreground/40'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />
@@ -119,8 +119,8 @@ export default function NotificationToggles({
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                      <span className="font-medium text-red-900 dark:text-red-100">미납자</span>
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="font-medium text-destructive">미납자</span>
                       <span className="text-xs text-muted-foreground">(동일 시간)</span>
                     </div>
                     <button
@@ -133,10 +133,10 @@ export default function NotificationToggles({
                       }}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         (settings.service_type === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
-                          ? 'bg-red-600' : 'bg-gray-300 dark:bg-gray-600'
+                          ? 'bg-destructive' : 'bg-muted-foreground/40'
                       }`}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                         (settings.service_type === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
                           ? 'translate-x-6' : 'translate-x-1'
                       }`} />
@@ -146,19 +146,19 @@ export default function NotificationToggles({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* 상담확정 — 항상 ON */}
-                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between p-3 bg-success-soft rounded-lg border border-success/30">
                     <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <span className="font-medium text-green-900 dark:text-green-100">상담확정</span>
+                      <Bell className="w-4 h-4 text-success" />
+                      <span className="font-medium text-success">상담확정</span>
                     </div>
-                    <span className="text-xs px-2 py-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded">항상 ON</span>
+                    <span className="text-xs px-2 py-1 bg-success/20 text-success rounded">항상 ON</span>
                   </div>
 
                   {/* 체험수업 */}
-                  <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between p-3 bg-primary-soft rounded-lg border border-primary/30">
                     <div className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="font-medium text-blue-900 dark:text-blue-100">체험수업</span>
+                      <GraduationCap className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-primary">체험수업</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <select
@@ -172,7 +172,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_trial_auto_enabled : !settings.sens_trial_auto_enabled}
-                        className="px-2 py-1 text-sm border border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-primary/30 bg-card text-foreground rounded focus:ring-1 focus:ring-primary disabled:opacity-50"
                       >
                         {[...Array(24)].map((_, hour) => (
                           <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}시</option>
@@ -188,10 +188,10 @@ export default function NotificationToggles({
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           (settings.service_type === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
-                            ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-primary' : 'bg-muted-foreground/40'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />
@@ -217,7 +217,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_reminder_auto_enabled : !settings.sens_reminder_auto_enabled}
-                        className="px-2 py-1 text-sm border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-purple-300 dark:border-purple-700 bg-card text-foreground rounded focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                       >
                         <option value={1}>1시간 전</option>
                         <option value={2}>2시간 전</option>
@@ -236,10 +236,10 @@ export default function NotificationToggles({
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           (settings.service_type === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
-                            ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-purple-600' : 'bg-muted-foreground/40'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />
@@ -251,8 +251,8 @@ export default function NotificationToggles({
             )}
 
             {!isEnabled && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
+              <div className="p-3 bg-warning-soft rounded-lg border border-warning/30">
+                <p className="text-sm text-warning">
                   알림톡이 비활성화되어 있습니다. 활성화해야 모든 알림톡을 발송할 수 있습니다.
                 </p>
               </div>

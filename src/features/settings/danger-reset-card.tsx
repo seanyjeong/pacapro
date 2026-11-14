@@ -21,12 +21,12 @@ export function DangerResetCard({
       title="위험 작업"
       description="원장 권한 전용"
       icon={AlertTriangle}
-      className="border-red-200 bg-red-50/40"
+      className="border-destructive/30 bg-destructive-soft/40"
       contentClassName="space-y-4"
     >
-      <div className="rounded-lg border border-red-200 bg-background p-4">
-        <h4 className="font-semibold text-red-700">{SETTINGS_RESET_COPY.title}</h4>
-        <p className="mt-2 text-sm leading-6 text-red-700">
+      <div className="rounded-lg border border-destructive/30 bg-background p-4">
+        <h4 className="font-semibold text-destructive">{SETTINGS_RESET_COPY.title}</h4>
+        <p className="mt-2 text-sm leading-6 text-destructive">
           {SETTINGS_RESET_COPY.description}
         </p>
       </div>
@@ -37,7 +37,7 @@ export function DangerResetCard({
           value={resetConfirmation}
           onChange={(event) => setResetConfirmation(event.target.value)}
           placeholder={SETTINGS_RESET_COPY.confirmation}
-          className="h-10 w-full rounded-md border border-red-200 bg-background px-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-red-200"
+          className="h-10 w-full rounded-md border border-destructive/30 bg-background px-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-destructive/30"
         />
       </div>
       <Button

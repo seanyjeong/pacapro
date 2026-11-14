@@ -79,7 +79,7 @@ export function ManualCreditCreateForm({
           <div>주당 횟수: <span className="font-medium">{weeklyCount}회</span> (월 {weeklyCount * 4}회)</div>
           <div>수업 요일: <span className="font-medium">{classDaysText}</span></div>
           <div className="pt-1 border-t border-border mt-2">
-            <span className="text-blue-600 dark:text-blue-400 font-medium">
+            <span className="text-primary font-medium">
               1회 금액: {perClassFee.toLocaleString()}원
             </span>
           </div>
@@ -125,25 +125,25 @@ export function ManualCreditCreateForm({
             </div>
 
             {startDate && endDate && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-                <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+              <div className="p-3 bg-primary-soft rounded-lg text-sm">
+                <div className="flex items-center gap-1 font-medium text-primary mb-1">
                   <Calculator className="w-4 h-4" />
                   계산 결과
                 </div>
                 {dateCalculation.count > 0 ? (
                   <>
-                    <div className="text-blue-600 dark:text-blue-500">
+                    <div className="text-primary">
                       해당 기간 수업일: {dateCalculation.dates.join(', ')}
                     </div>
-                    <div className="text-blue-600 dark:text-blue-500">
+                    <div className="text-primary">
                       수업 횟수: <span className="font-medium">{dateCalculation.count}회</span>
                     </div>
-                    <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
+                    <div className="text-primary font-medium mt-1">
                       총 크레딧: {dateCalculation.totalCredit.toLocaleString()}원
                     </div>
                   </>
                 ) : (
-                  <div className="text-orange-600 dark:text-orange-400">
+                  <div className="text-warning">
                     해당 기간에 수업일이 없습니다.
                   </div>
                 )}
@@ -170,15 +170,15 @@ export function ManualCreditCreateForm({
               <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
             </div>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-              <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+            <div className="p-3 bg-primary-soft rounded-lg text-sm">
+              <div className="flex items-center gap-1 font-medium text-primary mb-1">
                 <Calculator className="w-4 h-4" />
                 계산 결과
               </div>
-              <div className="text-blue-600 dark:text-blue-500">
+              <div className="text-primary">
                 {perClassFee.toLocaleString()}원 x {classCount}회
               </div>
-              <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
+              <div className="text-primary font-medium mt-1">
                 총 크레딧: {countCalculation.totalCredit.toLocaleString()}원
               </div>
             </div>
@@ -197,12 +197,12 @@ export function ManualCreditCreateForm({
             </div>
 
             {directAmount > 0 && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-                <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+              <div className="p-3 bg-primary-soft rounded-lg text-sm">
+                <div className="flex items-center gap-1 font-medium text-primary mb-1">
                   <Banknote className="w-4 h-4" />
                   입력 금액
                 </div>
-                <div className="text-blue-700 dark:text-blue-400 font-medium">
+                <div className="text-primary font-medium">
                   크레딧: {directAmount.toLocaleString()}원
                 </div>
               </div>
@@ -247,7 +247,7 @@ export function ManualCreditCreateForm({
         </div>
 
         {error && (
-          <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400" role="alert">
+          <div className="flex items-center gap-1 text-sm text-destructive" role="alert">
             <AlertTriangle className="w-4 h-4" />
             {error}
           </div>
@@ -261,7 +261,7 @@ export function ManualCreditCreateForm({
         <Button
           type="submit"
           disabled={processing || currentCalculation.totalCredit <= 0}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-primary hover:bg-primary/90 text-white"
         >
           {processing ? '생성 중...' : `${currentCalculation.totalCredit?.toLocaleString() || 0}원 크레딧 생성`}
         </Button>

@@ -256,21 +256,21 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         />
                     </div>
 
-                    <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-md border border-red-200 dark:border-red-900">
+                    <div className="p-3 bg-destructive-soft rounded-md border border-destructive/30">
                         <div className="flex items-center gap-2 mb-2">
                             <input
                                 type="checkbox"
                                 id="is_holiday"
                                 checked={formData.is_holiday}
                                 onChange={(e) => setFormData(prev => ({ ...prev, is_holiday: e.target.checked }))}
-                                className="w-4 h-4 rounded border-red-300"
+                                className="w-4 h-4 rounded border-destructive/30"
                             />
-                            <label htmlFor="is_holiday" className="text-sm font-medium text-red-700 dark:text-red-300">
+                            <label htmlFor="is_holiday" className="text-sm font-medium text-destructive">
                                 휴일 지정
                             </label>
                         </div>
                         {Boolean(formData.is_holiday) && (
-                            <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400">
+                            <div className="flex items-start gap-2 text-xs text-destructive">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span>해당 날짜의 수업이 휴강 처리됩니다. 상담 예약도 막으려면 상담 차단을 켜주세요.</span>
                             </div>
@@ -302,7 +302,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {submitError && (
                         <div
-                            className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+                            className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
                             role="alert"
                         >
                             <div className="flex items-start gap-3">

@@ -46,8 +46,8 @@ interface ScheduleCalendarV2Props {
 }
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-950 hover:bg-orange-100 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800 hover:shadow-sm' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800 hover:shadow-sm' },
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-warning', bgColor: 'bg-warning-soft hover:bg-warning-soft border-warning/30 hover:shadow-sm' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-primary', bgColor: 'bg-primary-soft hover:bg-primary-soft border-primary/30 hover:shadow-sm' },
   { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800 hover:shadow-sm' },
 ];
 
@@ -151,8 +151,8 @@ export function ScheduleCalendarV2({
               key={day}
               className={cn(
                 'text-center text-sm font-semibold py-2',
-                index === 0 && 'text-red-600',
-                index === 6 && 'text-blue-600'
+                index === 0 && 'text-destructive',
+                index === 6 && 'text-primary'
               )}
             >
               {day}
@@ -186,8 +186,8 @@ export function ScheduleCalendarV2({
                       className={cn(
                         'text-sm font-semibold shrink-0',
                         today && 'text-primary',
-                        !today && index % 7 === 0 && 'text-red-600',
-                        !today && index % 7 === 6 && 'text-blue-600',
+                        !today && index % 7 === 0 && 'text-destructive',
+                        !today && index % 7 === 6 && 'text-primary',
                         !inMonth && 'text-muted-foreground'
                       )}
                     >
@@ -249,9 +249,9 @@ export function ScheduleCalendarV2({
                                   className={cn(
                                     'flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full text-[10px] font-semibold',
                                     attendedInstructors >= scheduledInstructors
-                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                                      ? 'bg-success-soft text-success'
                                       : attendedInstructors > 0
-                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                                      ? 'bg-warning-soft text-warning'
                                       : 'bg-muted text-muted-foreground'
                                   )}
                                   title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
@@ -296,7 +296,7 @@ export function ScheduleCalendarV2({
               </div>
             ))}
             <div className="flex items-center gap-2 ml-4 border-l pl-4">
-              <UserCheck className="h-4 w-4 text-green-600" />
+              <UserCheck className="h-4 w-4 text-success" />
               <span>= 강사 출근/배정</span>
             </div>
             <div className="flex items-center gap-2">

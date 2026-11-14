@@ -31,7 +31,7 @@ export function SeasonConfirmDialog({
         role="alertdialog"
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/35 dark:text-amber-200">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-warning-soft text-warning">
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -48,7 +48,7 @@ export function SeasonConfirmDialog({
           </p>
         ) : null}
 
-        {warning ? <p className="mt-3 break-keep text-xs text-amber-700 dark:text-amber-300">{warning}</p> : null}
+        {warning ? <p className="mt-3 break-keep text-xs text-warning">{warning}</p> : null}
 
         <div className="mt-5 flex justify-end gap-2">
           <Button disabled={busy} type="button" variant="outline" onClick={onCancel}>

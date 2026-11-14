@@ -16,7 +16,6 @@ export function StudentDetailHeader({ actions, description, onBack }: StudentDet
           <ArrowLeft className="mr-2 h-4 w-4" />
           목록으로
         </Button>
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Profile</p>
         <h1 className="text-2xl font-semibold tracking-normal text-foreground">학생 상세</h1>
         <p className="text-sm text-muted-foreground">
           {description || '학생의 정보, 출결, 납부, 시즌, 상담 기록을 확인합니다.'}

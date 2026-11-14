@@ -178,7 +178,7 @@ export function ExpenseCalendar({
                 {currentYear}년 {currentMonth + 1}월 지출
               </CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                월간 총 지출: <span className="font-semibold text-red-600">{monthlyTotal.toLocaleString()}원</span>
+                월간 총 지출: <span className="font-semibold text-destructive">{monthlyTotal.toLocaleString()}원</span>
               </p>
             </div>
             <div className="flex items-center gap-2 self-end lg:self-auto">
@@ -202,8 +202,8 @@ export function ExpenseCalendar({
                 key={day}
                 className={cn(
                   'text-center text-sm font-semibold py-2',
-                  index === 0 && 'text-red-600',
-                  index === 6 && 'text-blue-600'
+                  index === 0 && 'text-destructive',
+                  index === 6 && 'text-primary'
                 )}
               >
                 {day}
@@ -235,8 +235,8 @@ export function ExpenseCalendar({
                     <div
                       className={cn(
                         'text-sm font-medium mb-1',
-                        index % 7 === 0 && 'text-red-600',
-                        index % 7 === 6 && 'text-blue-600',
+                        index % 7 === 0 && 'text-destructive',
+                        index % 7 === 6 && 'text-primary',
                         !inMonth && 'text-muted-foreground'
                       )}
                     >
@@ -249,7 +249,7 @@ export function ExpenseCalendar({
                         <Badge variant="secondary" className="text-xs px-1 py-0">
                           {daySummary.count}건
                         </Badge>
-                        <div className="text-xs sm:text-sm font-medium text-red-600 dark:text-red-400">
+                        <div className="text-xs sm:text-sm font-medium text-destructive">
                           -{formatAmount(daySummary.totalAmount)}원
                         </div>
                       </div>
@@ -267,7 +267,7 @@ export function ExpenseCalendar({
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-red-600" />
+              <Banknote className="h-5 w-5 text-destructive" />
               {selectedDate && new Date(selectedDate).toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
@@ -280,10 +280,10 @@ export function ExpenseCalendar({
           <div className="py-6 px-6 space-y-4">
             {/* 일일 총계 */}
             {selectedSummary && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+              <div className="p-3 bg-destructive-soft rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">총 {selectedSummary.count}건</span>
-                  <span className="text-lg font-bold text-red-600 dark:text-red-400">
+                  <span className="text-lg font-bold text-destructive">
                     -{selectedSummary.totalAmount.toLocaleString()}원
                   </span>
                 </div>
@@ -308,7 +308,7 @@ export function ExpenseCalendar({
                           {expense.instructor_name && ` · ${expense.instructor_name}`}
                         </div>
                       </div>
-                      <div className="font-semibold text-red-600">
+                      <div className="font-semibold text-destructive">
                         -{Math.floor(parseFloat(String(expense.amount))).toLocaleString()}원
                       </div>
                     </div>

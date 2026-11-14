@@ -113,10 +113,10 @@ export default function SensTemplates({
         <h2 className="text-lg font-semibold text-foreground mb-4">SENS 알림톡 템플릿 설정</h2>
         <div className="flex gap-2 flex-wrap">
           {[
-            { key: 'unpaid' as TemplateType, label: '납부 안내', icon: <DollarSign className="w-4 h-4" />, activeColor: 'bg-orange-600', setCode: settings.template_code },
-            { key: 'overdue' as TemplateType, label: '미납자', icon: <AlertCircle className="w-4 h-4" />, activeColor: 'bg-red-600', setCode: settings.sens_overdue_template_code },
-            { key: 'consultation' as TemplateType, label: '상담확정', icon: <Bell className="w-4 h-4" />, activeColor: 'bg-green-600', setCode: settings.sens_consultation_template_code },
-            { key: 'trial' as TemplateType, label: '체험수업', icon: <GraduationCap className="w-4 h-4" />, activeColor: 'bg-blue-600', setCode: settings.sens_trial_template_code },
+            { key: 'unpaid' as TemplateType, label: '납부 안내', icon: <DollarSign className="w-4 h-4" />, activeColor: 'bg-warning', setCode: settings.template_code },
+            { key: 'overdue' as TemplateType, label: '미납자', icon: <AlertCircle className="w-4 h-4" />, activeColor: 'bg-destructive', setCode: settings.sens_overdue_template_code },
+            { key: 'consultation' as TemplateType, label: '상담확정', icon: <Bell className="w-4 h-4" />, activeColor: 'bg-success', setCode: settings.sens_consultation_template_code },
+            { key: 'trial' as TemplateType, label: '체험수업', icon: <GraduationCap className="w-4 h-4" />, activeColor: 'bg-primary', setCode: settings.sens_trial_template_code },
             { key: 'reminder' as TemplateType, label: '상담 리마인드', icon: <Clock className="w-4 h-4" />, activeColor: 'bg-purple-600', setCode: settings.sens_reminder_template_code },
             { key: 'attendance' as TemplateType, label: '출결관리', icon: <ClipboardCheck className="w-4 h-4" />, activeColor: 'bg-teal-600', setCode: settings.sens_attendance_template_code },
           ].map(({ key, label, icon, activeColor, setCode }) => (
@@ -130,7 +130,7 @@ export default function SensTemplates({
               {icon}
               {label}
               {setCode && (
-                <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === key ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === key ? 'bg-card/20' : 'bg-success-soft text-success'}`}>설정됨</span>
               )}
             </button>
           ))}
@@ -139,7 +139,7 @@ export default function SensTemplates({
 
       {/* SENS 납부안내 템플릿 */}
       {activeSensTemplate === 'unpaid' && (
-        <div className="bg-card rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-warning/30 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
@@ -147,7 +147,7 @@ export default function SensTemplates({
                 type="text"
                 value={settings.template_code}
                 onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-warning focus:border-warning"
                 placeholder="템플릿 코드 (SENS 콘솔에서 확인)"
               />
             </div>
@@ -157,16 +157,16 @@ export default function SensTemplates({
                 value={settings.template_content}
                 onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
                 rows={8}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-warning focus:border-warning font-mono text-sm"
                 placeholder={`[#{학원명}] 학원비 납부 안내\n\n안녕하세요, #{이름} 학부모님.\n#{월}월 학원비 #{교육비}원이 아직 납부되지 않았습니다.`}
               />
             </div>
-            <div className="md:col-span-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-              <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">사용 가능한 변수</p>
+            <div className="md:col-span-2 p-3 bg-warning-soft rounded-lg border border-warning/30">
+              <p className="text-sm font-medium text-warning mb-2">사용 가능한 변수</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                 {[['#{이름}', '학생명'], ['#{월}', '청구 월'], ['#{교육비}', '교육비'], ['#{날짜}', '납부일'], ['#{학원명}', '학원 이름'], ['#{학원전화}', '학원 전화']].map(([code, desc]) => (
                   <div key={code} className="flex items-center gap-2">
-                    <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{code}</code>
+                    <code className="bg-card px-2 py-1 rounded border border-border text-warning">{code}</code>
                     <span className="text-muted-foreground">{desc}</span>
                   </div>
                 ))}
@@ -175,7 +175,7 @@ export default function SensTemplates({
             <TemplateImageField
               value={settings.sens_image_url || ''}
               onChange={(value) => setSettings(prev => ({ ...prev, sens_image_url: value }))}
-              focusClassName="focus:ring-orange-500 focus:border-orange-500"
+              focusClassName="focus:ring-warning focus:border-warning"
               hint="SENS 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다."
             />
             <ButtonEditor
@@ -195,9 +195,9 @@ export default function SensTemplates({
                 </div>
                 <button
                   onClick={() => setSettings(prev => ({ ...prev, sens_auto_enabled: !prev.sens_auto_enabled }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_auto_enabled ? 'bg-orange-600' : 'bg-muted'}`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_auto_enabled ? 'bg-warning' : 'bg-muted'}`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_auto_enabled && (
@@ -206,7 +206,7 @@ export default function SensTemplates({
                   <select
                     value={settings.sens_auto_hour}
                     onChange={e => setSettings(prev => ({ ...prev, sens_auto_hour: parseInt(e.target.value) }))}
-                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-warning"
                   >
                     {[...Array(24)].map((_, hour) => (
                       <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}:00</option>
@@ -223,22 +223,22 @@ export default function SensTemplates({
                   type="tel"
                   value={testPhone}
                   onChange={e => setTestPhone(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-warning"
                   placeholder="테스트 전화번호 (예: 01012345678)"
                 />
                 <button
                   onClick={handleTest}
                   disabled={testing || !settings.is_enabled || !settings.template_code}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="px-4 py-2 bg-warning text-white rounded-lg hover:bg-warning/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   {testing ? '발송 중...' : '테스트'}
                 </button>
               </div>
-              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
-              {settings.is_enabled && !settings.template_code && <p className="text-sm text-amber-600 mt-1">템플릿 코드를 먼저 설정해야 테스트 발송이 가능합니다</p>}
+              {!settings.is_enabled && <p className="text-sm text-warning mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {settings.is_enabled && !settings.template_code && <p className="text-sm text-warning mt-1">템플릿 코드를 먼저 설정해야 테스트 발송이 가능합니다</p>}
             </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
-              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-warning text-white rounded-lg hover:bg-warning/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {saving ? '저장 중...' : '납부안내 설정 저장'}
               </button>
             </div>
@@ -248,17 +248,17 @@ export default function SensTemplates({
 
       {/* SENS 미납자 템플릿 */}
       {activeSensTemplate === 'overdue' && (
-        <div className="bg-card rounded-lg shadow-sm border border-red-200 dark:border-red-800 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-destructive/30 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
-              <input type="text" value={settings.sens_overdue_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
+              <input type="text" value={settings.sens_overdue_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-destructive focus:border-destructive" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
-              <textarea value={settings.sens_overdue_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm" placeholder={`[#{학원명}] 미납 안내\n\n#{이름} 학생의 학원비가 미납되었습니다.`} />
+              <textarea value={settings.sens_overdue_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-destructive focus:border-destructive font-mono text-sm" placeholder={`[#{학원명}] 미납 안내\n\n#{이름} 학생의 학원비가 미납되었습니다.`} />
             </div>
-            <TemplateImageField value={settings.sens_overdue_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_overdue_image_url: value }))} focusClassName="focus:ring-red-500 focus:border-red-500" />
+            <TemplateImageField value={settings.sens_overdue_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_overdue_image_url: value }))} focusClassName="focus:ring-destructive focus:border-destructive" />
             <ButtonEditor
               buttons={settings.sens_overdue_buttons || []}
               onAdd={addSensOverdueButton}
@@ -271,14 +271,14 @@ export default function SensTemplates({
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">미납자 수업일 자동 발송</p><p className="text-sm text-muted-foreground">미납 학생의 수업이 있는 날에만 자동 발송</p></div>
-                <button onClick={() => setSettings(prev => ({ ...prev, sens_overdue_auto_enabled: !prev.sens_overdue_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_overdue_auto_enabled ? 'bg-red-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <button onClick={() => setSettings(prev => ({ ...prev, sens_overdue_auto_enabled: !prev.sens_overdue_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_overdue_auto_enabled ? 'bg-destructive' : 'bg-muted'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_overdue_auto_enabled && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm text-foreground">발송 시간:</label>
-                  <select value={settings.sens_overdue_auto_hour} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_auto_hour: parseInt(e.target.value) }))} className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500">
+                  <select value={settings.sens_overdue_auto_hour} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_auto_hour: parseInt(e.target.value) }))} className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-destructive">
                     {[...Array(24)].map((_, hour) => (<option key={hour} value={hour}>{hour.toString().padStart(2, '0')}:00</option>))}
                   </select>
                 </div>
@@ -288,13 +288,13 @@ export default function SensTemplates({
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
               <label className="block text-sm font-medium text-foreground mb-2">미납자 테스트 발송</label>
               <div className="flex gap-3">
-                <input type="tel" value={testPhoneSensOverdue} onChange={e => setTestPhoneSensOverdue(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500" placeholder="테스트 전화번호 (예: 01012345678)" />
-                <button onClick={handleTestSensOverdue} disabled={testingSensOverdue || !settings.is_enabled || !settings.sens_overdue_template_code} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensOverdue ? '발송 중...' : '테스트'}</button>
+                <input type="tel" value={testPhoneSensOverdue} onChange={e => setTestPhoneSensOverdue(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-destructive" placeholder="테스트 전화번호 (예: 01012345678)" />
+                <button onClick={handleTestSensOverdue} disabled={testingSensOverdue || !settings.is_enabled || !settings.sens_overdue_template_code} className="px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensOverdue ? '발송 중...' : '테스트'}</button>
               </div>
-              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {!settings.is_enabled && <p className="text-sm text-warning mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
-              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '미납자 설정 저장'}</button>
+              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-destructive text-white rounded-lg hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '미납자 설정 저장'}</button>
             </div>
           </div>
         </div>
@@ -302,17 +302,17 @@ export default function SensTemplates({
 
       {/* SENS 상담확정 템플릿 */}
       {activeSensTemplate === 'consultation' && (
-        <div className="bg-card rounded-lg shadow-sm border border-green-200 dark:border-green-800 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-success/30 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
-              <input type="text" value={settings.sens_consultation_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_consultation_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
+              <input type="text" value={settings.sens_consultation_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_consultation_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
-              <textarea value={settings.sens_consultation_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_consultation_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm" placeholder={`[#{학원명}] 상담 확정 안내\n\n#{이름}님, 상담이 확정되었습니다.`} />
+              <textarea value={settings.sens_consultation_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_consultation_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success focus:border-success font-mono text-sm" placeholder={`[#{학원명}] 상담 확정 안내\n\n#{이름}님, 상담이 확정되었습니다.`} />
             </div>
-            <TemplateImageField value={settings.sens_consultation_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_consultation_image_url: value }))} focusClassName="focus:ring-green-500 focus:border-green-500" />
+            <TemplateImageField value={settings.sens_consultation_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_consultation_image_url: value }))} focusClassName="focus:ring-success focus:border-success" />
             <ButtonEditor
               buttons={settings.sens_consultation_buttons || []}
               onAdd={addSensConsultationButton}
@@ -325,13 +325,13 @@ export default function SensTemplates({
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
               <label className="block text-sm font-medium text-foreground mb-2">상담확정 테스트 발송</label>
               <div className="flex gap-3">
-                <input type="tel" value={testPhoneSensConsultation} onChange={e => setTestPhoneSensConsultation(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500" placeholder="테스트 전화번호 (예: 01012345678)" />
-                <button onClick={handleTestSensConsultation} disabled={testingSensConsultation || !settings.is_enabled || !settings.sens_consultation_template_code} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensConsultation ? '발송 중...' : '테스트'}</button>
+                <input type="tel" value={testPhoneSensConsultation} onChange={e => setTestPhoneSensConsultation(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-success" placeholder="테스트 전화번호 (예: 01012345678)" />
+                <button onClick={handleTestSensConsultation} disabled={testingSensConsultation || !settings.is_enabled || !settings.sens_consultation_template_code} className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensConsultation ? '발송 중...' : '테스트'}</button>
               </div>
-              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {!settings.is_enabled && <p className="text-sm text-warning mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
-              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담확정 설정 저장'}</button>
+              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담확정 설정 저장'}</button>
             </div>
           </div>
         </div>
@@ -339,17 +339,17 @@ export default function SensTemplates({
 
       {/* SENS 체험수업 템플릿 */}
       {activeSensTemplate === 'trial' && (
-        <div className="bg-card rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-primary/30 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
-              <input type="text" value={settings.sens_trial_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_trial_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
+              <input type="text" value={settings.sens_trial_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_trial_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
-              <textarea value={settings.sens_trial_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_trial_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm" placeholder={`[#{학원명}] 체험수업 안내\n\n#{이름}님, 오늘 체험수업이 있습니다.`} />
+              <textarea value={settings.sens_trial_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_trial_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm" placeholder={`[#{학원명}] 체험수업 안내\n\n#{이름}님, 오늘 체험수업이 있습니다.`} />
             </div>
-            <TemplateImageField value={settings.sens_trial_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_trial_image_url: value }))} focusClassName="focus:ring-blue-500 focus:border-blue-500" />
+            <TemplateImageField value={settings.sens_trial_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_trial_image_url: value }))} focusClassName="focus:ring-primary focus:border-primary" />
             <ButtonEditor
               buttons={settings.sens_trial_buttons || []}
               onAdd={addSensTrialButton}
@@ -362,14 +362,14 @@ export default function SensTemplates({
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">체험수업 당일 자동 발송</p><p className="text-sm text-muted-foreground">체험수업 예정일에 자동 발송</p></div>
-                <button onClick={() => setSettings(prev => ({ ...prev, sens_trial_auto_enabled: !prev.sens_trial_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_trial_auto_enabled ? 'bg-blue-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <button onClick={() => setSettings(prev => ({ ...prev, sens_trial_auto_enabled: !prev.sens_trial_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_trial_auto_enabled ? 'bg-primary' : 'bg-muted'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_trial_auto_enabled && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm text-foreground">발송 시간:</label>
-                  <select value={settings.sens_trial_auto_hour} onChange={e => setSettings(prev => ({ ...prev, sens_trial_auto_hour: parseInt(e.target.value) }))} className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select value={settings.sens_trial_auto_hour} onChange={e => setSettings(prev => ({ ...prev, sens_trial_auto_hour: parseInt(e.target.value) }))} className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-primary">
                     {[...Array(24)].map((_, hour) => (<option key={hour} value={hour}>{hour.toString().padStart(2, '0')}:00</option>))}
                   </select>
                 </div>
@@ -379,13 +379,13 @@ export default function SensTemplates({
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
               <label className="block text-sm font-medium text-foreground mb-2">체험수업 테스트 발송</label>
               <div className="flex gap-3">
-                <input type="tel" value={testPhoneSensTrial} onChange={e => setTestPhoneSensTrial(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="테스트 전화번호 (예: 01012345678)" />
-                <button onClick={handleTestSensTrial} disabled={testingSensTrial || !settings.is_enabled || !settings.sens_trial_template_code} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensTrial ? '발송 중...' : '테스트'}</button>
+                <input type="tel" value={testPhoneSensTrial} onChange={e => setTestPhoneSensTrial(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-primary" placeholder="테스트 전화번호 (예: 01012345678)" />
+                <button onClick={handleTestSensTrial} disabled={testingSensTrial || !settings.is_enabled || !settings.sens_trial_template_code} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensTrial ? '발송 중...' : '테스트'}</button>
               </div>
-              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {!settings.is_enabled && <p className="text-sm text-warning mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
-              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '체험수업 설정 저장'}</button>
+              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '체험수업 설정 저장'}</button>
             </div>
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function SensTemplates({
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">상담 리마인드 자동 발송</p><p className="text-sm text-muted-foreground">상담 N시간 전에 자동 발송</p></div>
                 <button onClick={() => setSettings(prev => ({ ...prev, sens_reminder_auto_enabled: !prev.sens_reminder_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_reminder_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_reminder_auto_enabled && (
@@ -442,7 +442,7 @@ export default function SensTemplates({
                 <input type="tel" value={testPhoneSensReminder} onChange={e => setTestPhoneSensReminder(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="테스트 전화번호 (예: 01012345678)" />
                 <button onClick={handleTestSensReminder} disabled={testingSensReminder || !settings.is_enabled || !settings.sens_reminder_template_code} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensReminder ? '발송 중...' : '테스트'}</button>
               </div>
-              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {!settings.is_enabled && <p className="text-sm text-warning mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담 리마인드 설정 저장'}</button>
@@ -461,7 +461,7 @@ export default function SensTemplates({
               </div>
               <button onClick={() => setSettings(prev => ({ ...prev, attendance_alimtalk_enabled: !prev.attendance_alimtalk_enabled }))}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.attendance_alimtalk_enabled ? 'bg-teal-600' : 'bg-muted'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
             <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">

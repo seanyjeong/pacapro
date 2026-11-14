@@ -19,9 +19,9 @@ interface StatsCardProps {
 
 const accentStyles: Record<AccentColor, { bar: string; iconBg: string; iconColor: string }> = {
     blue: {
-        bar: 'bg-blue-500',
-        iconBg: 'bg-blue-50 dark:bg-blue-950/50',
-        iconColor: 'text-blue-600 dark:text-blue-400',
+        bar: 'bg-primary',
+        iconBg: 'bg-primary-soft',
+        iconColor: 'text-primary',
     },
     cyan: {
         bar: 'bg-cyan-500',
@@ -34,14 +34,14 @@ const accentStyles: Record<AccentColor, { bar: string; iconBg: string; iconColor
         iconColor: 'text-violet-600 dark:text-violet-400',
     },
     emerald: {
-        bar: 'bg-emerald-500',
-        iconBg: 'bg-emerald-50 dark:bg-emerald-950/50',
-        iconColor: 'text-emerald-600 dark:text-emerald-400',
+        bar: 'bg-success',
+        iconBg: 'bg-success-soft',
+        iconColor: 'text-success',
     },
     amber: {
-        bar: 'bg-amber-500',
-        iconBg: 'bg-amber-50 dark:bg-amber-950/50',
-        iconColor: 'text-amber-600 dark:text-amber-400',
+        bar: 'bg-warning',
+        iconBg: 'bg-warning-soft',
+        iconColor: 'text-warning',
     },
 };
 
@@ -88,8 +88,8 @@ export function StatsCard({
                             className={cn(
                                 'flex items-center gap-1 text-sm font-semibold px-2.5 py-1 rounded-full',
                                 trend.isPositive
-                                    ? 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/50'
-                                    : 'text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/50'
+                                    ? 'text-success bg-success-soft'
+                                    : 'text-destructive bg-destructive-soft'
                             )}
                         >
                             <span className="text-xs">{trend.isPositive ? '▲' : '▼'}</span>

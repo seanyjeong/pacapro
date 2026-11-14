@@ -75,7 +75,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">공제</p>
-                  <p className="mt-1 text-red-600 dark:text-red-300">-{formatSalaryAmount(deductionAmount)}</p>
+                  <p className="mt-1 text-destructive">-{formatSalaryAmount(deductionAmount)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">실수령액</p>
@@ -130,13 +130,13 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
                   <div>
                     <div className="font-semibold text-foreground">{formatSalaryAmount(salary.base_amount + salary.incentive_amount)}</div>
                     {salary.incentive_amount > 0 && (
-                      <div className="text-xs text-blue-600 dark:text-blue-400">인센티브: +{formatSalaryAmount(salary.incentive_amount)}</div>
+                      <div className="text-xs text-primary">인센티브: +{formatSalaryAmount(salary.incentive_amount)}</div>
                     )}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-5 py-4">
                   <div>
-                    <div className="text-red-600 dark:text-red-400">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>
+                    <div className="text-destructive">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>
                     <span className={`rounded border px-2 py-0.5 text-xs ${getTaxTypeColor(salary.tax_type)}`}>
                       {TAX_TYPE_LABELS[salary.tax_type]}
                     </span>
@@ -145,7 +145,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
                 <td className="whitespace-nowrap px-5 py-4">
                   <div className="text-lg font-bold text-foreground">{formatSalaryAmount(salary.net_salary)}</div>
                   {salary.payment_date && (
-                    <div className="text-xs text-green-600 dark:text-green-400">지급: {formatDate(salary.payment_date)}</div>
+                    <div className="text-xs text-success">지급: {formatDate(salary.payment_date)}</div>
                   )}
                 </td>
                 <td className="whitespace-nowrap px-5 py-4">

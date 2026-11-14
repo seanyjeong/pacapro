@@ -76,8 +76,8 @@ export function ClassInfoSection({
 
           {/* 예약 변경 알림 (수정 모드에서만) */}
           {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && !classDaysChanged && (
-            <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
-              <p className="text-sm text-orange-700 dark:text-orange-400">
+            <div className="mt-2 p-3 bg-warning-soft border border-warning/30 rounded-lg">
+              <p className="text-sm text-warning">
                 변경 예정: {(() => {
                   const nextSlots = parseClassDaysWithSlots(initialData.class_days_next, initialData.time_slot || 'evening');
                   const dayMap: Record<number, string> = { 0: '일', 1: '월', 2: '화', 3: '수', 4: '목', 5: '금', 6: '토' };
@@ -85,7 +85,7 @@ export function ClassInfoSection({
                   return nextSlots.map(s => `${dayMap[s.day] || ''}(${timeMap[s.timeSlot] || s.timeSlot})`).join(', ') || '-';
                 })()} ({initialData.class_days_effective_from?.slice(0, 7)}부터)
               </p>
-              <p className="text-xs text-orange-600 dark:text-orange-500 mt-1">
+              <p className="text-xs text-warning mt-1">
                 여기서 수업요일을 직접 수정하면 예약 변경은 취소됩니다.
               </p>
             </div>
@@ -100,7 +100,7 @@ export function ClassInfoSection({
                     요일이나 시간대를 바꾸면 즉시 적용 또는 예약 적용을 선택할 수 있습니다.
                   </p>
                 </div>
-                <span className={`w-fit rounded-md px-2 py-1 text-xs font-medium ${classDaysChanged ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>
+                <span className={`w-fit rounded-md px-2 py-1 text-xs font-medium ${classDaysChanged ? 'bg-warning-soft text-warning' : 'bg-muted text-secondary-foreground'}`}>
                   {classDaysChanged ? '변경 있음' : '변경 없음'}
                 </span>
               </div>
@@ -114,10 +114,10 @@ export function ClassInfoSection({
                 ))}
               </select>
               {effectiveFrom === 'immediate' && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">즉시 적용하면 출석부에 바로 반영됩니다.</p>
+                <p className="text-xs text-warning mt-2">즉시 적용하면 출석부에 바로 반영됩니다.</p>
               )}
               {effectiveFrom !== 'immediate' && (
-                <p className="text-xs text-blue-600 dark:text-blue-500 mt-2">선택한 달부터 수업요일이 변경됩니다. 현재 수업요일은 유지됩니다.</p>
+                <p className="text-xs text-primary mt-2">선택한 달부터 수업요일이 변경됩니다. 현재 수업요일은 유지됩니다.</p>
               )}
                 </div>
               ) : null}

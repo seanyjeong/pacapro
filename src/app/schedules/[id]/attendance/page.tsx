@@ -168,8 +168,8 @@ export default function AttendancePage() {
       />
 
       {schedule.attendance_taken && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm text-blue-800">
+        <div className="rounded-md border border-primary/30 bg-primary-soft p-4">
+          <p className="text-sm text-primary">
             이 수업의 출석은 이미 완료되었습니다. 수정이 필요한 경우 관리자에게 문의하세요.
           </p>
         </div>

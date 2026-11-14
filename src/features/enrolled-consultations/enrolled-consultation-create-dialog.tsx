@@ -155,7 +155,7 @@ export function EnrolledConsultationCreateDialog({
                 {loadingBookedTimes ? (
                   <div className="mt-1 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">시간을 불러오는 중입니다.</div>
                 ) : hasNoTimeSlots ? (
-                  <div className="mt-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+                  <div className="mt-1 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
                     <p className="font-medium">상담 가능 시간이 설정되지 않았습니다.</p>
                     <Link className="mt-1 inline-flex text-xs font-semibold underline" href="/consultations/settings">
                       상담 설정으로 이동
@@ -221,7 +221,7 @@ export function EnrolledConsultationCreateDialog({
           {createForm.studentId && (
             <div className="border-t pt-4">
               <Label className="mb-3 flex items-center gap-2">
-                <Award className="h-4 w-4 text-blue-600" />
+                <Award className="h-4 w-4 text-primary" />
                 모의고사 등급
               </Label>
               {createScoresLoading ? (
@@ -237,7 +237,7 @@ export function EnrolledConsultationCreateDialog({
                       <div key={exam} className="rounded-md bg-muted/30 p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <p className="text-sm font-medium">{exam} 모평</p>
-                          {scoreData && <Badge className="bg-green-100 text-xs text-green-800">정시엔진 연동</Badge>}
+                          {scoreData && <Badge className="bg-success-soft text-xs text-success">정시엔진 연동</Badge>}
                         </div>
                         {scoreData ? (
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">

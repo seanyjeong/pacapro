@@ -36,7 +36,6 @@ export function ExpensesHeader({
     <header className="space-y-4 border-b border-border/70 pb-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</div>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">지출 관리</h1>
           <p className="mt-1 text-sm text-muted-foreground">운영비, 환불, 급여 연동 지출을 확인합니다.</p>
         </div>

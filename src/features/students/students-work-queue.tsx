@@ -42,7 +42,7 @@ export function StudentsWorkQueue({
         <div className="space-y-4" data-testid="students-work-queue">
             <section className="rounded-md border border-border bg-card p-4">
                 <div className="flex items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-success-soft text-success">
                         <UsersRound className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
@@ -145,8 +145,8 @@ function QueueRow({
 }) {
     const className = cn(
         'grid w-full grid-cols-1 gap-1 rounded-md border px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3',
-        onClick ? 'text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500/25' : '',
-        active ? 'border-blue-300 bg-blue-50' : 'border-border bg-background',
+        onClick ? 'text-left transition focus:outline-none focus:ring-2 focus:ring-primary/25' : '',
+        active ? 'border-primary/30 bg-primary-soft' : 'border-border bg-background',
         onClick && !active ? 'hover:border-border/80 hover:bg-muted/40' : ''
     );
     const content = (

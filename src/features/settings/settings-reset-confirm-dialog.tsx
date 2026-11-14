@@ -35,7 +35,7 @@ export function SettingsResetConfirmDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <div className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive">
             <p className="font-semibold">삭제되는 정보</p>
             <ul className="mt-2 space-y-1">
               {SETTINGS_RESET_TARGETS.map((target) => (
@@ -52,7 +52,7 @@ export function SettingsResetConfirmDialog({
                 event.preventDefault();
                 onConfirm();
               }}
-              className="gap-2 bg-red-600 hover:bg-red-700"
+              className="gap-2 bg-destructive hover:bg-destructive/90"
             >
               {isResetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {isResetting ? '초기화 중' : '초기화'}

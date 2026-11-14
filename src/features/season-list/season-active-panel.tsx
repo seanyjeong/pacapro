@@ -18,16 +18,16 @@ export function SeasonActivePanel({ seasons, onRefresh }: SeasonActivePanelProps
   if (!season) return null;
 
   return (
-    <section className="rounded-md border border-slate-200 bg-card px-4 py-4 shadow-sm" data-testid="season-active-panel">
+    <section className="rounded-md border border-border bg-card px-4 py-4 shadow-sm" data-testid="season-active-panel">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">진행 중 시즌</span>
+            <span className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">진행 중 시즌</span>
             <SeasonTypeBadge type={season.season_type} />
             <SeasonStatusBadge status={season.status} />
           </div>
-          <h2 className="mt-2 text-lg font-semibold tracking-normal text-slate-950">{season.season_name}</h2>
-          <p className="mt-1 text-sm text-slate-500">{formatDateRange(season.season_start_date, season.season_end_date)}</p>
+          <h2 className="mt-2 text-lg font-semibold tracking-normal text-foreground">{season.season_name}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{formatDateRange(season.season_start_date, season.season_end_date)}</p>
         </div>
 
         <div className="flex flex-wrap gap-2 lg:flex-nowrap">
@@ -72,12 +72,12 @@ export function SeasonActivePanel({ seasons, onRefresh }: SeasonActivePanelProps
 
 function SeasonFact({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+    <div className="rounded-md border border-border bg-muted p-3">
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon className="h-4 w-4" />
         {label}
       </div>
-      <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
+      <p className="mt-2 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export function OtherIncomesTable({ incomes, canEdit, onSelect, onEdit, onDelete
                 <p className="truncate text-sm font-semibold text-foreground">{income.description || '-'}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{income.income_date.split('T')[0]}</p>
               </div>
-              <p className="shrink-0 text-base font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+              <p className="shrink-0 text-base font-semibold tabular-nums text-success">
                 +{formatAmount(income.amount)}원
               </p>
             </div>
@@ -82,7 +82,7 @@ export function OtherIncomesTable({ incomes, canEdit, onSelect, onEdit, onDelete
                   </span>
                 </td>
                 <td className="max-w-[260px] truncate px-5 py-3 text-foreground">{income.description || '-'}</td>
-                <td className="px-5 py-3 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                <td className="px-5 py-3 text-right font-semibold tabular-nums text-success">
                   +{formatAmount(income.amount)}원
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">
@@ -132,7 +132,7 @@ function renderIncomeActions(
             type="button"
             aria-label="기타 수입 삭제"
             onClick={() => onDelete(income.id)}
-            className="rounded-md p-2 text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 dark:text-red-300 dark:hover:bg-red-950/35"
+            className="rounded-md p-2 text-destructive hover:bg-destructive-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
             <Trash2 className="h-4 w-4" />
           </button>

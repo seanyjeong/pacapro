@@ -43,13 +43,13 @@ export function StepTuition({ formData, updateFormData }: StepTuitionProps) {
             aria-pressed={activeTab === option.id}
             className={[
               'flex-1 rounded-md px-3 py-2 text-left transition',
-              activeTab === option.id ? 'bg-slate-900 text-white' : 'text-muted-foreground hover:bg-muted',
+              activeTab === option.id ? 'bg-foreground text-white' : 'text-muted-foreground hover:bg-muted',
             ].join(' ')}
             type="button"
             onClick={() => setActiveTab(option.id)}
           >
             <span className="block text-sm font-semibold">{option.label}</span>
-            <span className={activeTab === option.id ? 'text-xs text-slate-200' : 'text-xs text-muted-foreground'}>
+            <span className={activeTab === option.id ? 'text-xs text-muted-foreground/60' : 'text-xs text-muted-foreground'}>
               {option.description}
             </span>
           </button>
@@ -58,7 +58,7 @@ export function StepTuition({ formData, updateFormData }: StepTuitionProps) {
 
       <div className="rounded-md border border-border bg-background p-4">
         <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-success-soft text-success">
             <BadgeDollarSign className="h-4 w-4" />
           </span>
           <div>

@@ -72,7 +72,7 @@ export function EnrolledConsultationsWorkQueue({
 
       <section className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start gap-3">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${hasWeeklyHours ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${hasWeeklyHours ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'}`}>
             {hasWeeklyHours ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
           </span>
           <div className="min-w-0">

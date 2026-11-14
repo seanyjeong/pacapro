@@ -149,7 +149,6 @@ export function StudentDetailActions({
   return (
     <section className="rounded-md border border-border bg-card" data-testid="student-detail-operations-board">
       <div className="border-b border-border px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Workboard</p>
         <h2 className="mt-1 text-sm font-semibold text-foreground">학생 작업 보드</h2>
         <p className="mt-1 text-xs text-muted-foreground">{student.name} 학생에게 필요한 처리 메뉴를 한곳에 모았습니다.</p>
       </div>
@@ -194,7 +193,7 @@ function ActionGrid({ actions, compact = false }: { actions: ActionButton[]; com
             aria-label={action.label}
             className={[
               'h-auto min-h-12 justify-start gap-3 px-3 py-3 text-left',
-              action.tone === 'danger' ? 'text-rose-700 hover:text-rose-800' : '',
+              action.tone === 'danger' ? 'text-destructive hover:text-destructive' : '',
             ].join(' ')}
             type="button"
             variant={action.tone === 'primary' ? 'default' : 'outline'}
@@ -236,7 +235,7 @@ function BoardRow({
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
         </div>
-        <p className={`text-sm font-semibold ${warn ? 'text-amber-700' : 'text-foreground'}`}>{value}</p>
+        <p className={`text-sm font-semibold ${warn ? 'text-warning' : 'text-foreground'}`}>{value}</p>
       </div>
     </div>
   );
