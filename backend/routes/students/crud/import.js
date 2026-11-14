@@ -4,6 +4,7 @@ const {
     verifyToken,
     checkPermission,
     encrypt,
+    decrypt,
     logger
 } = require('./_utils');
 const {
@@ -238,7 +239,24 @@ async function getStudentNumberFactory(academyId) {
     return getNextStudentNumberFactory(lastStudents[0]?.student_number);
 }
 
-async function insertImportedStudent(row, academyId, nextStudentNumber) {
+// 이름·연락처는 매번 다른 IV 로 암호화돼 SQL 에서 같은 값으로 찾을 수 없다.
+// 다른 등록 경로처럼 복호화한 이름 + 숫자만 남긴 연락처로 비교한다.
+function studentKey(name, phone) {
+    return `${String(name || '').trim()}|${String(phone || '').replace(/\D/g, '')}`;
+}
+
+async function getRegisteredStudentKeys(academyId) {
+    const [students] = await pool.execute(
+        `SELECT name, phone FROM students
+         WHERE academy_id = ?
+         AND deleted_at IS NULL`,
+        [academyId]
+    );
+
+    return new Set(students.map(student => studentKey(decrypt(student.name), decrypt(student.phone))));
+}
+
+async function insertImportedStudent(row, academyId, nextStudentNumber, registeredKeys) {
     if (!row.name || !row.phone) {
         return {
             status: 'failed',
@@ -257,25 +275,16 @@ async function insertImportedStudent(row, academyId, nextStudentNumber) {
         };
     }
 
-    const encryptedName = encrypt(row.name);
-    const encryptedPhone = encrypt(row.phone);
-
-    const [existing] = await pool.execute(
-        `SELECT id FROM students
-         WHERE academy_id = ?
-         AND name = ?
-         AND phone = ?
-         AND deleted_at IS NULL
-         LIMIT 1`,
-        [academyId, encryptedName, encryptedPhone]
-    );
-
-    if (existing.length > 0) {
+    const key = studentKey(row.name, row.phone);
+    if (registeredKeys.has(key)) {
         return {
             status: 'skipped',
             message: `${row.name} 학생은 이미 등록되어 있어 건너뛰었습니다.`,
         };
     }
+
+    const encryptedName = encrypt(row.name);
+    const encryptedPhone = encrypt(row.phone);
 
     await pool.execute(
         `INSERT INTO students (
@@ -313,6 +322,8 @@ async function insertImportedStudent(row, academyId, nextStudentNumber) {
             null,
         ]
     );
+    // 같은 파일 안에서 같은 학생이 두 번 나와도 한 번만 등록한다.
+    registeredKeys.add(key);
 
     return {
         status: 'created',
@@ -350,11 +361,12 @@ module.exports = function(router) {
             }
 
             const nextStudentNumber = await getStudentNumberFactory(req.user.academyId);
+            const registeredKeys = await getRegisteredStudentKeys(req.user.academyId);
             const results = [];
 
             for (const row of rows) {
                 try {
-                    results.push(await insertImportedStudent(row, req.user.academyId, nextStudentNumber));
+                    results.push(await insertImportedStudent(row, req.user.academyId, nextStudentNumber, registeredKeys));
                 } catch (error) {
                     logger.error('Student import row failed:', error);
                     results.push({

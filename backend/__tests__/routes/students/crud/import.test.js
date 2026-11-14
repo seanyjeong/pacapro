@@ -17,6 +17,8 @@ jest.mock('../../../../middleware/auth', () => ({
 
 jest.mock('../../../../utils/encryption', () => ({
     encrypt: jest.fn((v) => `enc_${v}`),
+    // 실제 암호문은 매번 IV 가 달라 같은 평문도 다르게 저장된다 — enc_ 뒤 아무 표식이든 벗겨 평문을 돌려준다.
+    decrypt: jest.fn((v) => (v ? String(v).replace(/^enc\w*?_/, '') : v)),
     decryptFields: jest.fn((row) => row),
     ENCRYPTED_FIELDS: { students: ['name', 'phone', 'parent_phone', 'address'] },
 }));
@@ -100,7 +102,6 @@ describe('POST /paca/students/import', () => {
             .mockResolvedValueOnce([[{ student_number: '2026007' }]])
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 101 }])
-            .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 102 }]);
 
         const res = await request(makeApp())
@@ -134,14 +135,14 @@ describe('POST /paca/students/import', () => {
         expect(insertCalls[1][1]).toEqual(expect.arrayContaining(['2026009', 'enc_김영희', 'female', 'early']));
     });
 
-    test('이미 등록된 학생은 내부 오류 없이 건너뛴다', async () => {
+    test('이미 등록된 학생(암호문은 달라도 이름·번호가 같음)은 내부 오류 없이 건너뛴다', async () => {
         const buffer = await buildStudentWorkbook([
             { name: '홍길동', phone: '010-1111-2222' },
         ]);
 
         pool.execute
             .mockResolvedValueOnce([[{ student_number: '2026007' }]])
-            .mockResolvedValueOnce([[{ id: 99 }]]);
+            .mockResolvedValueOnce([[{ name: 'encIV1_홍길동', phone: 'encIV2_01011112222' }]]);
 
         const res = await request(makeApp())
             .post('/paca/students/import')
@@ -156,6 +157,32 @@ describe('POST /paca/students/import', () => {
             failed: 0,
         });
         expect(pool.execute.mock.calls.some(([sql]) => /INSERT INTO students/.test(sql))).toBe(false);
+    });
+
+    test('같은 파일 안에 같은 학생이 두 번 있으면 한 번만 등록한다', async () => {
+        const buffer = await buildStudentWorkbook([
+            { name: '홍길동', phone: '010-1111-2222' },
+            { name: '홍길동', phone: '01011112222' },
+        ]);
+
+        pool.execute
+            .mockResolvedValueOnce([[{ student_number: '2026007' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 105 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/import')
+            .set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .send(Buffer.from(buffer));
+
+        expect(res.status).toBe(200);
+        expect(res.body.summary).toEqual({
+            total: 2,
+            created: 1,
+            skipped: 1,
+            failed: 0,
+        });
+        expect(pool.execute.mock.calls.filter(([sql]) => /INSERT INTO students/.test(sql))).toHaveLength(1);
     });
 
     test('선행반 한글값을 advance 입시유형으로 등록한다', async () => {
@@ -206,7 +233,9 @@ describe('POST /paca/students/import', () => {
         const buffer = await buildStudentWorkbook([
             { name: '고3생', phone: '010-7777-8888', grade: '고3', admissionType: '선행반' },
         ]);
-        pool.execute.mockResolvedValueOnce([[{ student_number: '2026007' }]]);
+        pool.execute
+            .mockResolvedValueOnce([[{ student_number: '2026007' }]])
+            .mockResolvedValueOnce([[]]);
 
         const res = await request(makeApp())
             .post('/paca/students/import')
@@ -231,7 +260,6 @@ describe('POST /paca/students/import', () => {
             .mockResolvedValueOnce([[{ student_number: '2026007' }]])
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 201 }])
-            .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 202 }]);
 
         const res = await request(makeApp())
