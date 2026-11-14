@@ -1,6 +1,7 @@
 /**
  * paca/payments/early-pay.js — 단월 미리납 (원장용)
  *
+ * POST /early-pay-preview — 확인 창 금액(실행과 같은 계산, DB 변경 없음)
  * POST /early-pay — 지정 월 월수강료 청구 생성(없으면) + 완납 처리 (트랜잭션)
  */
 
@@ -10,7 +11,68 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
+/**
+ * 미리 납부 금액 — 미리 납부 실행과 확인 창 미리보기(early-pay-preview)가 같이 쓴다.
+ * - 새 청구·보통 미납 청구: 학원비 = 학생 월 학원비, 할인 = 학생 할인율 천원 절삭, 최종은 월 청구와 같은 공통 식
+ *   (이미 있는 청구의 추가 금액·이미 적용된 크레딧은 지킨다).
+ * - 일할·정산 등 금액을 따로 정한 청구(isSeparatelyPricedBill): 학원비·할인 칸을 바꾸지 않고 그 청구 금액 그대로.
+ * 일부 납부한 청구는 이번에 받는 돈이 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다).
+ */
+function earlyPayAmounts(student, existingBill) {
+    const baseAmount = parseFloat(student.monthly_tuition) || 0;
+    const discountAmount = floorPercent(baseAmount, parseFloat(student.discount_rate) || 0);
+    const separatelyPriced = Boolean(existingBill) && isSeparatelyPricedBill(existingBill);
+    const billBase = separatelyPriced ? existingBill.base_amount : baseAmount;
+    const billDiscount = separatelyPriced ? existingBill.discount_amount : discountAmount;
+    const finalAmount = existingBill
+        ? billFinalAfterChange(existingBill, { base_amount: billBase, discount_amount: billDiscount })
+        : billFinalAmount(baseAmount, discountAmount);
+    const alreadyPaid = existingBill ? parseFloat(existingBill.paid_amount) || 0 : 0;
+    return { baseAmount, discountAmount, billBase, billDiscount, finalAmount, alreadyPaid, receivedAmount: finalAmount - alreadyPaid, separatelyPriced };
+}
+
 module.exports = function(router) {
+
+/**
+ * POST /paca/payments/early-pay-preview — 미리 납부 확인 창 금액(DB 변경 없음, 실행과 같은 함수)
+ * 응답: { year_month, status: new|existing_unpaid|already_paid, final_amount, already_paid_amount, received_amount, separately_priced }
+ */
+router.post('/early-pay-preview', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    try {
+        const { student_id, year_month } = req.body;
+        if (!student_id || !year_month || !/^\d{4}-\d{2}$/.test(year_month)) {
+            return res.status(400).json({ error: 'Validation Error', message: '학생과 청구 월(YYYY-MM)을 입력해주세요.' });
+        }
+        const [students] = await pool.execute(
+            'SELECT id, monthly_tuition, discount_rate FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            [student_id, req.user.academyId]
+        );
+        if (students.length === 0) return res.status(404).json({ error: 'Not Found', message: '학생을 찾을 수 없습니다.' });
+        const [existing] = await pool.execute(
+            `SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                    is_prorated, description
+             FROM student_payments
+             WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
+            [student_id, req.user.academyId, year_month]
+        );
+        const bill = existing[0] || null;
+        if (bill && bill.payment_status === 'paid') {
+            return res.json({ year_month, status: 'already_paid', final_amount: Number(bill.final_amount), already_paid_amount: Number(bill.paid_amount), received_amount: 0, separately_priced: false });
+        }
+        const amounts = earlyPayAmounts(students[0], bill);
+        res.json({
+            year_month,
+            status: bill ? 'existing_unpaid' : 'new',
+            final_amount: amounts.finalAmount,
+            already_paid_amount: amounts.alreadyPaid,
+            received_amount: Math.max(amounts.receivedAmount, 0),
+            separately_priced: amounts.separatelyPriced,
+        });
+    } catch (error) {
+        logger.error('Error in early pay preview:', error);
+        res.status(500).json({ error: 'Server Error', message: '미리 납부 금액을 불러오지 못했습니다.' });
+    }
+});
 
 /**
  * POST /paca/payments/early-pay
@@ -86,20 +148,8 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
             });
         }
 
-        const baseAmount = parseFloat(student.monthly_tuition) || 0;
-        const studentDiscountRate = parseFloat(student.discount_rate) || 0;
-        const discountAmount = floorPercent(baseAmount, studentDiscountRate);
-        // 최종 금액: 월 청구와 같은 공통 식(천원 절삭). 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지킨다.
-        // 일할·정산 등 금액을 따로 정한 청구(isSeparatelyPricedBill)는 학원비·할인 칸을 바꾸지 않고 그 청구 금액 그대로 받는다
-        // (예전엔 학원비 칸을 한 달 정액으로 바꿔 첫 달 일할·휴원 정산 청구를 정액으로 받았다).
-        const separatelyPriced = existing.length > 0 && isSeparatelyPricedBill(existing[0]);
-        const billBase = separatelyPriced ? existing[0].base_amount : baseAmount;
-        const billDiscount = separatelyPriced ? existing[0].discount_amount : discountAmount;
-        const finalAmount = existing.length === 0
-            ? billFinalAmount(baseAmount, discountAmount)
-            : billFinalAfterChange(existing[0], { base_amount: billBase, discount_amount: billDiscount });
-        // 일부 납부한 청구: 이번에 받는 돈은 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다)
-        const alreadyPaid = existing.length ? parseFloat(existing[0].paid_amount) || 0 : 0;
+        const { baseAmount, discountAmount, billBase, billDiscount, finalAmount, alreadyPaid, receivedAmount } =
+            earlyPayAmounts(student, existing[0] || null);
         if (alreadyPaid > finalAmount) {
             await connection.rollback();
             connection.release();
@@ -108,7 +158,6 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
                 message: `이미 낸 금액(${alreadyPaid.toLocaleString()}원)이 미리 납부 금액(${finalAmount.toLocaleString()}원)보다 많습니다. 청구 내역에서 금액을 확인해 주세요.`,
             });
         }
-        const receivedAmount = finalAmount - alreadyPaid;
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const [year, month] = year_month.split('-').map(Number);
         const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];

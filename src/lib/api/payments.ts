@@ -25,6 +25,7 @@ import type {
   PrepaidPayResponse,
   EarlyPayRequest,
   EarlyPayResponse,
+  EarlyPayPreviewResponse,
   CreditsResponse,
   CreditsSummaryResponse,
 } from '@/lib/types/payment';
@@ -151,6 +152,11 @@ export const paymentsAPI = {
 
   prepaidPay: async (data: PrepaidPayRequest, config?: APIRequestConfig): Promise<PrepaidPayResponse> => {
     return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data, config);
+  },
+
+  /** 단월 미리 납부 확인 창 금액 (실행과 같은 계산, DB 변경 없음) */
+  earlyPayPreview: async (data: { student_id: number; year_month: string }, config?: APIRequestConfig): Promise<EarlyPayPreviewResponse> => {
+    return await apiClient.post<EarlyPayPreviewResponse>('/payments/early-pay-preview', data, config);
   },
 
   /** 단월 미리 납부 (청구 생성 + 완납) */

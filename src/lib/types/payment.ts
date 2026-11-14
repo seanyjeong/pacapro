@@ -255,6 +255,16 @@ export interface EarlyPayRequest {
   payment_date?: string;
 }
 
+// 미리 납부 확인 창 금액(서버가 실행과 같은 계산으로 낸다)
+export interface EarlyPayPreviewResponse {
+  year_month: string;
+  status: 'new' | 'existing_unpaid' | 'already_paid';
+  final_amount: number;
+  already_paid_amount: number;
+  received_amount: number;
+  separately_priced: boolean;
+}
+
 export interface EarlyPayResponse {
   message: string;
   payment_id: number;

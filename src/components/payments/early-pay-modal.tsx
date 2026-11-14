@@ -20,6 +20,7 @@ import { Banknote, Loader2 } from 'lucide-react';
 import { paymentsAPI } from '@/lib/api/payments';
 import { toast } from 'sonner';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
+import type { EarlyPayPreviewResponse } from '@/lib/types/payment';
 
 interface EarlyPayModalProps {
   open: boolean;
@@ -37,10 +38,6 @@ const PAYMENT_METHODS = [
   { value: 'cash', label: '현금' },
   { value: 'other', label: '기타' },
 ] as const;
-
-function truncateToThousands(amount: number): number {
-  return Math.floor(amount / 1000) * 1000;
-}
 
 function getMonthOptions(): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = [];
@@ -65,7 +62,6 @@ export function EarlyPayModal({
   studentId,
   studentName,
   monthlyTuition,
-  discountRate = 0,
   onSuccess,
 }: EarlyPayModalProps) {
   const [yearMonth, setYearMonth] = useState(defaultNextMonth);
@@ -76,8 +72,23 @@ export function EarlyPayModal({
 
   const monthOptions = useMemo(() => getMonthOptions(), []);
 
-  const studentDiscount = truncateToThousands(monthlyTuition * (discountRate || 0) / 100);
-  const finalAmount = Math.max(0, monthlyTuition - studentDiscount);
+  // 납부 금액은 서버 미리보기(실행과 같은 계산)로 — 일할·휴원 정산·크레딧·추가 금액이 있는 청구도 실제로 받을 금액이 보인다
+  // (예전엔 화면에서 학원비 − 할인으로 계산해 375,000원·293,000원 청구를 450,000원으로 보였다)
+  const [preview, setPreview] = useState<EarlyPayPreviewResponse | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !studentId || !yearMonth) return;
+    let cancelled = false;
+    setPreview(null);
+    setFormError(null);
+    setPreviewLoading(true);
+    paymentsAPI.earlyPayPreview({ student_id: studentId, year_month: yearMonth }, { suppressErrorToast: true })
+      .then((result) => { if (!cancelled) setPreview(result); })
+      .catch(() => { if (!cancelled) setFormError('미리 납부 금액을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'); })
+      .finally(() => { if (!cancelled) setPreviewLoading(false); });
+    return () => { cancelled = true; };
+  }, [open, studentId, yearMonth]);
 
   useEffect(() => {
     if (!open) return;
@@ -147,21 +158,34 @@ export function EarlyPayModal({
             </select>
           </div>
 
-          <div className="rounded-xl bg-muted px-3 py-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">기본 학원비</span>
-              <span>{monthlyTuition.toLocaleString()}원</span>
-            </div>
-            {studentDiscount > 0 && (
-              <div className="mt-1 flex justify-between">
-                <span className="text-muted-foreground">학생 할인</span>
-                <span className="text-destructive">-{studentDiscount.toLocaleString()}원</span>
+          <div className="rounded-xl bg-muted px-3 py-2 text-sm" data-testid="early-pay-amounts">
+            {previewLoading || !preview ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> 금액 확인 중
               </div>
+            ) : preview.status === 'already_paid' ? (
+              <p className="text-muted-foreground">이 달은 이미 완납되어 있어요.</p>
+            ) : (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{preview.status === 'new' ? `월 학원비 ${monthlyTuition.toLocaleString()}원, 할인 반영` : '이 달 청구 금액'}</span>
+                  <span>{preview.final_amount.toLocaleString()}원</span>
+                </div>
+                {preview.separately_priced && (
+                  <p className="mt-1 text-[13px] text-muted-foreground">일할·휴원 정산 등으로 정해진 청구라 그 금액 그대로 받아요.</p>
+                )}
+                {preview.already_paid_amount > 0 && (
+                  <div className="mt-1 flex justify-between">
+                    <span className="text-muted-foreground">이미 낸 금액</span>
+                    <span>-{preview.already_paid_amount.toLocaleString()}원</span>
+                  </div>
+                )}
+                <div className="mt-1 flex justify-between font-semibold">
+                  <span>납부 금액</span>
+                  <span className="text-success">{preview.received_amount.toLocaleString()}원</span>
+                </div>
+              </>
             )}
-            <div className="mt-1 flex justify-between font-semibold">
-              <span>납부 금액</span>
-              <span className="text-success">{finalAmount.toLocaleString()}원</span>
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -201,7 +225,7 @@ export function EarlyPayModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             취소
           </Button>
-          <Button type="button" onClick={() => void handleSubmit()} disabled={submitting}>
+          <Button type="button" onClick={() => void handleSubmit()} disabled={submitting || previewLoading || !preview || preview.status === 'already_paid'}>
             {submitting ? (
               <>
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />

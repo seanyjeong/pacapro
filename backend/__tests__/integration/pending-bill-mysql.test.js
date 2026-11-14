@@ -688,6 +688,27 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         await pool.query('DELETE FROM seasons');
     });
 
+    test('미리 납부 확인 창 금액(early-pay-preview) = 실제 미리 납부 금액 — 복귀 375,000 같은 조정 청구, 추가·크레딧 청구, 새 청구', async () => {
+        const month = koreaMonth(2);
+        const cases = [
+            ['따로 정한 청구', [450000, 0, 0, 375000, 1, '학원비'], 375000],
+            ['추가·크레딧 청구', [450000, 10000, 166500, 293000, 0, '학원비'], 293000],
+            ['새 청구', null, 450000],
+        ];
+        for (const [label, row, want] of cases) {
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            if (row) await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+                additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+                VALUES (1, 1, 1, ?, 'monthly', ?, 0, ?, ?, ?, 0, ?, ?, 'pending', ?)`, [month, row[0], row[1], row[2], row[3], row[4], `${month}-05`, row[5]]);
+            const preview = await request(app()).post('/paca/payments/early-pay-preview').send({ student_id: 1, year_month: month });
+            expect([label, preview.status, preview.body.final_amount, preview.body.received_amount]).toEqual([label, 200, want, want]);
+            const paid = await request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: month, payment_method: 'cash' });
+            expect([label, paid.body.final_amount, paid.body.received_amount]).toEqual([label, want, want]);
+            const again = await request(app()).post('/paca/payments/early-pay-preview').send({ student_id: 1, year_month: month });
+            expect([label, again.body.status]).toEqual([label, 'already_paid']);
+        }
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,
