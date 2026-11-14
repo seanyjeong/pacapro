@@ -109,7 +109,8 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         a.use('/paca/branches', require('../../routes/branches'));
         const payments = express.Router();
         require('../../routes/payments/bulk')(payments); require('../../routes/payments/bulk/monthlyForStudent')(payments);
-        require('../../routes/payments/crud')(payments);
+        require('../../routes/payments/crud')(payments); require('../../routes/payments/early-pay')(payments);
+        require('../../routes/payments/prepaid')(payments);
         a.use('/paca/payments', payments);
         return a;
     };
@@ -356,6 +357,42 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         const afterResume = await request(app()).post('/paca/students/1/credits/5/apply').send({ year_month: month });
         expect(afterResume.body).toMatchObject({ applied_amount: 30000, new_final_amount: resumed - 30000 });
         expect(await bill()).toEqual([450000, 0, 30000, resumed - 30000]);
+    });
+
+    test('미리 납부·선납: 기존 미납 청구의 추가 금액·크레딧을 지키고 공통 식, 휴원으로 줄인 청구는 줄인 금액 기준', async () => {
+        const [m1, m2] = [koreaMonth(2), koreaMonth(3)];
+        const pendingBill = (month, final, carryover = 166500, additional = 10000) => pool.query(`INSERT INTO student_payments (student_id, academy_id,
+            \`year_month\`, payment_type, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated,
+            due_date, payment_status) VALUES (1, 1, ?, 'monthly', 450000, 0, ?, ?, ?, 0, 0, ?, 'pending')`, [month, additional, carryover, final, `${month}-05`]);
+        const monthBill = async month => {
+            const [[row]] = await pool.query('SELECT discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, payment_status FROM student_payments WHERE `year_month` = ?', [month]);
+            return [Number(row.discount_amount), Number(row.additional_amount), row.carryover_amount, Number(row.final_amount), Number(row.paid_amount), row.payment_status];
+        };
+
+        // 미리 납부: 추가 10,000원·크레딧 166,500원 미납 청구 → 293,000원 (예전 450,000원)
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pendingBill(m1, monthlyBillAmounts(450000, 0, 10000, 166500).final);
+        const early = await request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: m1, payment_method: 'cash' });
+        expect(early.body.final_amount).toBe(293000);
+        expect(await monthBill(m1)).toEqual([0, 10000, 166500, 293000, 293000, 'paid']);
+
+        // 미리 납부: 휴원으로 225,000원으로 줄인 청구(크레딧 없음) → 225,000원 그대로 (예전 450,000원)
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pendingBill(m1, 225000, 0, 0);
+        expect((await request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: m1, payment_method: 'cash' })).body.final_amount).toBe(225000);
+
+        // 선납 2개월 5%: 선납 할인 22,000원(450,000 × 5% 천원 절삭, 그대로)
+        //   m1 기존 미납(추가 10,000·크레딧 166,500) → 450,000 − 22,000 + 10,000 − 166,500 = 271,500 → 271,000 (예전 428,000)
+        //   m2 새 청구 → 428,000
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pendingBill(m1, 293000);
+        const body = { student_id: 1, months: [m1, m2], prepaid_discount_rate: 5, payment_method: 'cash' };
+        const preview = await request(app()).post('/paca/payments/prepaid-preview').send(body);
+        expect(preview.body.months.map(m => m.final_amount)).toEqual([271000, 428000]);
+        const paid = await request(app()).post('/paca/payments/prepaid-pay').send(body);
+        expect(paid.body).toMatchObject({ total_amount: 699000, total_discount: 44000 });
+        expect(await monthBill(m1)).toEqual([22000, 10000, 166500, 271000, 271000, 'paid']);
+        expect(await monthBill(m2)).toEqual([22000, 0, null, 428000, 428000, 'paid']); // 새 선납 청구는 크레딧 칸을 쓰지 않는다(예전과 같음)
     });
 
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {

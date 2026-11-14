@@ -5,7 +5,7 @@
  */
 
 const { pool, decrypt, logger } = require('./_utils');
-const { floorPercent } = require('../../utils/monthlyBillAmounts');
+const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
@@ -65,7 +65,7 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         }
 
         const [existing] = await connection.execute(
-            `SELECT id, payment_status, paid_amount, final_amount
+            `SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount
              FROM student_payments
              WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
              FOR UPDATE`,
@@ -84,7 +84,12 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         const baseAmount = parseFloat(student.monthly_tuition) || 0;
         const studentDiscountRate = parseFloat(student.discount_rate) || 0;
         const discountAmount = floorPercent(baseAmount, studentDiscountRate);
-        const finalAmount = Math.max(0, baseAmount - discountAmount);
+        // 최종 금액: 월 청구와 같은 공통 식(천원 절삭). 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지키고,
+        // 휴원·복귀 등으로 최종 금액만 줄인 청구는 줄인 금액 기준(utils/monthlyBillAmounts billFinalAfterChange).
+        // 예전엔 학원비 − 할인으로 덮어써 추가 금액이 빠지고 이미 뺀 크레딧까지 다시 받았다.
+        const finalAmount = existing.length === 0
+            ? billFinalAmount(baseAmount, discountAmount)
+            : billFinalAfterChange(existing[0], { base_amount: baseAmount, discount_amount: discountAmount });
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const [year, month] = year_month.split('-').map(Number);
         const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];

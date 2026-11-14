@@ -33,8 +33,8 @@
  * 분리 결정 (ADR-006): ~280줄 — 분리 불요.
  */
 
-const { pool, decryptStudentName, truncateToThousands, logger } = require('./_utils');
-const { billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
+const { pool, decryptStudentName, logger } = require('./_utils');
+const { billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 
@@ -124,10 +124,8 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
             });
         }
 
-        // Calculate final_amount (백원 단위 절삭)
-        const finalAmount = truncateToThousands(
-            parseFloat(base_amount) - parseFloat(discount_amount || 0) + parseFloat(additional_amount || 0)
-        );
+        // 최종 금액: 월 청구와 같은 공통 식(천원 절삭, 0 미만이면 0)
+        const finalAmount = billFinalAmount(base_amount, discount_amount, additional_amount);
 
         // Insert payment record
         const [result] = await pool.execute(

@@ -129,6 +129,23 @@ describe('POST /paca/payments/prepaid-preview', () => {
         expect(res.body.months[1].final_amount).toBe(0); // already_paid 시 0
     });
 
+    test('200: 미리보기도 실행과 같은 금액 — 기존 미납 청구의 추가 금액·크레딧을 넣어 천원 절삭', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 0, payment_due_day: 5, status: 'active', tuition_due_day: 5 },
+            ]])
+            .mockResolvedValueOnce([[]]) // 2026-05 = new
+            .mockResolvedValueOnce([[
+                { id: 11, payment_status: 'pending', paid_amount: 0, base_amount: '100000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: 30000, final_amount: '80000.00' },
+            ]]); // 2026-06 = existing_unpaid
+        const res = await request(makeApp())
+            .post('/paca/payments/prepaid-preview')
+            .send({ student_id: 7, months: ['2026-05', '2026-06'], prepaid_discount_rate: 5 });
+        expect(res.status).toBe(200);
+        expect(res.body.months.map(m => [m.status, m.prepaid_discount, m.final_amount])).toEqual([['new', 5000, 95000], ['existing_unpaid', 5000, 75000]]);
+        expect(res.body.total_final).toBe(170000);
+    });
+
     test('500: 한국어 메시지', async () => {
         pool.execute.mockRejectedValueOnce(new Error('SQL fail'));
         const res = await request(makeApp())
@@ -194,8 +211,8 @@ describe('POST /paca/payments/prepaid-pay', () => {
             .mockResolvedValueOnce([{ affectedRows: 1 }]) // INSERT 새
             .mockResolvedValueOnce([{ affectedRows: 1 }]) // INSERT revenues
             .mockResolvedValueOnce([[
-                { id: 11, payment_status: 'pending', paid_amount: 0, final_amount: 100000 },
-            ]])                                             // 2026-06 SELECT FOR UPDATE = 미납 → UPDATE
+                { id: 11, payment_status: 'pending', paid_amount: 0, base_amount: '100000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: 30000, final_amount: '80000.00' },
+            ]])                                             // 2026-06 SELECT FOR UPDATE = 미납(추가 10,000원·크레딧 30,000원) → UPDATE
             .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE 기존
             .mockResolvedValueOnce([{ affectedRows: 1 }]); // INSERT revenues
         const res = await request(makeApp())
@@ -216,6 +233,13 @@ describe('POST /paca/payments/prepaid-pay', () => {
         expect(conn.commit).toHaveBeenCalledTimes(1);
         expect(conn.release).toHaveBeenCalledTimes(1);
         expect(conn.rollback).not.toHaveBeenCalled();
+        // 새 청구: 100,000 − 선납 5,000 = 95,000
+        const insert = conn.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
+        expect(insert[1].slice(3, 6)).toEqual([100000, 5000, 95000]);
+        // 기존 미납 청구: 추가 금액·이미 적용된 크레딧을 지켜 천원 절삭(100,000 − 5,000 + 10,000 − 30,000 = 75,000), 예전엔 95,000
+        const update = conn.execute.mock.calls.find(([sql]) => /UPDATE student_payments SET/.test(sql));
+        expect(update[1].slice(0, 4)).toEqual([100000, 5000, 75000, 75000]);
+        expect(res.body.total_amount).toBe(95000 + 75000);
     });
 
     test('200: 이미 완납인 월 → skip + months_skipped 에 포함', async () => {

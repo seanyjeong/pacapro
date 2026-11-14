@@ -38,10 +38,26 @@
  */
 
 const { pool, decrypt, logger } = require('./_utils');
-const { floorPercent } = require('../../utils/monthlyBillAmounts');
+const { floorPercent, billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken } = require('../../middleware/auth');
 const crypto = require('crypto');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+
+/**
+ * 한 달 선납 금액 — 미리보기·실행이 같이 쓴다.
+ * 학생 할인 + 선납 할인(정해진 할인 그대로)을 할인액으로 두고 최종 금액은 월 청구와 같은 공통 식(천원 절삭).
+ * 이미 있는 미납 청구는 그 청구의 추가 금액·이미 적용된 크레딧을 지키고, 휴원·복귀 등으로 최종 금액만 줄인 청구는 줄인 금액 기준.
+ * (예전엔 학원비 − 할인으로 덮어써 추가 금액이 빠지고 이미 뺀 크레딧까지 다시 받았다)
+ */
+function prepaidMonthAmounts(baseAmount, studentDiscountRate, prepaidRate, existingBill) {
+    const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
+    const prepaidDiscount = floorPercent(baseAmount - studentDiscount, prepaidRate);
+    const totalDiscountAmount = studentDiscount + prepaidDiscount;
+    const finalAmount = existingBill
+        ? billFinalAfterChange(existingBill, { base_amount: baseAmount, discount_amount: totalDiscountAmount })
+        : billFinalAmount(baseAmount, totalDiscountAmount);
+    return { studentDiscount, prepaidDiscount, totalDiscountAmount, finalAmount };
+}
 
 module.exports = function(router) {
 
@@ -97,7 +113,7 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 결제 레코드 확인
             const [existing] = await pool.execute(
-                'SELECT id, payment_status, paid_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ?',
+                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ?',
                 [student_id, yearMonth, 'monthly']
             );
 
@@ -111,10 +127,8 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
                 }
             }
 
-            const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
-            const afterStudentDiscount = baseAmount - studentDiscount;
-            const prepaidDiscount = floorPercent(afterStudentDiscount, rate);
-            const finalAmount = afterStudentDiscount - prepaidDiscount;
+            const { studentDiscount, prepaidDiscount, finalAmount } =
+                prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, status === 'existing_unpaid' ? existing[0] : null);
 
             const detail = {
                 year_month: yearMonth,
@@ -228,7 +242,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 레코드 SELECT FOR UPDATE
             const [existing] = await connection.execute(
-                'SELECT id, payment_status, paid_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ? FOR UPDATE',
+                'SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ? FOR UPDATE',
                 [student_id, yearMonth, 'monthly']
             );
 
@@ -238,12 +252,9 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
                 continue;
             }
 
-            // 금액 계산
-            const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
-            const afterStudentDiscount = baseAmount - studentDiscount;
-            const prepaidDiscount = floorPercent(afterStudentDiscount, rate);
-            const finalAmount = afterStudentDiscount - prepaidDiscount;
-            const totalDiscountAmount = studentDiscount + prepaidDiscount;
+            // 금액 계산 (미리보기와 같은 함수)
+            const { prepaidDiscount, totalDiscountAmount, finalAmount } =
+                prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, existing[0] || null);
 
             const [year, month] = yearMonth.split('-').map(Number);
             const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];
