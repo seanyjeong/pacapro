@@ -94,11 +94,12 @@ export default function InstructorDetailPage() {
       </Button>
 
       <section className="rounded-2xl bg-card p-5 sm:p-6" aria-label="강사 요약">
+        <h1 className="sr-only">강사 상세</h1>
         <div className="flex items-start gap-4">
           <InstructorInitial instructor={instructor} className="h-16 w-16 text-2xl" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="break-keep text-[26px] font-extrabold leading-tight tracking-tight text-foreground md:text-[28px]">{instructor.name}</h1>
+              <h2 className="break-keep text-[26px] font-extrabold leading-tight tracking-tight text-foreground md:text-[28px]">{instructor.name}</h2>
               <InstructorStatusBadge status={instructor.status} />
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
