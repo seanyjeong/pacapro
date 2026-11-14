@@ -9,6 +9,7 @@ const {
     resolveProratedPaymentDueDate,
 } = require('../../../../utils/proratedPaymentDueDate');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
+const { updatePendingMonthlyTuition } = require('../../../../repositories/pendingMonthlyTuitionRepository');
 
 async function updatePendingPayments(context) {
     const {
@@ -27,23 +28,10 @@ async function updatePendingPayments(context) {
     try {
         const nextTuition = monthlyTuition !== undefined ? monthlyTuition : updatedStudent.monthly_tuition;
         const nextDiscountRate = discountRate !== undefined ? discountRate : (updatedStudent.discount_rate || 0);
-        const finalTuition = nextTuition * (1 - nextDiscountRate / 100);
-        const currentYearMonth = getKoreaDateText().slice(0, 7);
-
-        // 이미 적용된 크레딧(carryover_amount)·추가 금액은 남긴다.
-        await pool.execute(
-            `UPDATE student_payments
-             SET base_amount = ?,
-                 final_amount = GREATEST(? + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0), 0),
-                 updated_at = NOW()
-             WHERE student_id = ?
-               AND academy_id = ?
-               AND \`year_month\` >= ?
-               AND payment_status = 'pending'
-               AND payment_type = 'monthly'
-               AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
-            [nextTuition, finalTuition, studentId, academyId, currentYearMonth]
-        );
+        // 반 학원비 적용·반 이동도 같은 함수로 미납 월 청구를 맞춘다.
+        const { finalTuition } = await updatePendingMonthlyTuition(pool, {
+            studentId, academyId, tuition: nextTuition, discountRate: nextDiscountRate,
+        });
         logger.info(`[Student ${studentId}] Pending payments updated: ${nextTuition}원 (할인 후: ${finalTuition}원)`);
     } catch (error) {
         logger.error('Payment update failed:', error);
