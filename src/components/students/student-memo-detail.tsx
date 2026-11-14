@@ -7,9 +7,9 @@ export function StudentMemoDetail({ memo }: StudentMemoDetailProps) {
 
   return (
     <div className="min-w-0 md:col-span-2" data-testid="student-detail-memo">
-      <div className="text-xs font-medium text-muted-foreground">학생 메모</div>
+      <div className="text-[13px] font-medium text-muted-foreground">학생 메모</div>
       {value ? (
-        <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-foreground">
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-foreground">
           {value}
         </p>
       ) : (

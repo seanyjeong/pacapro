@@ -111,8 +111,8 @@ export function StudentAttendanceComponent({ studentId }: Props) {
           <StatCard
             label="출석률"
             value={`${data.summary.attendance_rate}%`}
-            color="bg-primary-50 dark:bg-primary-900/30"
-            textColor="text-primary-700 dark:text-primary-400"
+            color="bg-primary-soft"
+            textColor="text-primary"
           />
         </div>
       )}
@@ -153,7 +153,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                     <div
                       key={day}
                       className={`h-16 border border-border/50 p-1 relative ${
-                        isToday ? 'bg-primary-50/50 dark:bg-primary-900/20' : ''
+                        isToday ? 'bg-primary-soft/60' : ''
                       }`}
                     >
                       <span className={`text-xs font-medium ${
@@ -218,7 +218,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                       {STATUS_LABELS[r.attendance_status || ''] || '미체크'}
                     </span>
                     {r.is_makeup && (
-                      <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded">보충</span>
+                      <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary">보충</span>
                     )}
                     {r.notes && (
                       <span className="text-xs text-muted-foreground truncate">{r.notes}</span>

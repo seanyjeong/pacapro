@@ -1,5 +1,4 @@
 import type { StudentDetail, StudentPayment } from '@/lib/types/student';
-import { formatClassDays } from '@/lib/utils/student-helpers';
 import type { StudentDetailTabItem } from './student-detail-types';
 
 export function buildStudentTabs(student: StudentDetail, paymentCount: number): StudentDetailTabItem[] {
@@ -32,9 +31,4 @@ export function getOutstandingAmount(payments: StudentPayment[]) {
 
 export function formatWon(value: number) {
   return `${value.toLocaleString('ko-KR')}원`;
-}
-
-export function getClassSummary(student: StudentDetail) {
-  const days = formatClassDays(student.class_days);
-  return days ? `${days} / 주 ${student.weekly_count}회` : `주 ${student.weekly_count}회`;
 }

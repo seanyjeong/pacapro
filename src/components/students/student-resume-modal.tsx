@@ -314,7 +314,7 @@ export function StudentResumeModal({
             )}
 
             {error && (
-              <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
+              <div role="alert" className="flex items-start gap-2 rounded-xl bg-destructive-soft p-3 text-sm text-destructive">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
               </div>

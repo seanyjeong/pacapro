@@ -42,7 +42,7 @@ function getCreditTypeBadgeColor(type: string) {
     case 'carryover':
       return 'bg-primary-soft text-primary border-primary/30';
     case 'excused':
-      return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800';
+      return 'bg-primary-soft text-primary border-transparent';
     case 'manual':
       return 'bg-success-soft text-success border-success/30';
     case 'refund':
@@ -211,9 +211,8 @@ export function StudentPaymentsComponent({
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => setEarlyPayModalOpen(true)}
-                className="border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-950"
               >
                 <Banknote className="w-4 h-4 mr-1" />
                 다음 달 미리 받기

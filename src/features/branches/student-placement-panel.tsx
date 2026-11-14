@@ -35,9 +35,9 @@ export function StudentPlacementPanel({ value, studentId, onChange }: StudentPla
   };
 
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-border bg-card p-4 sm:flex-row sm:items-center">
-      <label htmlFor="student-placement" className="shrink-0 text-sm font-medium text-foreground">지점·반</label>
-      <div className="min-w-0 flex-1 sm:max-w-sm">
+    <section className="flex flex-col gap-2 rounded-2xl bg-card p-5">
+      <label htmlFor="student-placement" className="shrink-0 text-[15px] font-bold text-foreground">지점·반</label>
+      <div className="min-w-0">
         <StudentPlacementSelect id="student-placement" branches={branches} value={value} onChange={handleChange} disabled={saving} />
       </div>
     </section>

@@ -57,25 +57,25 @@ export function StudentPaymentHistory({
             <table className="w-full">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     납부 기간
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     금액
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     납부 금액
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     납부 방법
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     납부일
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     상태
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                     관리
                   </th>
                 </tr>
