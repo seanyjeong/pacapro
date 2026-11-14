@@ -12,6 +12,7 @@ const {
     isAdvanceAdmissionAllowed,
 } = require('../../../constants/studentAdmissionTypes');
 const { STUDENT_PARENT_PHONE_DIGITS_PATTERN } = require('../../../constants/studentParentPhones');
+const { getKoreaDateText } = require('../../../utils/proratedPaymentDueDate');
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -100,10 +101,10 @@ function formatDate(date) {
 
 function normalizeDate(value) {
     const text = normalizeEmpty(value);
-    if (!text) return new Date().toISOString().split('T')[0];
+    if (!text) return getKoreaDateText();
 
     const match = text.match(/^(\d{4})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})/);
-    if (!match) return new Date().toISOString().split('T')[0];
+    if (!match) return getKoreaDateText();
 
     const [, year, month, day] = match;
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
