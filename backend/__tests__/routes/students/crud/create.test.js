@@ -95,8 +95,7 @@ describe('POST /paca/students (create)', () => {
 
     test('선행반 입시유형으로 학생을 등록한다', async () => {
         pool.execute
-            .mockResolvedValueOnce([[]])
-            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])  // 학원 학생(중복·동명 확인)
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 556 }])
             .mockResolvedValueOnce([[
@@ -165,8 +164,8 @@ describe('POST /paca/students (create)', () => {
     });
 
     test('동일학생 (name+phone) 중복 → 400 한국어 (원본 메시지 보존)', async () => {
-        // 1) student_number 분기 skip (없음) — 2) duplicateStudent SELECT 1건
-        pool.execute.mockResolvedValueOnce([[{ id: 99, name: 'enc_홍', phone: 'enc_010-1', school: '서울고' }]]);
+        // 1) student_number 분기 skip (없음) — 2) 학원 학생 SELECT: 복호화 값이 같은 이름·연락처(하이픈 차이는 무시)
+        pool.execute.mockResolvedValueOnce([[{ id: 99, name: '홍', phone: '0101', gender: null }]]);
         const res = await request(makeApp()).post('/paca/students')
             .send({ name: '홍', phone: '010-1' });
         expect(res.status).toBe(400);
@@ -176,8 +175,7 @@ describe('POST /paca/students (create)', () => {
 
     test('동명학생 (name+gender 동일, phone 다름) + confirm_force=false → 409 SAME_NAME_EXISTS (응답 표면 보존)', async () => {
         pool.execute
-            .mockResolvedValueOnce([[]])  // duplicate (no match)
-            .mockResolvedValueOnce([[{ id: 88, name: '홍길동', phone: '010-9', gender: 'male' }]]);  // sameName
+            .mockResolvedValueOnce([[{ id: 88, name: '홍길동', phone: '010-9', gender: 'male' }]]);  // 학원 학생: 동명·다른 연락처
         const res = await request(makeApp()).post('/paca/students')
             .send({ name: '홍길동', phone: '010-1', gender: 'male' });
         expect(res.status).toBe(409);
@@ -189,11 +187,10 @@ describe('POST /paca/students (create)', () => {
     });
 
     test('정상 등록 (체험생 X, monthly_tuition 0) → 201 + 응답 표면 보존 + 보안 헬퍼 시그니처 (ADR-007)', async () => {
-        // duplicate skip / sameName skip / lastStudent skip / INSERT students / SELECT inserted
+        // 학원 학생(중복·동명 확인) / lastStudent skip / INSERT students / SELECT inserted
         pool.execute
-            .mockResolvedValueOnce([[]])  // duplicate
-            // sameName 분기는 sameNameStudent.length > 0 + confirm_force false 일 때만 409. 학생 없으면 통과.
-            .mockResolvedValueOnce([[]])  // sameName 빈 배열
+            // 동명 학생이 있고 confirm_force false 일 때만 409. 학생 없으면 통과.
+            .mockResolvedValueOnce([[]])  // 학원 학생 빈 배열
             .mockResolvedValueOnce([[]])  // lastStudent for student_number 자동 발급 (year% 패턴)
             .mockResolvedValueOnce([{ insertId: 555 }])  // INSERT students
             .mockResolvedValueOnce([[{
@@ -227,8 +224,7 @@ describe('POST /paca/students (create)', () => {
 
     test('신규생 첫 달 일할 청구의 납부기한은 등록일이다', async () => {
         pool.execute
-            .mockResolvedValueOnce([[]])
-            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])  // 학원 학생(중복·동명 확인)
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 555 }])
             .mockResolvedValueOnce([[{ id: 555, name: 'enc_신규생', phone: 'enc_010-1' }]])
@@ -252,8 +248,7 @@ describe('POST /paca/students (create)', () => {
 
     test('체험생 (is_trial=true) → message="Trial student created successfully"', async () => {
         pool.execute
-            .mockResolvedValueOnce([[]])  // duplicate
-            .mockResolvedValueOnce([[]])  // sameName
+            .mockResolvedValueOnce([[]])  // 학원 학생(중복·동명 확인)
             .mockResolvedValueOnce([[]])  // lastStudent
             .mockResolvedValueOnce([{ insertId: 777 }])  // INSERT
             .mockResolvedValueOnce([[{ id: 777, name: 'enc_체험', is_trial: 1, status: 'trial' }]]);  // SELECT
@@ -285,8 +280,7 @@ describe('POST /paca/students (create)', () => {
 
     test('ADR-005 — 모든 db 호출이 pool.execute (db.query / connection.query 잔존 0건)', async () => {
         pool.execute
-            .mockResolvedValueOnce([[]])
-            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])  // 학원 학생(중복·동명 확인)
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ insertId: 1 }])
             .mockResolvedValueOnce([[{ id: 1, name: 'enc_홍' }]]);

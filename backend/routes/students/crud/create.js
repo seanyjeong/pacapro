@@ -40,6 +40,7 @@ const {
     verifyToken,
     checkPermission,
     encrypt,
+    decrypt,
     decryptFields,
     ENCRYPTED_FIELDS,
     parseClassDaysWithSlots,
@@ -135,31 +136,26 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             }
         }
 
-        // Check for duplicate student (same name + phone)
-        const [duplicateStudent] = await pool.execute(
-            `SELECT id, name, phone, school FROM students
+        // 이름·연락처는 매번 다른 IV 로 암호화돼 SQL 에서 같은 값으로 찾을 수 없다.
+        // 엑셀 가져오기처럼 학원 학생을 복호화해 이름 + 숫자만 남긴 연락처로 비교한다.
+        const [academyStudents] = await pool.execute(
+            `SELECT id, name, phone, gender FROM students
              WHERE academy_id = ?
-             AND name = ?
-             AND phone = ?
              AND deleted_at IS NULL`,
-            [req.user.academyId, name, phone]
+            [req.user.academyId]
         );
+        const phoneDigits = (value) => String(value || '').replace(/\D/g, '');
+        const sameNameStudent = academyStudents
+            .map(student => ({ ...student, name: decrypt(student.name), phone: decrypt(student.phone) }))
+            .filter(student => String(student.name || '').trim() === String(name || '').trim());
 
-        if (duplicateStudent.length > 0) {
+        // Check for duplicate student (same name + phone)
+        if (phoneDigits(phone) && sameNameStudent.some(student => phoneDigits(student.phone) === phoneDigits(phone))) {
             return res.status(400).json({
                 error: 'Duplicate Error',
                 message: `이미 등록된 학생입니다. (이름: ${name}, 전화: ${phone})`
             });
         }
-
-        // Check for same name (warning only, not blocking)
-        const [sameNameStudent] = await pool.execute(
-            `SELECT id, name, phone, gender FROM students
-             WHERE academy_id = ?
-             AND name = ?
-             AND deleted_at IS NULL`,
-            [req.user.academyId, name]
-        );
 
         // 같은 이름 + 같은 성별인데, 전화번호가 다른 경우 경고
         const confirmForce = req.body.confirm_force;
