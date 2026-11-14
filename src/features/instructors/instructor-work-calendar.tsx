@@ -20,8 +20,8 @@ const SLOT_LABELS: Record<InstructorWorkSchedule['time_slot'], string> = {
 };
 const SLOT_STYLES: Record<InstructorWorkSchedule['time_slot'], string> = {
   morning: 'border-warning/30 bg-warning-soft text-warning',
-  afternoon: 'border-sky-200 bg-sky-50 text-sky-800',
-  evening: 'border-violet-200 bg-violet-50 text-violet-800',
+  afternoon: 'border-primary/20 bg-primary-soft text-primary',
+  evening: 'border-success/30 bg-success-soft text-success',
 };
 
 interface InstructorWorkCalendarProps {
@@ -45,22 +45,22 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
   const goToCurrentMonth = () => setVisibleMonth(new Date());
 
   return (
-    <section className="w-[calc(100vw-2rem)] min-w-0 overflow-hidden rounded-md border border-border bg-card sm:w-full" data-testid="instructor-work-calendar">
-      <div className="flex min-w-0 flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="w-full min-w-0 overflow-hidden rounded-2xl bg-card" data-testid="instructor-work-calendar">
+      <div className="flex min-w-0 flex-col gap-3 px-5 pb-2 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button
           type="button"
           aria-controls="instructor-work-calendar-content"
           aria-expanded={isExpanded}
           aria-label={`월별 출근 예정 ${isExpanded ? '접기' : '펼치기'}`}
-          className="flex min-w-0 items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-w-0 items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => setIsExpanded((current) => !current)}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
             <CalendarDays className="h-4 w-4" />
           </span>
           <span className="min-w-0">
             <span className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground">월별 출근 예정</h2>
+              <h2 className="text-[17px] font-bold tracking-tight text-foreground">월별 출근 예정</h2>
               {!loading && !error && (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   예정일 {scheduledDayCount}일
@@ -88,7 +88,7 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
       </div>
 
       {isExpanded && (
-        <div id="instructor-work-calendar-content" className="min-w-0 p-3 sm:p-4">
+        <div id="instructor-work-calendar-content" className="min-w-0 px-3 pb-4 pt-2 sm:px-6 sm:pb-6">
           {error ? (
             <div className="flex min-h-44 flex-col items-center justify-center gap-3 text-center">
               <p className="max-w-md text-sm text-muted-foreground">{error}</p>
@@ -100,16 +100,16 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
           ) : (
             <>
               {!loading && scheduledDayCount === 0 && (
-                <p className="mb-3 rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+                <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
                   이 달에는 등록된 출근 예정이 없습니다.
                 </p>
               )}
-              <div className="grid w-full min-w-0 grid-cols-7 border-l border-t border-border" role="grid" aria-label={`${year}년 ${monthIndex + 1}월 출근 예정 달력`}>
+              <div className="grid w-full min-w-0 grid-cols-7 border-l border-t border-border/60" role="grid" aria-label={`${year}년 ${monthIndex + 1}월 출근 예정 달력`}>
                 {WEEKDAYS.map((weekday, index) => (
                   <div
                     key={weekday}
                     className={cn(
-                      'min-w-0 border-b border-r border-border bg-muted/60 py-2 text-center text-xs font-medium text-muted-foreground',
+                      'min-w-0 border-b border-r border-border/60 bg-muted py-2 text-center text-xs font-semibold text-muted-foreground',
                       index === 0 && 'text-destructive',
                       index === 6 && 'text-primary'
                     )}
@@ -126,8 +126,8 @@ export function InstructorWorkCalendar({ instructorId }: InstructorWorkCalendarP
                       key={day.date}
                       aria-label={`${day.dayOfMonth}일${scheduleLabel}`}
                       className={cn(
-                        'min-h-20 min-w-0 overflow-hidden border-b border-r border-border p-1 sm:min-h-28 sm:p-2',
-                        !day.isCurrentMonth && 'bg-muted/25 text-muted-foreground/50',
+                        'min-h-20 min-w-0 overflow-hidden border-b border-r border-border/60 p-1 sm:min-h-28 sm:p-2',
+                        !day.isCurrentMonth && 'bg-muted/40 text-muted-foreground/50',
                         day.isCurrentMonth && daySchedules.length > 0 && 'bg-primary/[0.035]',
                         day.isToday && 'ring-1 ring-inset ring-primary'
                       )}

@@ -19,10 +19,9 @@ export default function NewInstructorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <div className="mx-auto w-full max-w-5xl space-y-4">
       <InstructorPageHeader
         description="급여 방식과 근무 정보를 함께 등록합니다."
-        eyebrow="Instructor Profile"
         onBack={() => router.push('/instructors')}
         title="강사 등록"
       />

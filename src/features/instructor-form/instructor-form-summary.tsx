@@ -33,7 +33,7 @@ function SummaryRow({
   const Icon = ready ? CheckCircle2 : CircleAlert;
 
   return (
-    <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
+    <div className="rounded-xl bg-muted px-3 py-2.5">
       <div className="flex min-w-0 items-start gap-2">
         <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${ready ? 'text-success' : 'text-warning'}`} />
         <div className="min-w-0">
@@ -51,14 +51,14 @@ export function InstructorFormSummary({ errors, formData }: InstructorFormSummar
   const hasSubmitError = Boolean(errors.submit);
 
   return (
-    <aside className="rounded-md border border-border bg-card" data-testid="instructor-form-summary">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="mt-1 text-sm font-semibold text-foreground">입력 체크</h2>
+    <aside className="rounded-2xl bg-card" data-testid="instructor-form-summary">
+      <div className="px-5 pb-2 pt-5">
+        <h2 className="text-[17px] font-bold tracking-tight text-foreground">입력 체크</h2>
         <p className="mt-1 text-xs text-muted-foreground">저장 전 확인</p>
       </div>
 
-      <div className="space-y-3 p-4">
-        <div className="rounded-md border border-primary/30 bg-primary-soft px-3 py-3 text-primary">
+      <div className="space-y-3 px-5 pb-5">
+        <div className="rounded-xl bg-primary-soft px-3 py-3 text-primary">
           <div className="flex items-start gap-2">
             <WalletCards className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-xs leading-5">
@@ -77,7 +77,7 @@ export function InstructorFormSummary({ errors, formData }: InstructorFormSummar
         />
 
         {workScheduleRequired ? (
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
+          <div className="rounded-xl bg-muted px-3 py-2.5">
             <div className="flex min-w-0 items-start gap-2">
               <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0">
@@ -89,7 +89,7 @@ export function InstructorFormSummary({ errors, formData }: InstructorFormSummar
         ) : null}
 
         {hasSubmitError ? (
-          <div className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
+          <div className="rounded-xl bg-warning-soft px-3 py-2 text-xs text-warning">
             저장에 실패했습니다. 입력값을 유지한 상태에서 다시 시도할 수 있습니다.
           </div>
         ) : null}

@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Edit, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, RefreshCw, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { StatTile } from '@/components/ui/page';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -19,6 +21,8 @@ import { InstructorCard } from '@/components/instructors/instructor-card';
 import { InstructorAttendanceComponent } from '@/components/instructors/instructor-attendance';
 import { InstructorSalaries } from '@/components/instructors/instructor-salaries';
 import { InstructorPageHeader } from '@/features/instructors/instructor-page-header';
+import { InstructorInitial, InstructorStatusBadge } from '@/features/instructors/instructor-badges';
+import { INSTRUCTOR_TYPE_LABELS, SALARY_TYPE_LABELS } from '@/lib/types/instructor';
 import { InstructorWorkCalendar } from '@/features/instructors/instructor-work-calendar';
 import { InstructorErrorPanel, InstructorLoadingPanel } from '@/features/instructors/instructor-page-states';
 import { useInstructor } from '@/hooks/use-instructors';
@@ -58,24 +62,22 @@ export default function InstructorDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-5">
+      <div className="mx-auto w-full max-w-7xl space-y-4">
         <InstructorPageHeader
-          description="강사 정보를 불러오는 중입니다."
-          eyebrow="Instructor Profile"
+          description="강사 정보를 불러오고 있어요."
           onBack={() => router.push('/instructors')}
           title="강사 상세"
         />
-        <InstructorLoadingPanel message="강사 정보를 불러오는 중입니다." />
+        <InstructorLoadingPanel message="강사 정보를 불러오고 있어요." />
       </div>
     );
   }
 
   if (error || !instructor) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-5">
+      <div className="mx-auto w-full max-w-7xl space-y-4">
         <InstructorPageHeader
-          description="강사 상세 정보를 다시 불러올 수 있습니다."
-          eyebrow="Instructor Profile"
+          description="강사 상세 정보를 다시 불러올 수 있어요."
           onBack={() => router.push('/instructors')}
           title="강사 상세"
         />
@@ -85,59 +87,60 @@ export default function InstructorDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <InstructorPageHeader
-        actions={
-          <>
-          <Button className="justify-center gap-2" variant="outline" onClick={reload}>
-            <RefreshCw className="h-4 w-4" />
-            새로고침
-          </Button>
-          <Button className="justify-center gap-2" variant="outline" onClick={handleEdit}>
-            <Edit className="h-4 w-4" />
-            수정
-          </Button>
-          <Button className="justify-center gap-2" variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
-            <Trash2 className="h-4 w-4" />
-            {deleting ? '삭제 중...' : '삭제'}
-          </Button>
-          </>
-        }
-        description={`${instructor.name} 강사의 기본 정보, 출근 예정, 출퇴근 기록, 급여 기록을 확인합니다.`}
-        eyebrow="Instructor Profile"
-        onBack={() => router.push('/instructors')}
-        title="강사 상세"
-      />
+    <div className="mx-auto w-full max-w-7xl space-y-4">
+      <Button className="-ml-2 text-muted-foreground" size="sm" type="button" variant="ghost" onClick={() => router.push('/instructors')}>
+        <ArrowLeft className="h-4 w-4" />
+        목록으로
+      </Button>
 
-      <section className="rounded-md border border-border bg-card p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">현재 강사</p>
-            <h2 className="mt-1 text-xl font-semibold text-foreground">{instructor.name}</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm sm:flex">
-            <div className="rounded-md border border-border px-3 py-2">
-              <span className="text-muted-foreground">출퇴근</span>
-              <span className="ml-2 font-semibold text-foreground">{attendances.length}건</span>
+      <section className="rounded-2xl bg-card p-5 sm:p-6" aria-label="강사 요약">
+        <div className="flex items-start gap-4">
+          <InstructorInitial instructor={instructor} className="h-16 w-16 text-2xl" />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="break-keep text-[26px] font-extrabold leading-tight tracking-tight text-foreground md:text-[28px]">{instructor.name}</h1>
+              <InstructorStatusBadge status={instructor.status} />
             </div>
-            <div className="rounded-md border border-border px-3 py-2">
-              <span className="text-muted-foreground">급여</span>
-              <span className="ml-2 font-semibold text-foreground">{salaries.length}건</span>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge variant="secondary">{SALARY_TYPE_LABELS[instructor.salary_type]}</Badge>
+              {instructor.instructor_type ? <Badge variant="secondary">{INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}</Badge> : null}
             </div>
           </div>
         </div>
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <Button onClick={handleEdit}>
+            <Edit className="h-4 w-4" />
+            수정
+          </Button>
+          <Button variant="outline" onClick={reload}>
+            <RefreshCw className="h-4 w-4" />
+            새로고침
+          </Button>
+          <Button className="col-span-2 text-destructive hover:text-destructive sm:col-span-1" variant="outline" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
+            <Trash2 className="h-4 w-4" />
+            {deleting ? '삭제 중...' : '삭제'}
+          </Button>
+        </div>
       </section>
 
-      <InstructorCard instructor={instructor} />
+      <div className="grid grid-cols-2 gap-3">
+        <StatTile label="출퇴근 기록" value={`${attendances.length}건`} />
+        <StatTile label="급여 기록" value={`${salaries.length}건`} />
+      </div>
 
-      <InstructorWorkCalendar instructorId={instructorId} />
-
-      <InstructorAttendanceComponent attendances={attendances} loading={false} />
-
-      <InstructorSalaries salaries={salaries} loading={false} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="order-2 min-w-0 space-y-4 xl:order-1">
+          <InstructorWorkCalendar instructorId={instructorId} />
+          <InstructorAttendanceComponent attendances={attendances} loading={false} />
+          <InstructorSalaries salaries={salaries} loading={false} />
+        </div>
+        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+          <InstructorCard instructor={instructor} />
+        </div>
+      </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !deleting && setDeleteDialogOpen(open)}>
-        <AlertDialogContent className="max-w-md rounded-md">
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>강사 삭제</AlertDialogTitle>
             <AlertDialogDescription>
