@@ -37,7 +37,8 @@
  * 분리 결정 (ADR-006): ~290줄 — 분리 불요.
  */
 
-const { pool, decrypt, truncateToThousands, logger } = require('./_utils');
+const { pool, decrypt, logger } = require('./_utils');
+const { floorPercent } = require('../../utils/monthlyBillAmounts');
 const { verifyToken } = require('../../middleware/auth');
 const crypto = require('crypto');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
@@ -110,9 +111,9 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
                 }
             }
 
-            const studentDiscount = truncateToThousands(baseAmount * studentDiscountRate / 100);
+            const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
             const afterStudentDiscount = baseAmount - studentDiscount;
-            const prepaidDiscount = truncateToThousands(afterStudentDiscount * rate / 100);
+            const prepaidDiscount = floorPercent(afterStudentDiscount, rate);
             const finalAmount = afterStudentDiscount - prepaidDiscount;
 
             const detail = {
@@ -238,9 +239,9 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
             }
 
             // 금액 계산
-            const studentDiscount = truncateToThousands(baseAmount * studentDiscountRate / 100);
+            const studentDiscount = floorPercent(baseAmount, studentDiscountRate);
             const afterStudentDiscount = baseAmount - studentDiscount;
-            const prepaidDiscount = truncateToThousands(afterStudentDiscount * rate / 100);
+            const prepaidDiscount = floorPercent(afterStudentDiscount, rate);
             const finalAmount = afterStudentDiscount - prepaidDiscount;
             const totalDiscountAmount = studentDiscount + prepaidDiscount;
 

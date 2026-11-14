@@ -46,9 +46,9 @@ const {
     parseClassDaysWithSlots,
     extractDayNumbers,
     autoAssignStudentToSchedules,
-    truncateToThousands,
     logger
 } = require('./_utils');
+const { floorRatio, floorPercent } = require('../../../utils/monthlyBillAmounts');
 const {
     getKoreaDateText,
     resolveProratedPaymentDueDate,
@@ -314,15 +314,15 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             let proRatedAmount;
 
             if (totalClassDaysInMonth > 0 && classDaysCount > 0) {
-                const dailyRate = baseAmount / totalClassDaysInMonth;
-                proRatedAmount = truncateToThousands(dailyRate * classDaysCount);
+                // 학원비 ÷ 그 달 수업일 × 남은 수업일 (소수 오차 없이)
+                proRatedAmount = floorRatio(baseAmount, classDaysCount, totalClassDaysInMonth);
             } else {
                 // 수업요일 설정 없으면 일수 기준
-                proRatedAmount = truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
+                proRatedAmount = floorRatio(baseAmount, remainingDays, lastDayOfMonth);
             }
 
             // 할인 적용 (천원 단위 절삭)
-            const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
+            const discountAmount = floorPercent(proRatedAmount, discountRateNum);
             const finalAmount = proRatedAmount - discountAmount;
 
             const dueDateStr = resolveProratedPaymentDueDate(enrollmentDateText);

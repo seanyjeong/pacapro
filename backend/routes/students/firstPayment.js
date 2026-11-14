@@ -30,6 +30,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { resolveProratedPaymentDueDate } = require('../../utils/proratedPaymentDueDate');
 const { parseClassDaysWithSlots, extractDayNumbers, truncateToThousands } = require('./_utils');
+const { floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
 
 module.exports = function(router) {
 
@@ -113,13 +114,13 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
 
         let proRatedAmount;
         if (totalClassDaysInMonth > 0 && classDaysCount > 0) {
-            proRatedAmount = truncateToThousands(baseAmount / totalClassDaysInMonth * classDaysCount);
+            proRatedAmount = floorRatio(baseAmount, classDaysCount, totalClassDaysInMonth);
         } else {
             // 수업요일 설정 없으면 일수 기준
-            proRatedAmount = truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
+            proRatedAmount = floorRatio(baseAmount, remainingDays, lastDayOfMonth);
         }
         const discountRateNum = parseFloat(student.discount_rate) || 0;
-        const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
+        const discountAmount = floorPercent(proRatedAmount, discountRateNum);
         // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
         const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
         const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;

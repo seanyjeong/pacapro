@@ -10,7 +10,8 @@
 
 const cron = require('node-cron');
 const db = require('../config/database');
-const { truncateToThousands, getFifthWeekClassCount, parseWeeklyDays } = require('../utils/seasonCalculator');
+const { getFifthWeekClassCount, parseWeeklyDays } = require('../utils/seasonCalculator');
+const { floorRatio } = require('../utils/monthlyBillAmounts');
 
 /**
  * 공결 크레딧 정산 로직
@@ -154,8 +155,8 @@ async function processStudentExcused(student, academyId, year, month, monthStart
 
     // 5. 크레딧 금액 계산
     const monthlyTuition = parseFloat(student.monthly_tuition);
-    const perClassFee = monthlyTuition / expectedClasses;
-    const creditAmount = truncateToThousands(perClassFee * remainingExcused);
+    // 월 수강료 ÷ 예정 수업 수 × 남은 공결 (소수 오차 없이)
+    const creditAmount = floorRatio(monthlyTuition, remainingExcused, expectedClasses);
 
     if (creditAmount <= 0) {
         return { creditGenerated: false, creditAmount: 0 };

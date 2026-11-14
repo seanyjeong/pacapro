@@ -1,10 +1,10 @@
 const repository = require('../repositories/resumePaymentRepository');
 const { resolveProratedPaymentDueDate } = require('../utils/proratedPaymentDueDate');
 const { CREDIT_ROUNDING_UNIT } = require('../constants/restCredit');
+const { floorRatio, floorPercent } = require('../utils/monthlyBillAmounts');
 const { CLASS_DAY_NAMES } = require('../constants/classDayNames');
 const { RestCreditRecalculationConflictError, RestCreditRecalculationValidationError } = require('./restCreditRecalculationService');
 
-const round = amount => Math.floor(amount / CREDIT_ROUNDING_UNIT) * CREDIT_ROUNDING_UNIT;
 
 function normalizeResumeClassDays(classDays) {
     const values = typeof classDays === 'string' ? JSON.parse(classDays) : (classDays || []);
@@ -33,8 +33,8 @@ function calculateResumePayment(student, resumeDate, classDays) {
     }
     remainingClassDays = Math.min(remainingClassDays, totalClassDays);
     const tuition = Number(student.monthly_tuition);
-    const baseAmount = day === 1 ? tuition : round(tuition * remainingClassDays / totalClassDays);
-    const discountAmount = round(baseAmount * (Number(student.discount_rate) || 0) / 100);
+    const baseAmount = day === 1 ? tuition : floorRatio(tuition, remainingClassDays, totalClassDays, CREDIT_ROUNDING_UNIT);
+    const discountAmount = floorPercent(baseAmount, Number(student.discount_rate) || 0, CREDIT_ROUNDING_UNIT);
     return {
         yearMonth: resumeDate.slice(0, 7), baseAmount, discountAmount,
         finalAmount: baseAmount - discountAmount, remainingClassDays, totalClassDays,
@@ -54,7 +54,7 @@ function calculateSameMonthAdjustment(payment, student, resumeDate, creditRecalc
     const [year, month, resumeDay] = resumeDate.split('-').map(Number);
     const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
     const beforeRestDays = Number(student.rest_start_date.slice(8, 10)) - 1;
-    const expectedPausedAmount = Math.max(round(fullAmount * beforeRestDays / daysInMonth), paidAmount);
+    const expectedPausedAmount = Math.max(floorRatio(fullAmount, beforeRestDays, daysInMonth, CREDIT_ROUNDING_UNIT), paidAmount);
     // process-rest has no historical adjustment marker. Only restore its recognizable
     // calendar-day reduction; ambiguous/manual bills must be reviewed, never guessed.
     if (!Number.isFinite(fullAmount) || fullAmount < 0 || finalAmount !== expectedPausedAmount
@@ -67,7 +67,7 @@ function calculateSameMonthAdjustment(payment, student, resumeDate, creditRecalc
     // Use the same calendar-day basis as process-rest, including the return date.
     const attendedDays = beforeRestDays + daysInMonth - resumeDay + 1;
     return Math.max(paidAmount, attendedDays === daysInMonth
-        ? fullAmount : round(fullAmount * attendedDays / daysInMonth));
+        ? fullAmount : floorRatio(fullAmount, attendedDays, daysInMonth, CREDIT_ROUNDING_UNIT));
 }
 
 function planResumePayment({ student, resumeDate, classDays, creditRecalculation, payments, canCreateMonthlyPayment = true }) {

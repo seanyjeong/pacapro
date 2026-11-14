@@ -8,6 +8,8 @@
  * 2. 시즌 중도 해지 환불 계산
  */
 
+const { floorRatio, floorPercent } = require('./monthlyBillAmounts');
+
 /**
  * 금액을 천원 단위로 절삭 (백원 단위 버림)
  * @param {number} amount - 금액
@@ -75,7 +77,7 @@ function calculateMidSeasonFee(params) {
     }
 
     // 일할계산: 시즌비 × (남은 수업일 / 전체 수업일), 천원 단위 절삭
-    const proRatedFee = truncateToThousands(seasonFee * (remainingClassDays / totalClassDays));
+    const proRatedFee = floorRatio(seasonFee, remainingClassDays, totalClassDays);
     const discount = seasonFee - proRatedFee;
 
     return {
@@ -142,14 +144,14 @@ function calculateProRatedFee(params) {
     // Step 4: 해당 월 전체 수업 횟수 (4주 고정: 주간횟수 × 4)
     const totalMonthlyClasses = weeklyDays.length * 4;
 
-    // Step 5: 회당 단가 계산
+    // Step 5: 회당 단가 계산(표시용)
     const perClassFee = monthlyFee / totalMonthlyClasses;
 
-    // Step 6: 일할 계산
-    let proRatedFee = Math.floor(perClassFee * classCountUntilEnd);
+    // Step 6: 일할 계산 — 월 수강료 ÷ 월 수업 수 × 종강까지 수업 수, 원 단위 내림(소수 오차 없이)
+    let proRatedFee = floorRatio(monthlyFee, classCountUntilEnd, totalMonthlyClasses, 1);
 
-    // Step 7: 할인 적용
-    const discountAmount = Math.floor(proRatedFee * (discountRate / 100));
+    // Step 7: 할인 적용(원 단위 내림)
+    const discountAmount = floorPercent(proRatedFee, discountRate, 1);
     const finalAmount = truncateToThousands(proRatedFee - discountAmount);
 
     return {
@@ -217,22 +219,25 @@ function calculateSeasonRefund(params) {
     let legalRefundRate = 0;
     let legalRefundReason = '';
     let legalRefundAmount = 0;
+    let legalRefundShare = [0, 1]; // 환불 비율 분자·분모(금액은 정수로 정확히 계산)
 
     if (progressRate < 1/3) {
         legalRefundRate = 2/3;
+        legalRefundShare = [2, 3];
         legalRefundReason = '총 학습시간 1/3 경과 전: 2/3 환불';
     } else if (progressRate < 1/2) {
         legalRefundRate = 1/2;
+        legalRefundShare = [1, 2];
         legalRefundReason = '총 학습시간 1/2 경과 전: 1/2 환불';
     } else {
         legalRefundRate = 0;
         legalRefundReason = '총 학습시간 1/2 경과 후: 환불 불가';
     }
-    legalRefundAmount = truncateToThousands(actualPaidAmount * legalRefundRate);
+    legalRefundAmount = floorRatio(actualPaidAmount, legalRefundShare[0], legalRefundShare[1]);
 
     // Step 5: 일할계산 기준 환불 (실제 납부금액 기준)
     const usedRate = attendedDays / totalClassDays;
-    const usedAmount = truncateToThousands(actualPaidAmount * usedRate);  // 이용료
+    const usedAmount = floorRatio(actualPaidAmount, attendedDays, totalClassDays);  // 이용료 = 납부액 × 이용 수업일 / 전체 수업일
     let refundAmount = actualPaidAmount - usedAmount;  // 기본 환불금
 
     // Step 6: 부가세 제외 (선택)
@@ -240,7 +245,7 @@ function calculateSeasonRefund(params) {
     let refundAfterVat = refundAmount;
     if (includeVat) {
         // 환불금에서 부가세 10% 제외 (내가 낼 세금)
-        vatAmount = truncateToThousands(refundAmount / 11);  // 부가세 = 환불금 / 1.1 * 0.1
+        vatAmount = floorRatio(refundAmount, 1, 11);  // 부가세 = 환불금 / 1.1 * 0.1
         refundAfterVat = refundAmount - vatAmount;
     }
 

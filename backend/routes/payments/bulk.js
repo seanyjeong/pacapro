@@ -39,14 +39,13 @@
 
 const {
     pool,
-    truncateToThousands,
     calculateDueDate,
     logger,
 } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
-const { monthlyBillAmounts } = require('../../utils/monthlyBillAmounts');
+const { monthlyBillAmounts, floorRatio, floorAfterPercent, exactPercent } = require('../../utils/monthlyBillAmounts');
 
 module.exports = function(router) {
 
@@ -387,11 +386,12 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
 
         // 등록일이 1일이 아니면 일할계산
         if (regDay > 1 && totalClassDays > 0) {
-            proRatedAmount = truncateToThousands(baseAmount * (remainingClassDays / totalClassDays));
+            proRatedAmount = floorRatio(baseAmount, remainingClassDays, totalClassDays);
             isProrated = true;
         }
 
-        const finalAmount = truncateToThousands(proRatedAmount - (proRatedAmount * (discountRate / 100)));
+        // 일할 금액 − 일할 금액 × 할인율 → 천원 절삭(식은 그대로, 소수 오차 없이)
+        const finalAmount = floorAfterPercent(proRatedAmount, discountRate);
 
         // 납부기한 계산 (등록월의 납부일 또는 등록일 + 7일)
         let dueDate;
@@ -446,7 +446,7 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
                 req.user.academyId,
                 yearMonth,
                 proRatedAmount,
-                proRatedAmount * (discountRate / 100),
+                exactPercent(proRatedAmount, discountRate),
                 finalAmount,
                 isProrated ? 1 : 0,
                 JSON.stringify(prorationDetails),

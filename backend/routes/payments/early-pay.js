@@ -4,7 +4,8 @@
  * POST /early-pay — 지정 월 월수강료 청구 생성(없으면) + 완납 처리 (트랜잭션)
  */
 
-const { pool, decrypt, truncateToThousands, logger } = require('./_utils');
+const { pool, decrypt, logger } = require('./_utils');
+const { floorPercent } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
@@ -82,7 +83,7 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
 
         const baseAmount = parseFloat(student.monthly_tuition) || 0;
         const studentDiscountRate = parseFloat(student.discount_rate) || 0;
-        const discountAmount = truncateToThousands(baseAmount * studentDiscountRate / 100);
+        const discountAmount = floorPercent(baseAmount, studentDiscountRate);
         const finalAmount = Math.max(0, baseAmount - discountAmount);
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const [year, month] = year_month.split('-').map(Number);

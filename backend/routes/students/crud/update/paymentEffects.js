@@ -10,6 +10,7 @@ const {
 } = require('../../../../utils/proratedPaymentDueDate');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
 const { updatePendingMonthlyTuition } = require('../../../../repositories/pendingMonthlyTuitionRepository');
+const { floorRatio, floorPercent } = require('../../../../utils/monthlyBillAmounts');
 
 async function updatePendingPayments(context) {
     const {
@@ -129,9 +130,9 @@ async function recalculateEnrollmentPayment(context) {
         );
         const remainingDays = lastDayOfMonth - enrollDay + 1;
         const proratedAmount = totalClassDaysInMonth > 0 && classDaysCount > 0
-            ? truncateToThousands(baseAmount / totalClassDaysInMonth * classDaysCount)
-            : truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
-        const discountAmount = truncateToThousands(proratedAmount * discountRate / 100);
+            ? floorRatio(baseAmount, classDaysCount, totalClassDaysInMonth)
+            : floorRatio(baseAmount, remainingDays, lastDayOfMonth);
+        const discountAmount = floorPercent(proratedAmount, discountRate);
         // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
         const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
         const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;
@@ -222,10 +223,10 @@ async function createActivationPayment(context) {
         );
         const remainingDays = lastDayOfMonth - enrollDay + 1;
         const proratedAmount = totalClassDaysInMonth > 0
-            ? Math.floor(monthlyTuition * classDaysCount / totalClassDaysInMonth / 1000) * 1000
+            ? floorRatio(monthlyTuition, classDaysCount, totalClassDaysInMonth)
             : monthlyTuition;
         const discountAmount = discountRate
-            ? Math.floor(proratedAmount * discountRate / 100 / 1000) * 1000
+            ? floorPercent(proratedAmount, discountRate)
             : 0;
         const finalAmount = proratedAmount - discountAmount;
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;

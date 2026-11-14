@@ -2,6 +2,7 @@ const {
     CREDIT_ROUNDING_UNIT,
     MILLISECONDS_PER_DAY,
 } = require('../constants/restCredit');
+const { floorRatio } = require('../utils/monthlyBillAmounts');
 const repository = require('../repositories/restCreditRepository');
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -96,9 +97,8 @@ function calculateCreditAmount(monthlyTuitionValue, daysInMonth, restDays) {
         );
     }
 
-    return Math.floor(
-        ((monthlyTuition / daysInMonth) * restDays) / CREDIT_ROUNDING_UNIT
-    ) * CREDIT_ROUNDING_UNIT;
+    // 월 수강료 ÷ 그 달 일수 × 휴원 일수 (소수 오차 없이)
+    return floorRatio(monthlyTuition, restDays, daysInMonth, CREDIT_ROUNDING_UNIT);
 }
 
 function getCreditUsage(credit) {

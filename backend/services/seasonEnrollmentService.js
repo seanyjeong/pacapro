@@ -10,9 +10,9 @@ const {
     calculateProRatedFee,
     calculateMidSeasonFee,
     calculateSeasonRefund,
-    parseWeeklyDays,
-    truncateToThousands
+    parseWeeklyDays
 } = require('../utils/seasonCalculator');
+const { floorPercent } = require('../utils/monthlyBillAmounts');
 const { DEFAULT_SEASON_MONTHLY_POLICY } = require('../utils/seasonMonthlyPolicy');
 const {
     autoAssignStudentToSeasonSchedules,
@@ -94,7 +94,7 @@ function planSeasonEnrollment({ season, student, seasonFee, registrationDate, is
             discountAmount = finalSeasonFee;
             finalSeasonFee = 0;
         } else if (discountType === 'rate' && season.continuous_discount_rate > 0) {
-            discountAmount = truncateToThousands(finalSeasonFee * (season.continuous_discount_rate / 100));
+            discountAmount = floorPercent(finalSeasonFee, season.continuous_discount_rate);
             finalSeasonFee -= discountAmount;
         }
     }

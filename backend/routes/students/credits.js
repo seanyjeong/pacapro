@@ -52,6 +52,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { truncateToThousands, countClassDaysInPeriod } = require('./_utils');
+const { floorRatio } = require('../../utils/monthlyBillAmounts');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
@@ -206,7 +207,7 @@ router.post('/:id/manual-credit', verifyToken, checkPermission('payments', 'edit
             }
 
             // 1회 금액 계산 (월 수강료 / (주당횟수 × 4주), 1,000원 단위 절사)
-            perClassFee = truncateToThousands(monthlyTuition / (weeklyCount * 4));
+            perClassFee = floorRatio(monthlyTuition, 1, weeklyCount * 4);
 
             if (hasDateInput) {
                 // 날짜로 입력 — 수업 횟수 자동 계산 (학생.class_days 기반)
