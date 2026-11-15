@@ -21,6 +21,7 @@ const ALLOWED_PATH_PREFIXES = [
   'scripts/release/',
   'scripts/smoke/',
   'src/',
+  'test/',
 ];
 
 const SENSITIVE_EXACT_PATHS = new Set([
