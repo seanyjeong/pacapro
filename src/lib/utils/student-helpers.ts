@@ -245,19 +245,6 @@ export function getStatusColor(status: StudentStatus): string {
 }
 
 /**
- * 납부 상태 뱃지 색상 클래스 반환
- */
-export function getPaymentStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    unpaid: 'bg-warning-soft text-warning border-warning/30',
-    partial: 'bg-warning-soft text-warning border-warning/30',
-    paid: 'bg-success-soft text-success border-success/30',
-    overdue: 'bg-destructive-soft text-destructive border-destructive/30',
-  };
-  return colors[status] || 'bg-muted text-foreground border-border';
-}
-
-/**
  * 날짜 포맷팅 (YYYY-MM-DD → YYYY년 MM월 DD일)
  */
 export function formatDate(dateStr: string | null): string {

@@ -3,10 +3,10 @@ import { Calculator, CreditCard, Pencil } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentPayment } from '@/lib/types/student';
-import { PAYMENT_STATUS_LABELS } from '@/lib/types/student';
-import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
+import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '@/lib/types/payment';
 import { cn } from '@/lib/utils/cn';
-import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
+import { getPaymentStatusColor } from '@/lib/utils/payment-helpers';
+import { formatDate, formatCurrency } from '@/lib/utils/student-helpers';
 
 interface StudentPaymentHistoryProps {
   payments: StudentPayment[];

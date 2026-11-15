@@ -139,3 +139,18 @@ test('P03 출석 체크: 이 수업에 보충으로 추가한 학생은 출석�
   const fromOtherDate = render({ is_makeup: true, original_date: '2026-11-13', attendance_status: 'present' });
   assert.match(fromOtherDate, /disabled=""/);
 });
+
+test('P05 학생 상세 납부 내역: 서버 상태값(pending)을 한글로 보인다', () => {
+  const { StudentPaymentHistory } = loadTypeScript('src/components/students/student-payment-history.tsx');
+  const payment = (id, status) => ({
+    id, student_id: 11606, year_month: '2026-11', base_amount: '370000.00', discount_amount: '107000.00', final_amount: '263000.00',
+    paid_amount: status === 'paid' ? '263000.00' : '0.00', payment_type: 'monthly', payment_status: status, due_date: '2026-11-05', created_at: '2026-11-15',
+  });
+  const html = renderToStaticMarkup(React.createElement(StudentPaymentHistory, {
+    payments: [payment(1, 'pending'), payment(2, 'partial'), payment(3, 'paid')], recalculating: false, onRecalculateClick() {},
+  }));
+  assert.doesNotMatch(html, />pending</);
+  assert.match(html, />미납</);
+  assert.match(html, />부분납부</);
+  assert.match(html, />완납</);
+});

@@ -1,3 +1,4 @@
+import type { Payment } from '@/lib/types/payment';
 import type { StudentParentNames } from '@/lib/types/student-parent-names';
 import type { StudentParentPhones } from '@/lib/types/student-parent-phones';
 
@@ -195,7 +196,7 @@ export interface StudentPayment {
   paid_amount: string;
   remaining_amount?: string | number;
   payment_type?: 'monthly' | 'season' | 'material' | 'other';
-  payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  payment_status: Payment['payment_status'];
   payment_method?: 'account' | 'card' | 'cash' | 'other';
   paid_date?: string;
   due_date: string;
@@ -245,13 +246,6 @@ export const STATUS_LABELS: Record<StudentStatus, string> = {
 export const GENDER_LABELS: Record<Gender, string> = {
   male: '남',
   female: '여',
-};
-
-export const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  unpaid: '미납',
-  partial: '부분납',
-  paid: '완납',
-  overdue: '연체',
 };
 
 // 요일 매핑 (숫자 -> 한글)
