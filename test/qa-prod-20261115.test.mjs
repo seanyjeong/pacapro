@@ -162,3 +162,8 @@ test('P06 휴일·출석 마감 칸이 0(숫자)일 때 화면에 0 을 그리�
   const attendance = readFileSync('src/app/schedules/[id]/attendance/page.tsx', 'utf8');
   assert.match(attendance, /\{!!schedule\.attendance_taken && \(/);
 });
+
+test('P07 급여 명세 PDF: 화면 테마와 상관없이 흰 바탕에 짙은 글자', () => {
+  const source = readFileSync('src/lib/utils/pdf-generator.ts', 'utf8');
+  assert.match(source, /<div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white; color: #111827;">/);
+});

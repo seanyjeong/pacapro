@@ -203,7 +203,7 @@ function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 
   }
 
   return `
-    <div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white;">
+    <div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white; color: #111827;">
       <!-- 헤더 - 학원명 -->
       <div style="text-align: center; margin-bottom: 12px;">
         <h1 style="font-size: 26px; font-weight: bold; color: #1E40AF; margin: 0;">${academyName}</h1>
