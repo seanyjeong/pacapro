@@ -174,6 +174,9 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: '미납',
   partial: '부분납부',
   paid: '완납',
+  // 화면 선택지에는 없지만 서버 칸(student_payments.payment_status)에 있는 값 — 원문 대신 한글로
+  overdue: '연체',
+  cancelled: '취소됨',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {

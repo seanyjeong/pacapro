@@ -204,3 +204,9 @@ test('D3 미납 칸 필터: 미납 + 부분 납부를 한 번에 불러 칸 숫�
   const state = readFileSync('src/features/payments/use-payments-page-state.ts', 'utf8');
   assert.match(state, /statusFromUrl === 'unpaid'\) \{\s+updateFilters\(\{ payment_status: UNPAID_PAYMENT_STATUS_FILTER \}\)/);
 });
+
+test('P05 보완: 연체·취소 상태도 원문 대신 한글', () => {
+  const { PAYMENT_STATUS_LABELS } = loadTypeScript('src/lib/types/payment.ts');
+  assert.equal(PAYMENT_STATUS_LABELS.overdue, '연체');
+  assert.equal(PAYMENT_STATUS_LABELS.cancelled, '취소됨');
+});
