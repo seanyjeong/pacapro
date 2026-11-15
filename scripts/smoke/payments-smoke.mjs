@@ -197,7 +197,8 @@ async function runNormal(browser) {
   if (!state.hits.some((hit) => hit.includes('/payments?') && /payment_status=pending(,|%2C)partial/i.test(hit))) {
     throw new Error(`missing pending metric query: ${state.hits.join(' | ')}`);
   }
-  await page.getByTestId('payments-metric-total').getByRole('button', { name: /1건/ }).click();
+  // 미납 필터의 총 청구 = 미납 박민수 + 부분 납부 기아림
+  await page.getByTestId('payments-metric-total').getByRole('button', { name: /2건/ }).click();
   await page.locator('tr:has-text("이서연")').waitFor();
   await page.locator('tr:has-text("기아림")').waitFor();
 
