@@ -88,6 +88,18 @@ describe('GET /paca/exports/financial', () => {
         });
     });
 
+    // 리뷰 D2 — 연간 재무 엑셀도 대시보드·수입 엑셀과 같은 규칙(실제 합계는 integration/income-partial-mysql)
+    test('월별 학원비 수입은 완납 + 부분 납부, 금액은 받은 금액(완납인데 비어 있으면 청구 금액)', async () => {
+        pool.execute.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
+
+        await request(buildApp()).get('/paca/exports/financial?year=2026');
+
+        const [revenueSql] = pool.execute.mock.calls[0];
+        expect(revenueSql).toContain("p.payment_status IN ('paid', 'partial')");
+        expect(revenueSql).toContain("WHEN p.payment_status = 'paid' AND COALESCE(p.paid_amount, 0) = 0");
+        expect(revenueSql).not.toMatch(/THEN paid_amount/);
+    });
+
     test('year 미지정 시 현재 연도 default', async () => {
         pool.execute
             .mockResolvedValueOnce([[]])

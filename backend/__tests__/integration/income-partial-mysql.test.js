@@ -87,7 +87,8 @@ run('수입 합계의 부분 납부 — 실제 MySQL 8', () => {
     const app = () => {
         const a = express(); a.use(express.json());
         a.use('/paca/reports', require('../../routes/reports'));
-        const exportsRouter = express.Router(); require('../../routes/exports/revenue')(exportsRouter); a.use('/paca/exports', exportsRouter);
+        const exportsRouter = express.Router(); require('../../routes/exports/revenue')(exportsRouter); require('../../routes/exports/financial')(exportsRouter);
+        a.use('/paca/exports', exportsRouter);
         const payments = express.Router(); require('../../routes/payments/list')(payments); a.use('/paca/payments', payments);
         return a;
     };
@@ -111,6 +112,20 @@ run('수입 합계의 부분 납부 — 실제 MySQL 8', () => {
         const summary = {};
         workbook.getWorksheet('수입 요약').eachRow((row, rowNumber) => { if (rowNumber > 1) summary[row.getCell(1).value] = row.getCell(2).value; });
         expect(summary).toEqual({ '학원비 수입': 400000, '기타 수입': 24000, '총 수입': 424000 });
+    });
+
+    test('연간 재무 엑셀: 이번 달 학원비·총 수입·총 지출이 손 계산과 같다', async () => {
+        const [year, month] = THIS_MONTH.split('-');
+        const res = await request(app()).get(`/paca/exports/financial?year=${year}`).buffer(true).parse(binaryParser);
+        expect(res.status).toBe(200);
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(res.body);
+        const sheet = workbook.worksheets[0];
+        const header = sheet.getRow(1).values;
+        const col = name => header.indexOf(name);
+        const row = sheet.getRow(Number(month) + 1);
+        expect([row.getCell(col('학원비')).value, row.getCell(col('시즌비')).value, row.getCell(col('총 수입')).value, row.getCell(col('총 지출')).value])
+            .toEqual([400000, 0, 424000, 48000]);
     });
 
     test('GET /payments 납부월 조회(상태 없이)는 그 달에 받은 완납·부분 납부를 모두 돌려준다 — 화면이 받은 금액으로 더한다', async () => {

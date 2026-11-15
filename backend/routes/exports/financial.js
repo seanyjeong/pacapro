@@ -26,6 +26,7 @@ const {
     applyCellStyle,
     applyTotalRowStyle
 } = require('./_utils');
+const { paidAmountSql } = require('../../utils/paymentAmountSql');
 
 module.exports = function(router) {
     router.get('/financial', verifyToken, checkPermission('reports', 'view'), async (req, res) => {
@@ -33,18 +34,20 @@ module.exports = function(router) {
             const { year } = req.query;
             const targetYear = year || new Date().getFullYear();
 
-            // 월별 수입 데이터
+            // 월별 수입 데이터 — 완납 + 부분 납부, 금액은 받은 금액(완납인데 받은 금액이 빈 옛 자료만 청구 금액).
+            // 대시보드·수입 화면·수입 엑셀과 같은 규칙
+            const paidAmount = paidAmountSql('p');
             const [monthlyRevenue] = await pool.execute(`
                 SELECT
-                    MONTH(paid_date) as month,
-                    SUM(CASE WHEN payment_type = 'monthly' THEN paid_amount ELSE 0 END) as tuition,
-                    SUM(CASE WHEN payment_type = 'season' THEN paid_amount ELSE 0 END) as season_fee,
-                    SUM(paid_amount) as total
-                FROM student_payments
-                WHERE academy_id = ?
-                AND YEAR(paid_date) = ?
-                AND payment_status = 'paid'
-                GROUP BY MONTH(paid_date)
+                    MONTH(p.paid_date) as month,
+                    SUM(CASE WHEN p.payment_type = 'monthly' THEN ${paidAmount} ELSE 0 END) as tuition,
+                    SUM(CASE WHEN p.payment_type = 'season' THEN ${paidAmount} ELSE 0 END) as season_fee,
+                    SUM(${paidAmount}) as total
+                FROM student_payments p
+                WHERE p.academy_id = ?
+                AND YEAR(p.paid_date) = ?
+                AND p.payment_status IN ('paid', 'partial')
+                GROUP BY MONTH(p.paid_date)
             `, [req.user.academyId, String(targetYear)]);
 
             // 월별 기타 수입
