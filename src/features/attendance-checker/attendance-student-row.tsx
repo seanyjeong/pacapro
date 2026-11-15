@@ -33,7 +33,9 @@ export function AttendanceStudentRow({
   const currentMakeupDate = edited?.makeup_date || attendance.makeup_date || '';
   const currentNotes = edited?.notes || attendance.notes || '';
   const isFromMakeup = Boolean(attendance.is_makeup);
-  const statusLocked = readOnly || isFromMakeup;
+  // 다른 날짜에서 보충으로 넘어온 학생(원래 날짜가 있음)만 잠근다. 이 수업에 보충으로 추가한 학생은 바로 출석을 찍는다.
+  const isFromOtherDate = isFromMakeup && Boolean(attendance.original_date);
+  const statusLocked = readOnly || isFromOtherDate;
 
   return (
     <div className={cn('space-y-3 py-4', isFromMakeup && '-mx-3 rounded-xl bg-muted px-3')}>
@@ -85,7 +87,7 @@ export function AttendanceStudentRow({
         })}
       </div>
 
-      {currentStatus === 'makeup' && !isFromMakeup && (
+      {currentStatus === 'makeup' && !isFromOtherDate && (
         <label className="flex items-center gap-2">
           <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="shrink-0 text-[13px] font-semibold text-secondary-foreground">보충 날짜</span>

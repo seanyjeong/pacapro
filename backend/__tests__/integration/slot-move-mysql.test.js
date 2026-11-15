@@ -57,4 +57,20 @@ run('time slot move keeps the student in one slot for the day', () => {
     expect(await openSlot('afternoon')).toEqual([4]);
     expect(await slotsOf(4)).toEqual(['afternoon']);
   });
+
+  // 개별 수업 출석 화면에서 보충 학생을 추가하면 그 수업 출석 화면에도 바로 나온다 (QA P03)
+  test('오전 수업에 보충 학생을 추가하면 수업 출석 조회와 시간대 창에 같은 학생이 나온다', async () => {
+    await f.paca.query("UPDATE students SET class_days='[]'");
+    await f.paca.query('INSERT IGNORE INTO class_schedules (academy_id, class_date, time_slot, title) VALUES (1, ?, ?, ?)', [date, 'morning', '개별 수업']);
+    const [[{ id: scheduleId }]] = await f.paca.query("SELECT id FROM class_schedules WHERE academy_id = 1 AND class_date = ? AND time_slot = 'morning'", [date]);
+
+    const added = await request(app).post('/paca/schedules/slot/student')
+      .send({ date, time_slot: 'morning', student_id: 4, is_makeup: true });
+    expect(added.status).toBe(200);
+
+    const attendance = await request(app).get(`/paca/schedules/${scheduleId}/attendance`);
+    expect(attendance.status).toBe(200);
+    expect(attendance.body.students.map(s => [s.student_id, s.is_makeup, s.attendance_status])).toEqual([[4, true, null]]);
+    expect(await openSlot('morning')).toEqual([4]);
+  });
 });

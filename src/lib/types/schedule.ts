@@ -28,7 +28,7 @@ export interface Attendance {
   student_number: string;
   attendance_status: AttendanceStatus | null;
   makeup_date?: string; // 보충 날짜 (YYYY-MM-DD)
-  is_makeup?: boolean; // 이 학생이 다른 날짜에서 보충으로 온 학생인지
+  is_makeup?: boolean; // 보충으로 온 학생인지(다른 날짜에서 넘어왔으면 original_date 가 있다)
   original_date?: string; // 보충인 경우 원래 결석했던 날짜
   notes?: string;
 }

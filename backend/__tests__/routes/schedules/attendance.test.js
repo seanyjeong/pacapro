@@ -105,7 +105,9 @@ describe('GET /paca/schedules/:id/attendance', () => {
             student_type: 'normal', is_trial: 0, grade: '고1',
             attendance_status: null, makeup_date: null, attendance_notes: null
         }]]);
-        // 4. makeupStudents (none)
+        // 4. assignedStudents (none)
+        pool.query.mockResolvedValueOnce([[]]);
+        // 5. makeupStudents (none)
         pool.query.mockResolvedValueOnce([[]]);
         const res = await request(makeApp()).get('/paca/schedules/1/attendance');
         expect(res.status).toBe(200);
@@ -113,6 +115,36 @@ describe('GET /paca/schedules/:id/attendance', () => {
         expect(res.body.season).toBeNull();
         expect(res.body.students.length).toBe(1);
         expect(res.body.students[0].student_id).toBe(10);
+    });
+
+    // QA P03 — 보충 학생 추가(POST /slot/student)는 이 수업에 출석 기록을 만든다. 시간대 창처럼 그 기록의 학생을 보여 준다.
+    test('이 수업에 직접 배정된 보충 학생도 나오고, 요일로 이미 나온 학생은 두 번 나오지 않는다', async () => {
+        pool.query.mockReset();
+        pool.query.mockResolvedValueOnce([[{
+            id: 8394, class_date: '2026-11-15', time_slot: 'morning',
+            title: 'QA-개별수업', attendance_taken: 0, instructor_name: 'enc-i'
+        }]]);
+        pool.query.mockResolvedValueOnce([[]]); // activeSeasons
+        pool.query.mockResolvedValueOnce([[{ // regularStudents — 일요일 수업 학생
+            student_id: 10, student_name: '나요일', student_number: 's10', student_type: 'exam', is_trial: 0,
+            attendance_status: null, makeup_date: null, attendance_notes: null
+        }]]);
+        pool.query.mockResolvedValueOnce([[ // assignedStudents — 이 수업의 출석 기록
+            { student_id: 10, student_name: '나요일', student_number: 's10', student_type: 'exam', is_trial: 0,
+              season_registration_id: null, assigned_makeup: 0, attendance_status: null, makeup_date: null, attendance_notes: null },
+            { student_id: 11601, student_name: '가보충', student_number: 's11601', student_type: 'exam', is_trial: 0,
+              season_registration_id: null, assigned_makeup: 1, attendance_status: null, makeup_date: null, attendance_notes: null },
+        ]]);
+        pool.query.mockResolvedValueOnce([[]]); // makeupStudents
+
+        const res = await request(makeApp()).get('/paca/schedules/8394/attendance');
+
+        expect(res.status).toBe(200);
+        expect(res.body.students.map(s => [s.student_id, s.is_makeup, s.attendance_status])).toEqual([[10, false, null], [11601, true, null]]);
+        const [assignedSql, assignedParams] = pool.query.mock.calls[3];
+        expect(assignedSql).toMatch(/FROM attendance a/);
+        expect(assignedSql).toMatch(/WHERE a\.class_schedule_id = \?/);
+        expect(assignedParams).toEqual([1, 8394]);
     });
 
     test('5xx 한국어', async () => {

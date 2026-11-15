@@ -126,3 +126,16 @@ test('P02 요약 칸: 미납 칸 아래에 부분납부 포함 건수, 태블릿
   const tablet = renderToStaticMarkup(React.createElement(TabletPaymentsSummary, { summary }));
   assert.match(tablet, /미납.*?1건.*?부분납부 1건 포함/s);
 });
+
+test('P03 출석 체크: 이 수업에 보충으로 추가한 학생은 출석을 찍을 수 있고, 다른 날짜에서 온 보충만 잠근다', () => {
+  const { AttendanceStudentRow } = loadTypeScript('src/features/attendance-checker/attendance-student-row.tsx');
+  const render = (attendance) => renderToStaticMarkup(React.createElement(AttendanceStudentRow, {
+    attendance: { student_id: 11601, student_name: '보충', student_number: '1', attendance_status: null, ...attendance },
+    readOnly: false, onStatusChange() {}, onMakeupDateChange() {}, onNotesChange() {},
+  }));
+  const added = render({ is_makeup: true });
+  assert.match(added, /보충<\/div>/);
+  assert.doesNotMatch(added, /disabled=""/);
+  const fromOtherDate = render({ is_makeup: true, original_date: '2026-11-13', attendance_status: 'present' });
+  assert.match(fromOtherDate, /disabled=""/);
+});

@@ -23,7 +23,8 @@
  *   1. 스케줄 날짜 기준 활성 시즌 확인
  *   2. 시즌 있으면 → 시즌 등록 학생 중 시간대 맞는 학년 조회
  *   3. 시즌 없으면 → class_days 매칭 학생 (고1/고2/공무원/성인 등)
- *   4. 보충 학생 추가 (a.makeup_date = 해당 날짜 + a.attendance_status='makeup')
+ *   4. 이 수업에 직접 배정된 학생 (보충 학생 추가·시간대 이동 — 이 수업의 출석 기록, 시간대 창과 같은 기준)
+ *   4-1. 보충 학생 추가 (a.makeup_date = 해당 날짜 + a.attendance_status='makeup')
  *   5. 정렬: 체험 → 일반 → 보충, 가나다순
  *
  * DB 호출 (ADR-005): 원본 db.query / connection.query 그대로 보존 (분리 단계 — pool/conn alias).
@@ -207,6 +208,34 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             }
         }
 
+        // 2-1. 이 수업에 직접 배정된 학생(보충 학생 추가·시간대 이동) — 시간대 창과 같은 기준(이 수업의 출석 기록)
+        const [assignedStudents] = await db.query(
+            `SELECT
+                s.id AS student_id,
+                s.name AS student_name,
+                s.student_number,
+                s.student_type,
+                s.is_trial,
+                NULL AS season_registration_id,
+                a.is_makeup AS assigned_makeup,
+                a.attendance_status,
+                a.makeup_date,
+                a.notes AS attendance_notes
+            FROM attendance a
+            JOIN students s ON a.student_id = s.id
+            AND s.academy_id = ?
+            WHERE a.class_schedule_id = ?
+            AND s.deleted_at IS NULL
+            ORDER BY s.name ASC`,
+            [req.user.academyId, scheduleId]
+        );
+        const listedIds = new Set(students.map(s => s.student_id));
+        for (const student of assignedStudents) {
+            if (!listedIds.has(student.student_id)) {
+                students.push(student);
+            }
+        }
+
         // 3. Get students who have makeup scheduled for this date
         const [makeupStudents] = await db.query(
             `SELECT
@@ -240,7 +269,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             makeup_date: student.makeup_date || null,
             notes: student.attendance_notes || '',
             is_expected: true,
-            is_makeup: false,
+            is_makeup: !!student.assigned_makeup,
             is_season_student: !!student.season_registration_id
         }));
 
