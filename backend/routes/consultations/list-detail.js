@@ -38,6 +38,13 @@
 const { parseBranchIds } = require('../../utils/branchFilter');
 const { pool, verifyToken, decrypt, decryptConsultationNames, logger } = require('./_utils');
 
+// 상담 검색: 학부모 이름·학생 이름·학부모 전화를 복호화해 찾는다(예전 SQL LIKE 와 같은 세 칸, 대소문자 무시)
+function matchesConsultationSearch(consultation, search) {
+    const query = String(search).trim().toLowerCase();
+    return [consultation.parent_name, consultation.student_name, consultation.parent_phone]
+        .some((value) => value && String(decrypt(value)).toLowerCase().includes(query));
+}
+
 module.exports = function (router) {
     // ============================================
     // GET /paca/consultations — 상담 목록 (페이징 + 필터 + 학생 매칭)
@@ -83,12 +90,6 @@ module.exports = function (router) {
                 params.push(...branchIds);
             }
 
-            if (search) {
-                whereClause += ' AND (c.parent_name LIKE ? OR c.student_name LIKE ? OR c.parent_phone LIKE ?)';
-                const searchTerm = `%${search}%`;
-                params.push(searchTerm, searchTerm, searchTerm);
-            }
-
             // 상태별 통계는 목록과 같은 범위(날짜·종류·지점·검색)에서 상태 조건만 빼고 센다
             const statsWhereClause = whereClause;
             const statsParams = [...params];
@@ -98,39 +99,55 @@ module.exports = function (router) {
                 params.push(status);
             }
 
-            // 전체 개수 조회
-            const [countResult] = await pool.execute(
-                `SELECT COUNT(*) as total FROM consultations c ${whereClause}`,
-                params
-            );
-            const total = countResult[0].total;
-
             // 페이징 — mysql2 prepared statement (pool.execute) 는 LIMIT/OFFSET 자리표시자
             // 바인딩에 정수 인자를 받지 못하는 mysql 5.x 호환 이슈가 있음 (lesson #235).
             // SQL injection 안전을 위해 정수 검증 후 직접 인터폴레이트.
             const safeLimit = Math.max(1, Math.min(1000, parseInt(limit) || 20));
             const safeOffset = Math.max(0, (parseInt(page) - 1) * safeLimit);
 
-            // 목록 조회
-            const [consultations] = await pool.execute(
-                `SELECT c.*, s.name as linked_student_name, s.is_trial as linked_student_is_trial
+            const listSelect = `SELECT c.*, s.name as linked_student_name, s.is_trial as linked_student_is_trial
                  FROM consultations c
                  LEFT JOIN students s ON c.linked_student_id = s.id
-                 AND s.academy_id = c.academy_id
-                 ${whereClause}
-                 ORDER BY c.preferred_date DESC, c.preferred_time DESC
-                 LIMIT ${safeLimit} OFFSET ${safeOffset}`,
-                params
-            );
+                 AND s.academy_id = c.academy_id`;
+            const listOrder = 'ORDER BY c.preferred_date DESC, c.preferred_time DESC';
 
-            // 상태별 통계
-            const [stats] = await pool.execute(
-                `SELECT c.status, COUNT(*) as count
-                 FROM consultations c
-                 ${statsWhereClause}
-                 GROUP BY c.status`,
-                statsParams
-            );
+            let total, consultations, stats;
+            if (search) {
+                // 이름·전화는 암호화돼 있어 SQL LIKE 로 찾을 수 없다 — 범위 안 상담을 복호화한 뒤 메모리에서 거른다(학생 목록과 같은 방식)
+                const [scoped] = await pool.execute(`${listSelect} ${statsWhereClause} ${listOrder}`, statsParams);
+                const matched = scoped.filter((c) => matchesConsultationSearch(c, search));
+                const counts = new Map();
+                for (const c of matched) counts.set(c.status, (counts.get(c.status) || 0) + 1);
+                stats = [...counts].map(([statusKey, count]) => ({ status: statusKey, count }));
+                const listed = status ? matched.filter((c) => c.status === status) : matched;
+                total = listed.length;
+                consultations = listed.slice(safeOffset, safeOffset + safeLimit);
+            } else {
+                // 전체 개수 조회
+                const [countResult] = await pool.execute(
+                    `SELECT COUNT(*) as total FROM consultations c ${whereClause}`,
+                    params
+                );
+                total = countResult[0].total;
+
+                // 목록 조회
+                [consultations] = await pool.execute(
+                    `${listSelect}
+                     ${whereClause}
+                     ${listOrder}
+                     LIMIT ${safeLimit} OFFSET ${safeOffset}`,
+                    params
+                );
+
+                // 상태별 통계
+                [stats] = await pool.execute(
+                    `SELECT c.status, COUNT(*) as count
+                     FROM consultations c
+                     ${statsWhereClause}
+                     GROUP BY c.status`,
+                    statsParams
+                );
+            }
 
             // 완료된 상담이 있으면 학생 매칭을 위해 학생 목록 조회
             const hasCompletedConsultations = consultations.some((c) => c.status === 'completed');

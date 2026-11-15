@@ -79,30 +79,57 @@ describe('GET /paca/consultations', () => {
         );
     });
 
-    test('search 필터 → WHERE 추가, params 에 LIKE term 3개 push', async () => {
-        pool.execute
-            .mockResolvedValueOnce([[{ total: 0 }]])
-            .mockResolvedValueOnce([[]])
-            .mockResolvedValueOnce([[]]);
+    // QA P04 — 상담의 학생·학부모 이름과 전화는 암호화돼 있어 SQL LIKE 로는 0건이었다
+    test('search: 범위 안 상담을 한 번 읽어 복호화한 이름·전화로 거르고, 목록·개수·상태별 통계를 같은 결과로 낸다', async () => {
+        const row = (id, status, studentName, extra = {}) => ({
+            id, status, student_name: studentName, parent_name: null, parent_phone: null, academic_scores: null, referral_sources: null, ...extra,
+        });
+        pool.execute.mockResolvedValueOnce([[
+            row(411, 'confirmed', 'enc:QA-일반450'),
+            row(412, 'pending', 'enc:다른학생'),
+            row(413, 'cancelled', 'enc:qa-일반450 동생'),
+            row(414, 'confirmed', '다른학생', { parent_phone: 'enc:010-0000-9202' }),
+        ]]);
 
-        await request(makeApp())
-            .get(`/paca/consultations?search=${encodeURIComponent('홍')}&status=pending&consultationType=new_registration`);
+        const res = await request(makeApp())
+            .get(`/paca/consultations?status=confirmed&consultationType=learning&startDate=2026-11-14&endDate=2026-11-16&branch_ids=3&search=${encodeURIComponent('QA-일반450')}`);
 
-        // SELECT consultations 의 params 에 status + consultationType + search %홍% 3건 + LIMIT/OFFSET 포함
-        const selectCall = pool.execute.mock.calls[1];
-        expect(selectCall[1]).toContain('pending');
-        expect(selectCall[1]).toContain('new_registration');
-        expect(selectCall[1]).toContain('%홍%');
+        expect(res.status).toBe(200);
+        expect(res.body.consultations.map(c => [c.id, c.student_name])).toEqual([[411, 'QA-일반450']]);
+        expect(res.body.pagination).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
+        expect(res.body.stats).toEqual({ confirmed: 1, cancelled: 1 });
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+        const [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).not.toMatch(/LIKE/);
+        expect(sql).not.toMatch(/c\.status = \?/);
+        expect(sql).not.toMatch(/LIMIT/);
+        expect(params).toEqual([1, '2026-11-14', '2026-11-16', 'learning', 3]);
+
+        // 전화 검색도 복호화한 값으로 찾는다
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[row(414, 'confirmed', '다른학생', { parent_phone: 'enc:010-0000-9202' }), row(412, 'pending', 'enc:다른학생')]]);
+        const byPhone = await request(makeApp()).get(`/paca/consultations?search=${encodeURIComponent('9202')}`);
+        expect(byPhone.body.consultations.map(c => c.id)).toEqual([414]);
     });
 
-    test('상태별 통계는 목록과 같은 범위(날짜·종류·지점·검색)에서 상태 조건만 빼고 센다', async () => {
+    test('search 쪽 페이지 나누기: 걸러진 결과에서 page·limit 만큼 자른다', async () => {
+        const rows = Array.from({ length: 5 }, (_, i) => ({ id: i + 1, status: 'pending', student_name: `enc:홍${i + 1}`, academic_scores: null, referral_sources: null }));
+        pool.execute.mockResolvedValueOnce([rows]);
+
+        const res = await request(makeApp()).get(`/paca/consultations?search=${encodeURIComponent('홍')}&page=2&limit=2`);
+
+        expect(res.body.consultations.map(c => c.id)).toEqual([3, 4]);
+        expect(res.body.pagination).toEqual({ total: 5, page: 2, limit: 2, totalPages: 3 });
+    });
+
+    test('상태별 통계는 목록과 같은 범위(날짜·종류·지점)에서 상태 조건만 빼고 센다', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ total: 1 }]])
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([[{ status: 'confirmed', count: 1 }]]);
 
         const res = await request(makeApp())
-            .get(`/paca/consultations?status=confirmed&consultationType=learning&startDate=2026-11-14&endDate=2026-11-14&branch_ids=3&search=${encodeURIComponent('홍')}`);
+            .get('/paca/consultations?status=confirmed&consultationType=learning&startDate=2026-11-14&endDate=2026-11-14&branch_ids=3');
 
         expect(res.status).toBe(200);
         const [statsSql, statsParams] = pool.execute.mock.calls[2];
@@ -110,7 +137,7 @@ describe('GET /paca/consultations', () => {
         expect(statsSql).toMatch(/c\.consultation_type = \?/);
         expect(statsSql).toMatch(/COALESCE\(c\.branch_id, 0\) IN \(\?\)/);
         expect(statsSql).not.toMatch(/c\.status = \?/);
-        expect(statsParams).toEqual([1, '2026-11-14', '2026-11-14', 'learning', 3, '%홍%', '%홍%', '%홍%']);
+        expect(statsParams).toEqual([1, '2026-11-14', '2026-11-14', 'learning', 3]);
         expect(pool.execute.mock.calls[0][1]).toEqual([...statsParams, 'confirmed']);
     });
 
