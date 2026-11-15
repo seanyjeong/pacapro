@@ -35,6 +35,7 @@ const {
 } = require('./_utils');
 
 const { parseBranchIds, paymentBranchSql } = require('../../utils/branchFilter');
+const { paidAmountSql } = require('../../utils/paymentAmountSql');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
@@ -61,6 +62,7 @@ module.exports = function(router) {
             }
 
             // 학원비 수입 (student_payments) — sp.paid_date 만 사용 (oi 컬럼 제거)
+            // 완납 + 부분 납부, 금액은 받은 금액(완납인데 받은 금액이 빈 옛 자료만 청구 금액) — 대시보드·수입 화면과 같은 규칙
             const tuitionParams = params.slice(0, start_date && end_date ? 3 : (year && month ? 3 : 1));
             const [tuitionPaymentsRaw] = await pool.execute(`
                 SELECT
@@ -68,7 +70,7 @@ module.exports = function(router) {
                     '학원비' as category,
                     s.name as student_name,
                     sp.payment_type,
-                    sp.paid_amount as amount,
+                    ${paidAmountSql('sp')} as amount,
                     sp.payment_method,
                     sp.description,
                     sp.notes,
@@ -77,7 +79,7 @@ module.exports = function(router) {
                 JOIN students s ON sp.student_id = s.id
                 LEFT JOIN branches b ON b.id = COALESCE(sp.branch_id, s.branch_id)
                 WHERE sp.academy_id = ?
-                AND sp.payment_status = 'paid'
+                AND sp.payment_status IN ('paid', 'partial')
                 AND sp.paid_date IS NOT NULL
                 ${dateFilter ? dateFilter.replace(/oi\.income_date/g, 'sp.paid_date').replace('OR sp.paid_date BETWEEN ? AND ?', '') : ''}
                 ${paymentBranchSql('sp', 's', branchIds)}

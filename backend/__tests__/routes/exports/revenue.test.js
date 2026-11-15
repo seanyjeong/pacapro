@@ -98,6 +98,18 @@ describe('GET /paca/exports/revenue', () => {
         expect(pool.execute.mock.calls[1][0]).toMatch(/FROM other_incomes/);
     });
 
+    // QA P01 — 부분 납부로 받은 돈도 수입이다(실제 합계는 integration/income-partial-mysql 에서 MySQL 로 확인)
+    test('학원비 수입은 완납 + 부분 납부, 금액은 받은 금액(완납인데 비어 있으면 청구 금액)', async () => {
+        pool.execute.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
+
+        await request(buildApp()).get('/paca/exports/revenue?year=2026&month=11');
+
+        const [tuitionSql] = pool.execute.mock.calls[0];
+        expect(tuitionSql).toContain("sp.payment_status IN ('paid', 'partial')");
+        expect(tuitionSql).toContain("WHEN sp.payment_status = 'paid' AND COALESCE(sp.paid_amount, 0) = 0");
+        expect(tuitionSql).not.toMatch(/sp\.paid_amount as amount/);
+    });
+
     test('파일명 = 수입내역_YYYY-MM-DD.xlsx (UTF-8 encode)', async () => {
         pool.execute.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
 

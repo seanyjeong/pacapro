@@ -1,5 +1,6 @@
 import apiClient, { type APIRequestConfig } from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
+import { hasReceivedPayment } from '@/lib/utils/payment-helpers';
 import type { IncomeFormData, OtherIncomesResponse, TuitionPaymentsResponse } from './incomes-types';
 import { getMonthRange } from './incomes-utils';
 
@@ -14,13 +15,14 @@ export async function getIncomePageData(yearMonth: string) {
     }),
     apiClient.get<TuitionPaymentsResponse>('/payments', {
       ...SILENT_CONFIG,
-      params: { paid_year: range.year, paid_month: range.month, payment_status: 'paid' },
+      params: { paid_year: range.year, paid_month: range.month },
     }),
   ]);
 
   return {
     otherIncomes: incomesResponse.incomes || [],
-    tuitionPayments: paymentsResponse.payments || [],
+    // 그 달에 받은 돈: 완납 + 부분 납부(대시보드·수입 엑셀과 같은 규칙)
+    tuitionPayments: (paymentsResponse.payments || []).filter(hasReceivedPayment),
   };
 }
 

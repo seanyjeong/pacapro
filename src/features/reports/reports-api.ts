@@ -1,4 +1,5 @@
 import apiClient, { type APIRequestConfig } from '@/lib/api/client';
+import { hasReceivedPayment } from '@/lib/utils/payment-helpers';
 import { canView } from '@/lib/utils/permissions';
 import type {
   ExpensesReportResponse,
@@ -31,7 +32,7 @@ export async function fetchReportSourceData(selectedMonth: string, access: Repor
       : ({} as PaymentsReportResponse),
     access.payments
       ? apiClient.get<PaymentsReportResponse>(
-        `/payments?paid_year=${range.year}&paid_month=${range.month}&payment_status=paid`,
+        `/payments?paid_year=${range.year}&paid_month=${range.month}`,
         QUIET_REQUEST
       )
       : ({} as PaymentsReportResponse),
@@ -55,7 +56,8 @@ export async function fetchReportSourceData(selectedMonth: string, access: Repor
   return {
     students: students.students ?? [],
     payments: payments.payments ?? [],
-    paidPayments: paidPayments.payments ?? [],
+    // 그 달에 받은 돈: 완납 + 부분 납부(대시보드·수입 화면과 같은 규칙)
+    paidPayments: (paidPayments.payments ?? []).filter(hasReceivedPayment),
     expenses: expenses.expenses ?? [],
     instructors: instructors.instructors ?? [],
     otherIncomes: incomes.incomes ?? [],

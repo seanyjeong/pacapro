@@ -1,3 +1,5 @@
+import type { Payment } from '@/lib/types/payment';
+
 export type IncomeTab = 'all' | 'tuition' | 'other';
 export type IncomeViewMode = 'list' | 'calendar';
 
@@ -20,9 +22,10 @@ export interface TuitionPayment {
   year_month: string;
   final_amount: number;
   paid_amount: number;
+  remaining_amount?: number;
   paid_date: string;
   payment_method: string;
-  payment_status: string;
+  payment_status: Payment['payment_status'];
 }
 
 export interface IncomeFormData {

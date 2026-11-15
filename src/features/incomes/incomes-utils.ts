@@ -1,6 +1,7 @@
 import { CATEGORY_LABELS } from './incomes-constants';
 import type { IncomeFormData, IncomeSummary, OtherIncome, TuitionPayment } from './incomes-types';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
+import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 
 export function formatAmount(amount: number): string {
   return Math.floor(toAmount(amount)).toLocaleString();
@@ -77,7 +78,8 @@ export function calculateIncomeSummary(
   tuitionPayments: TuitionPayment[],
   otherIncomes: OtherIncome[]
 ): IncomeSummary {
-  const totalTuition = tuitionPayments.reduce((sum, payment) => sum + toAmount(payment.final_amount), 0);
+  // 학원비는 실제로 받은 금액(부분 납부는 받은 만큼, 완납인데 받은 금액이 빈 옛 자료만 청구 금액)
+  const totalTuition = tuitionPayments.reduce((sum, payment) => sum + toAmount(getPaidPaymentAmount(payment)), 0);
   const totalOther = otherIncomes.reduce((sum, income) => sum + toAmount(income.amount), 0);
   const totalIncome = totalTuition + totalOther;
   return {

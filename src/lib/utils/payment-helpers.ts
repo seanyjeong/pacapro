@@ -52,6 +52,13 @@ export function getPaidPaymentAmount(payment: Pick<Payment, 'final_amount' | 'pa
   return paidAmount;
 }
 
+/**
+ * 받은 돈이 있는 청구(완납·부분 납부) — 납부일이 든 달의 수입이다
+ */
+export function hasReceivedPayment(payment: Pick<Payment, 'payment_status'>): boolean {
+  return payment.payment_status === 'paid' || payment.payment_status === 'partial';
+}
+
 export function getRemainingPaymentAmount(payment: Pick<Payment, 'final_amount' | 'paid_amount' | 'payment_status' | 'remaining_amount'>): number {
   if (payment.remaining_amount !== undefined && payment.remaining_amount !== null) {
     return Math.max(parseFloat(String(payment.remaining_amount)) || 0, 0);

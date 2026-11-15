@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { CreditCard, ReceiptText, UserRound } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { PAYMENT_STATUS_LABELS } from '@/lib/types/payment';
+import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 import { PAYMENT_METHOD_LABELS } from './incomes-constants';
 import type { TuitionPayment } from './incomes-types';
 import { formatAmount } from './incomes-utils';
@@ -21,13 +24,16 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
           <article key={`tuition-${payment.id}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-[15px] font-semibold text-foreground">{payment.student_name}</p>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <p className="truncate text-[15px] font-semibold text-foreground">{payment.student_name}</p>
+                  <PartialPaymentBadge payment={payment} />
+                </div>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
                   {payment.year_month} · 납부 {payment.paid_date?.split('T')[0] || '-'} · {PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method || '-'}
                 </p>
               </div>
               <p className="shrink-0 text-base font-bold tabular-nums text-success">
-                +{formatAmount(payment.final_amount)}원
+                +{formatAmount(getPaidPaymentAmount(payment))}원
               </p>
             </div>
             <TuitionPaymentActions payment={payment} mobile />
@@ -50,10 +56,15 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
           <tbody className="divide-y divide-border/60">
             {payments.map((payment) => (
               <tr key={`tuition-${payment.id}`} className="transition-colors hover:bg-muted/50">
-                <td className="px-3 py-3.5 text-[15px] font-semibold text-foreground">{payment.student_name}</td>
+                <td className="px-3 py-3.5 text-[15px] font-semibold text-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    {payment.student_name}
+                    <PartialPaymentBadge payment={payment} />
+                  </span>
+                </td>
                 <td className="px-3 py-3.5 text-muted-foreground">{payment.year_month}</td>
                 <td className="px-3 py-3.5 text-right text-[15px] font-bold tabular-nums text-success">
-                  +{formatAmount(payment.final_amount)}원
+                  +{formatAmount(getPaidPaymentAmount(payment))}원
                 </td>
                 <td className="px-3 py-3.5 text-muted-foreground">{payment.paid_date?.split('T')[0] || '-'}</td>
                 <td className="px-3 py-3.5 text-muted-foreground">
@@ -69,6 +80,12 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
       </div>
     </section>
   );
+}
+
+// 부분 납부 줄은 받은 금액만 수입으로 보이므로 따로 표시한다
+function PartialPaymentBadge({ payment }: { payment: TuitionPayment }) {
+  if (payment.payment_status !== 'partial') return null;
+  return <Badge variant="warning" className="shrink-0">{PAYMENT_STATUS_LABELS.partial}</Badge>;
 }
 
 function TuitionPaymentActions({ payment, mobile = false }: { payment: TuitionPayment; mobile?: boolean }) {

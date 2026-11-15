@@ -1,4 +1,5 @@
 import { inBranches } from '@/features/branches/branch-checks';
+import { getPaidPaymentAmount, hasReceivedPayment } from '@/lib/utils/payment-helpers';
 import type {
   ReportAccess,
   ReportComputedStats,
@@ -72,9 +73,10 @@ export function calculateReportStats(data: ReportSourceData, branchIds: number[]
   const activeStudentsWithTuition = activeStudents.filter((student) => toAmount(student.monthly_tuition) > 0);
   const tuitionSum = activeStudentsWithTuition.reduce((sum, student) => sum + toAmount(student.monthly_tuition), 0);
   const avgTuition = activeStudentsWithTuition.length > 0 ? tuitionSum / activeStudentsWithTuition.length : 0;
+  // 이달 청구에서 받은 돈: 완납 + 부분 납부의 받은 금액
   const paidAmountFromBilled = activePayments
-    .filter((payment) => payment.payment_status === 'paid')
-    .reduce((sum, payment) => sum + toAmount(payment.paid_amount || payment.final_amount), 0);
+    .filter(hasReceivedPayment)
+    .reduce((sum, payment) => sum + toAmount(getPaidPaymentAmount(payment)), 0);
 
   return {
     students: {
@@ -92,7 +94,7 @@ export function calculateReportStats(data: ReportSourceData, branchIds: number[]
       paidAmount: Math.floor(
         data.paidPayments
           .filter((payment) => inBranches(payment.branch_id, branchIds))
-          .reduce((sum, payment) => sum + toAmount(payment.paid_amount || payment.final_amount), 0)
+          .reduce((sum, payment) => sum + toAmount(getPaidPaymentAmount(payment)), 0)
       ),
     },
     expenses: {

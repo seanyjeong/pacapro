@@ -50,6 +50,7 @@ function registerDashboardReport(router) {
                 [academyId]
             );
 
+            // 학원비 수입: 그 달에 받은 돈(완납 + 부분 납부). 금액은 받은 금액, 완납인데 받은 금액이 빈 옛 자료만 청구 금액.
             const [paymentRevenue] = await db.query(
                 `SELECT
                     COUNT(*) as count,
@@ -57,7 +58,7 @@ function registerDashboardReport(router) {
                 FROM student_payments p
                 ${paymentStudentJoin}
                 WHERE p.academy_id = ?
-                AND p.payment_status = 'paid'
+                AND p.payment_status IN ('paid', 'partial')
                 AND DATE_FORMAT(p.paid_date, '%Y-%m') = ?${paymentBranchSql('p', 's', branchIds)}`,
                 [academyId, currentMonth, ...branchIds]
             );

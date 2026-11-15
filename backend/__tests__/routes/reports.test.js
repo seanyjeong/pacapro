@@ -104,6 +104,27 @@ describe('GET /paca/reports/dashboard', () => {
         expect((await request(makeApp()).get('/paca/reports/dashboard?branch_ids=3%20OR%201')).status).toBe(400);
         expect(db.query).not.toHaveBeenCalled();
     });
+
+    // QA P01 — 부분 납부로 받은 돈도 그 달 수입이다(실제 합계는 integration/income-partial-mysql 에서 MySQL 로 확인)
+    test('이번 달 학원비 수입은 납부일 기준 완납 + 부분 납부를 받은 금액으로 더한다', async () => {
+        db.query
+            .mockResolvedValueOnce([[{ total_students: 3, active_students: 3, paused_students: 0, withdrawn_students: 0 }]])
+            .mockResolvedValueOnce([[{ count: 0 }]])
+            .mockResolvedValueOnce([[{ total_instructors: 2, active_instructors: 2 }]])
+            .mockResolvedValueOnce([[{ count: 3, amount: '400000.00' }]])
+            .mockResolvedValueOnce([[{ count: 1, amount: '24000.00' }]])
+            .mockResolvedValueOnce([[{ count: 1, amount: '48000.00' }]])
+            .mockResolvedValueOnce([[{ unpaid_count: 1, unpaid_amount: 243000 }]]);
+
+        const res = await request(makeApp()).get('/paca/reports/dashboard');
+
+        expect(res.body.current_month.revenue).toEqual({ count: 4, amount: 424000 });
+        expect(res.body.current_month.net_income).toBe(376000);
+        const [revenueSql] = db.query.mock.calls[3];
+        expect(revenueSql).toContain("p.payment_status IN ('paid', 'partial')");
+        expect(revenueSql).toContain("WHEN p.payment_status = 'paid' AND COALESCE(p.paid_amount, 0) = 0");
+        expect(revenueSql).toContain("DATE_FORMAT(p.paid_date, '%Y-%m') = ?");
+    });
 });
 
 test('학생 보고서 총원도 예비생을 제외하고 학년·전형 분포는 기존 재원·휴원 범위를 유지한다', async () => {
