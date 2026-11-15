@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Banknote, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Payment } from '@/lib/types/payment';
+import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 import {
   generateCalendarGrid,
   isInMonth,
@@ -42,9 +44,10 @@ interface TuitionPayment {
   year_month: string;
   final_amount: number;
   paid_amount: number;
+  remaining_amount?: number;
   paid_date: string;
   payment_method: string;
-  payment_status: string;
+  payment_status: Payment['payment_status'];
 }
 
 interface IncomeCalendarProps {
@@ -122,7 +125,8 @@ export function IncomeCalendar({
           });
         }
         const summary = map.get(date)!;
-        const amount = Math.floor(parseFloat(String(payment.final_amount)) || 0);
+        // 받은 금액(부분 납부는 받은 만큼) — 수입 목록과 같은 식
+        const amount = Math.floor(getPaidPaymentAmount(payment) || 0);
         summary.tuitionCount++;
         summary.tuitionAmount += amount;
         summary.totalAmount += amount;
@@ -363,7 +367,7 @@ export function IncomeCalendar({
                           </div>
                         </div>
                         <div className="font-semibold text-primary">
-                          {Math.floor(parseFloat(String(payment.final_amount))).toLocaleString()}원
+                          {Math.floor(getPaidPaymentAmount(payment)).toLocaleString()}원
                         </div>
                       </div>
                     </div>

@@ -167,3 +167,15 @@ test('P07 급여 명세 PDF: 화면 테마와 상관없이 흰 바탕에 짙은 
   const source = readFileSync('src/lib/utils/pdf-generator.ts', 'utf8');
   assert.match(source, /<div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white; color: #111827;">/);
 });
+
+// 독립 검토 D1·D3·P05 보완
+test('D1 수입 달력: 일별 합계도 받은 금액(293,000원 중 50,000원 부분 납부 → 5만원)', () => {
+  const { IncomeCalendar } = loadTypeScript('src/components/incomes/income-calendar.tsx');
+  const html = renderToStaticMarkup(React.createElement(IncomeCalendar, {
+    otherIncomes: [], tuitionPayments: [PAID_IN_NOVEMBER[2]], initialYearMonth: '2026-11',
+  }));
+  assert.match(html, /5만원/);
+  assert.doesNotMatch(html, /29\.3만/);
+  const source = readFileSync('src/components/incomes/income-calendar.tsx', 'utf8');
+  assert.doesNotMatch(source, /payment\.final_amount/); // 그날 상세 줄도 받은 금액
+});
