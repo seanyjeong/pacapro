@@ -227,7 +227,7 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
-  await assertOperationsBoard(page, { paidRate: '67%', unpaid: '0건', unpaidAction: '미납 알림 (0명)' });
+  await assertOperationsBoard(page, { paidRate: '100%', unpaid: '0건', unpaidAction: '미납 알림 (0명)' });
   await page.locator('article:has-text("박민수")').waitFor();
   await assertNoRawVisibleText(page, 'payments mobile');
   await assertNoHorizontalOverflow(page, 'payments mobile');
@@ -238,8 +238,9 @@ async function runNormal(browser) {
 }
 
 async function assertOperationsBoard(page, options = {}) {
+  // 납부율은 금액 기준(이달 받은 금액 ÷ 이달 청구 금액): 500,000 / 1,060,000 = 47%
   const expected = {
-    paidRate: '33%',
+    paidRate: '47%',
     total: '3건',
     unpaid: '1건',
     previous: '1건',

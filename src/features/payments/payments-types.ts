@@ -15,6 +15,7 @@ export interface PaymentSummary {
   previousUnpaidPayments: Payment[];
   paidCount: number;
   unpaidCount: number;
+  unpaidPartialCount: number; // unpaidCount 안에 든 잔액 남은 부분 납부
   partialCount: number;
   unpaidNotifyCount: number;
   totalAmount: number;

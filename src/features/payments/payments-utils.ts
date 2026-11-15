@@ -75,7 +75,12 @@ export function calculatePaymentSummary(payments: Payment[], selectedYearMonth: 
   const currentMonthPayments = payments.filter((payment) => payment.year_month === selectedYearMonth);
   const previousUnpaidPayments = payments.filter((payment) => payment.year_month !== selectedYearMonth);
   const paidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'paid').length;
-  const unpaidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'pending' && !isSeasonUpcoming(payment)).length;
+  // 부분 납부 중 잔액이 남은 것은 미납에 함께 센다(시작 전 시즌비 제외)
+  const unpaidPartialCount = currentMonthPayments.filter(
+    (payment) => payment.payment_status === 'partial' && !isSeasonUpcoming(payment) && getRemainingPaymentAmount(payment) > 0
+  ).length;
+  const unpaidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'pending' && !isSeasonUpcoming(payment)).length
+    + unpaidPartialCount;
   const partialCount = currentMonthPayments.filter((payment) => payment.payment_status === 'partial').length;
   // 미납 알림을 받을 청구: 서버 발송 조건처럼 미납·부분납부 중 잔액이 남은 것(시작 전 시즌비 제외).
   const unpaidNotifyCount = currentMonthPayments.filter(
@@ -99,12 +104,14 @@ export function calculatePaymentSummary(payments: Payment[], selectedYearMonth: 
     previousUnpaidPayments,
     paidCount,
     unpaidCount,
+    unpaidPartialCount,
     partialCount,
     unpaidNotifyCount,
     totalAmount,
     paidAmount,
     unpaidAmount,
-    paidRate: payments.length > 0 ? Math.round((paidCount / payments.length) * 100) : 0,
+    // 납부율은 칸 아래 금액(받은 금액 / 총 청구 금액)과 같은 금액 기준
+    paidRate: totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0,
   };
 }
 

@@ -51,8 +51,17 @@ export function PaymentSummaryStrip({ summary, viewOnly, isOwner, filters, onFil
           className={cn('flex h-full w-full flex-col', unpaidSelected && selectedTile)}
           label="미납"
           value={`${summary.unpaidCount}건`}
-          note={summary.previousUnpaidPayments.length > 0
-            ? <span data-testid="payments-metric-previous">전달 미납 {summary.previousUnpaidPayments.length}건</span>
+          note={summary.unpaidPartialCount > 0 || summary.previousUnpaidPayments.length > 0
+            ? (
+              <span className="flex flex-col">
+                {summary.unpaidPartialCount > 0 && (
+                  <span data-testid="payments-metric-partial">부분납부 {summary.unpaidPartialCount}건 포함</span>
+                )}
+                {summary.previousUnpaidPayments.length > 0 && (
+                  <span data-testid="payments-metric-previous">전달 미납 {summary.previousUnpaidPayments.length}건</span>
+                )}
+              </span>
+            )
             : undefined}
           tone="danger"
           icon={AlertCircle}

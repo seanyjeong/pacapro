@@ -85,3 +85,44 @@ test('P01 리포트: 총 수입·학원비 수납도 완납 + 부분 납부의 �
   assert.equal(computed.collectionRate, 42);
   assert.equal(computed.unpaidAmount, 343000);
 });
+
+// P02 — 남은 금액이 있는 부분 납부는 미납으로 세고, 납부율은 금액 기준
+const BILLS = [
+  { id: 11, student_id: 11, year_month: '2026-11', payment_type: 'monthly', final_amount: '293000.00', paid_amount: '50000.00', remaining_amount: '243000.00', payment_status: 'partial', due_date: '2026-11-05' },
+  { id: 12, student_id: 12, year_month: '2026-11', payment_type: 'monthly', final_amount: '100000.00', paid_amount: '0.00', remaining_amount: '100000.00', payment_status: 'pending', due_date: '2026-11-05' },
+  { id: 13, student_id: 13, year_month: '2026-11', payment_type: 'monthly', final_amount: '200000.00', paid_amount: '200000.00', remaining_amount: '0.00', payment_status: 'paid', due_date: '2026-11-05' },
+  { id: 14, student_id: 14, year_month: '2099-01', payment_type: 'season', final_amount: '50000.00', paid_amount: '10000.00', remaining_amount: '40000.00', payment_status: 'partial', due_date: '2099-01-01' },
+];
+
+test('P02 학원비 요약: 미납 = 미납 + 잔액 남은 부분 납부(시작 전 시즌비 제외), 납부율은 받은 금액 ÷ 총 청구', () => {
+  const { calculatePaymentSummary } = loadTypeScript('src/features/payments/payments-utils.ts');
+  const onlyPartial = calculatePaymentSummary([BILLS[0]], '2026-11');
+  assert.equal(onlyPartial.unpaidCount, 1);
+  assert.equal(onlyPartial.unpaidPartialCount, 1);
+  assert.equal(onlyPartial.paidRate, 17); // 50,000 / 293,000 = 17.06%
+
+  const summary = calculatePaymentSummary(BILLS.slice(0, 3), '2026-11');
+  assert.equal(summary.paidCount, 1);
+  assert.equal(summary.unpaidCount, 2);
+  assert.equal(summary.unpaidPartialCount, 1);
+  assert.equal(summary.paidRate, 42); // 250,000 / 593,000 = 42.2%
+
+  const season = calculatePaymentSummary([{ ...BILLS[3], year_month: '2026-11' }], '2026-11');
+  assert.equal(season.unpaidCount, 0); // 시작 전 시즌비는 지금처럼 미납에서 뺀다
+});
+
+test('P02 요약 칸: 미납 칸 아래에 부분납부 포함 건수, 태블릿 결제 확인도 같은 수', () => {
+  const { calculatePaymentSummary } = loadTypeScript('src/features/payments/payments-utils.ts');
+  const { PaymentSummaryStrip } = loadTypeScript('src/features/payments/payment-summary-strip.tsx');
+  const { TabletPaymentsSummary } = loadTypeScript('src/features/tablet-payments/tablet-payments-summary.tsx');
+  const summary = calculatePaymentSummary([BILLS[0]], '2026-11');
+
+  const strip = renderToStaticMarkup(React.createElement(PaymentSummaryStrip, {
+    summary, viewOnly: false, isOwner: true, filters: {}, onFilterChange() {},
+  }));
+  assert.match(strip, /data-testid="payments-metric-unpaid".*?1건.*?부분납부 1건 포함/s);
+  assert.match(strip, /data-testid="payments-metric-rate".*?17%.*?50,000 \/ 293,000원/s);
+
+  const tablet = renderToStaticMarkup(React.createElement(TabletPaymentsSummary, { summary }));
+  assert.match(tablet, /미납.*?1건.*?부분납부 1건 포함/s);
+});
