@@ -141,7 +141,7 @@ export default function AttendancePage() {
         onStudentAdded={() => refetchAttendance()}
       />
 
-      {schedule.attendance_taken && (
+      {!!schedule.attendance_taken && (
         <div className="rounded-2xl bg-primary-soft p-4">
           <p className="text-sm font-medium text-primary">
             이 수업의 출석은 이미 끝났어요. 수정이 필요하면 관리자에게 문의해 주세요.

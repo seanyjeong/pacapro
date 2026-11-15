@@ -36,7 +36,7 @@ export function MobileAcademyEventsPage() {
                   <div className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
                     <Badge variant="default">{EVENT_TYPE_LABELS[event.event_type]}</Badge>
                     <span>{event.is_all_day ? '종일' : [event.start_time?.slice(0, 5), event.end_time?.slice(0, 5)].filter(Boolean).join(' ~ ') || '시간 미정'}</span>
-                    {event.is_holiday && <Badge variant="destructive">휴일</Badge>}
+                    {!!event.is_holiday && <Badge variant="destructive">휴일</Badge>}
                   </div>
                   <h3 className="break-words text-[15px] font-semibold">{event.title}</h3>
                   {event.description && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{event.description}</p>}

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { loadTypeScript } from './helpers/load-typescript.mjs';
 
@@ -153,4 +154,11 @@ test('P05 학생 상세 납부 내역: 서버 상태값(pending)을 한글로 �
   assert.match(html, />미납</);
   assert.match(html, />부분납부</);
   assert.match(html, />완납</);
+});
+
+test('P06 휴일·출석 마감 칸이 0(숫자)일 때 화면에 0 을 그리지 않는다', () => {
+  const events = readFileSync('src/features/mobile-academy-events/mobile-academy-events-page.tsx', 'utf8');
+  assert.match(events, /\{!!event\.is_holiday && <Badge/);
+  const attendance = readFileSync('src/app/schedules/[id]/attendance/page.tsx', 'utf8');
+  assert.match(attendance, /\{!!schedule\.attendance_taken && \(/);
 });
