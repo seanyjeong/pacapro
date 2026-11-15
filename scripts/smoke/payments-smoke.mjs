@@ -189,10 +189,12 @@ async function runNormal(browser) {
   await page.locator('tr:has-text("박민수")').waitFor();
 
   // 새 디자인: 옛 '수납 작업 보드'의 미납·총 청구 칸은 위 '학원비 요약' 줄의 같은 test id 칸(누르면 표 필터)이 되었다.
+  // 미납 칸은 미납 + 부분 납부(잔액 남은 기아림)를 함께 보여 준다
   await page.getByTestId('payments-metric-unpaid').getByRole('button').click();
   await page.locator('tr:has-text("박민수")').waitFor();
+  await page.locator('tr:has-text("기아림")').waitFor();
   await page.locator('tr:has-text("이서연")').waitFor({ state: 'hidden' });
-  if (!state.hits.some((hit) => hit.includes('/payments?') && hit.includes('payment_status=pending'))) {
+  if (!state.hits.some((hit) => hit.includes('/payments?') && /payment_status=pending(,|%2C)partial/i.test(hit))) {
     throw new Error(`missing pending metric query: ${state.hits.join(' | ')}`);
   }
   await page.getByTestId('payments-metric-total').getByRole('button', { name: /1건/ }).click();

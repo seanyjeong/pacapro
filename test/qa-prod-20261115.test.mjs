@@ -179,3 +179,28 @@ test('D1 수입 달력: 일별 합계도 받은 금액(293,000원 중 50,000원 
   const source = readFileSync('src/components/incomes/income-calendar.tsx', 'utf8');
   assert.doesNotMatch(source, /payment\.final_amount/); // 그날 상세 줄도 받은 금액
 });
+
+test('D3 미납 칸 필터: 미납 + 부분 납부를 한 번에 불러 칸 숫자와 누른 뒤 목록이 같다', async () => {
+  const { UNPAID_PAYMENT_STATUS_FILTER } = loadTypeScript('src/lib/types/payment.ts');
+  const { calculatePaymentSummary, filterPayments } = loadTypeScript('src/features/payments/payments-utils.ts');
+  const before = calculatePaymentSummary(BILLS.slice(0, 3), '2026-11');
+  const filters = { year: 2026, month: 11, payment_status: UNPAID_PAYMENT_STATUS_FILTER };
+  const listed = filterPayments(BILLS.slice(0, 3), filters, false, false, new Map());
+  assert.deepEqual(listed.map((payment) => payment.id), [11, 12]);
+  assert.equal(calculatePaymentSummary(listed, '2026-11').unpaidCount, before.unpaidCount);
+  // 한 상태를 고르면 예전처럼 그 상태만
+  assert.deepEqual(filterPayments(BILLS.slice(0, 3), { ...filters, payment_status: 'pending' }, false, false, new Map()).map((p) => p.id), [12]);
+
+  const calls = stubApi(() => ({ payments: [] }));
+  const { getPaymentsForPage } = loadTypeScript('src/features/payments/payments-page-api.ts');
+  await getPaymentsForPage(filters);
+  assert.equal(calls.at(-1).params.payment_status, 'pending,partial');
+
+  const { PaymentSummaryStrip } = loadTypeScript('src/features/payments/payment-summary-strip.tsx');
+  const strip = renderToStaticMarkup(React.createElement(PaymentSummaryStrip, {
+    summary: before, viewOnly: false, isOwner: true, filters, onFilterChange() {},
+  }));
+  assert.match(strip, /data-testid="payments-metric-unpaid"><button[^>]*ring-2/);
+  const state = readFileSync('src/features/payments/use-payments-page-state.ts', 'utf8');
+  assert.match(state, /statusFromUrl === 'unpaid'\) \{\s+updateFilters\(\{ payment_status: UNPAID_PAYMENT_STATUS_FILTER \}\)/);
+});

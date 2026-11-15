@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { inBranches, useBranchChecks } from '@/features/branches/branch-checks';
-import type { Payment, PaymentFilters } from '@/lib/types/payment';
+import { UNPAID_PAYMENT_STATUS_FILTER, type Payment, type PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
 import { getRemainingPaymentAmount, isSeasonUpcoming } from '@/lib/utils/payment-helpers';
 import {
@@ -97,7 +97,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   useEffect(() => {
     if (initialFiltersApplied) return;
     if (statusFromUrl === 'unpaid') {
-      updateFilters({ payment_status: 'pending' });
+      updateFilters({ payment_status: UNPAID_PAYMENT_STATUS_FILTER });
     }
     setInitialFiltersApplied(true);
   }, [initialFiltersApplied, statusFromUrl, updateFilters]);

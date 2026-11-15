@@ -137,5 +137,8 @@ run('수입 합계의 부분 납부 — 실제 MySQL 8', () => {
         // 상태 하나만 주는 기존 호출은 그대로
         const paidOnly = await request(app()).get(`/paca/payments?paid_year=${year}&paid_month=${month}&payment_status=paid`);
         expect(paidOnly.body.payments.map(p => p.id).sort()).toEqual([1, 2]);
+        // 미납 칸: 쉼표로 미납 + 부분 납부를 한 번에(이번 달 청구)
+        const unpaid = await request(app()).get(`/paca/payments?year=${year}&month=${Number(month)}&payment_status=pending,partial`);
+        expect(unpaid.body.payments.map(p => p.id).sort()).toEqual([3, 4]);
     });
 });

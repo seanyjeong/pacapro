@@ -1,7 +1,7 @@
 import { Banknote, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PAYMENT_STATUS_OPTIONS, PAYMENT_TYPE_OPTIONS } from '@/lib/types/payment';
+import { PAYMENT_STATUS_OPTIONS, PAYMENT_TYPE_OPTIONS, UNPAID_PAYMENT_STATUS_FILTER } from '@/lib/types/payment';
 import type { PaymentFilters } from '@/lib/types/payment';
 import type { PaymentStatusFilter, PaymentTypeFilter } from './payments-types';
 
@@ -57,6 +57,8 @@ export function PaymentFilterBar({
             {option.label}
           </option>
         ))}
+        {/* 미납 칸·대시보드 '미납'으로 들어왔을 때의 필터(미납 + 부분 납부) */}
+        <option value={UNPAID_PAYMENT_STATUS_FILTER}>미납·부분납부</option>
       </select>
 
       <select

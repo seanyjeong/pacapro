@@ -116,6 +116,29 @@ describe('GET /paca/payments', () => {
         expect(params).toEqual([5, '2026-04']);
     });
 
+    // 리뷰 D3 — 미납 칸(미납 + 부분 납부)은 두 상태를 한 번에 부른다. 한 값을 보내는 기존 호출은 그대로.
+    test('필터: payment_status 한 값은 예전처럼 = ?, 쉼표로 여러 값이면 IN', async () => {
+        await request(makeApp()).get('/paca/payments?payment_status=pending&year=2026&month=11&include_previous_unpaid=true');
+        let [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toContain('AND p.payment_status = ?');
+        expect(sql).not.toContain('p.payment_status IN (');
+        expect(params).toEqual([5, 'pending', '2026-11', '2026-11']);
+
+        pool.execute.mockClear();
+        await request(makeApp()).get('/paca/payments?payment_status=pending,partial&year=2026&month=11&include_previous_unpaid=true');
+        [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toContain('AND p.payment_status IN (?, ?)');
+        expect(sql).not.toContain('AND p.payment_status = ?');
+        expect(params).toEqual([5, 'pending', 'partial', '2026-11', '2026-11']);
+    });
+
+    test('필터: 쉼표로 준 상태에 정해지지 않은 값이 있으면 400, 조회하지 않는다', async () => {
+        const res = await request(makeApp()).get(`/paca/payments?payment_status=${encodeURIComponent("pending,paid' OR 1=1")}`);
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('납부 상태를 확인해주세요.');
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('500: 한국어 메시지 + e.message 누출 0건', async () => {
         pool.execute.mockRejectedValueOnce(new Error('DB connection lost'));
         const res = await request(makeApp()).get('/paca/payments');

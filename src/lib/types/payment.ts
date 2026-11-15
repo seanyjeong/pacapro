@@ -76,10 +76,13 @@ export interface BulkMonthlyChargeData {
   month: number;
 }
 
+// 미납 칸·대시보드 '미납' 진입 필터: 미납 + 부분 납부(서버 GET /payments 는 쉼표로 여러 상태를 받는다)
+export const UNPAID_PAYMENT_STATUS_FILTER = 'pending,partial';
+
 // 학원비 필터 인터페이스
 export interface PaymentFilters {
   student_id?: number;
-  payment_status?: 'pending' | 'partial' | 'paid';
+  payment_status?: 'pending' | 'partial' | 'paid' | typeof UNPAID_PAYMENT_STATUS_FILTER;
   payment_type?: 'monthly' | 'season' | 'material' | 'other';
   year?: number;
   month?: number;

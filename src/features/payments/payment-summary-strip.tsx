@@ -1,6 +1,6 @@
 import { AlertCircle, Banknote, CheckCircle2, Percent } from 'lucide-react';
 import { StatTile } from '@/components/ui/page';
-import type { PaymentFilters } from '@/lib/types/payment';
+import { UNPAID_PAYMENT_STATUS_FILTER, type PaymentFilters } from '@/lib/types/payment';
 import { cn } from '@/lib/utils/cn';
 import type { PaymentSummary } from './payments-types';
 
@@ -30,7 +30,7 @@ export function PaymentSummaryStrip({ summary, viewOnly, isOwner, filters, onFil
   }
 
   const allSelected = !filters.payment_status;
-  const unpaidSelected = filters.payment_status === 'pending';
+  const unpaidSelected = filters.payment_status === UNPAID_PAYMENT_STATUS_FILTER;
 
   // 총 청구·미납 칸을 누르면 표 필터가 바뀐다(옛 수납 작업 보드의 숫자 칸과 같은 동작).
   return (
@@ -65,7 +65,7 @@ export function PaymentSummaryStrip({ summary, viewOnly, isOwner, filters, onFil
             : undefined}
           tone="danger"
           icon={AlertCircle}
-          onClick={() => onFilterChange({ payment_status: 'pending' })}
+          onClick={() => onFilterChange({ payment_status: UNPAID_PAYMENT_STATUS_FILTER })}
         />
       </div>
       <div className="min-w-0" data-testid="payments-metric-rate">

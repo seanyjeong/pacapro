@@ -60,7 +60,7 @@ export function filterPayments(
       if (query && !matchesStudentIdentity(payment, query)) return false;
       return true;
     }
-    if (filters.payment_status && payment.payment_status !== filters.payment_status) return false;
+    if (filters.payment_status && !filters.payment_status.split(',').includes(payment.payment_status)) return false;
     if (filters.payment_type && payment.payment_type !== filters.payment_type) return false;
     if (viewOnly && (payment.payment_status === 'paid' || isSeasonUpcoming(payment))) return false;
     if (query && !matchesStudentIdentity(payment, query)) return false;

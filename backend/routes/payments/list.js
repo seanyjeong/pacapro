@@ -5,7 +5,7 @@
  *         mount path: '/paca/payments'
  *
  * Endpoint (3건 — 모두 정적 경로):
- *   - GET /              — 전체 결제 목록 (필터: student_id/payment_status/payment_type/year/month/include_previous_unpaid/paid_year/paid_month)
+ *   - GET /              — 전체 결제 목록 (필터: student_id/payment_status(쉼표로 여러 값)/payment_type/year/month/include_previous_unpaid/paid_year/paid_month)
  *   - GET /unpaid        — 미납/연체 결제 목록 (학원 전체)
  *   - GET /unpaid-today  — 오늘 출석 예정 학생 중 미납자 (PACA 자동화 계정 호환 — verifyToken 만)
  *
@@ -20,7 +20,7 @@
  *   5xx               → { error:'Server Error', message:'...' }
  *
  * DB 호출 (ADR-005): pool.execute (3건). db.query 잔존 0건.
- * ADR-016 IN 절: 본 파일 IN 절 사용 0건.
+ * ADR-016 IN 절: GET / 의 여러 납부 상태 1건 — 자리표시자를 값 수만큼 명시 전개.
  * ADR-007: decrypt 시그니처 무변경 (decryptPaymentArray 헬퍼 — 학생 이름 복호화).
  *
  * 분리 결정 (ADR-006): ~210줄 — 분리 불요.
@@ -29,6 +29,9 @@
 const { pool, decryptPaymentArray, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql, dueUnpaidSql } = require('../../utils/paymentAmountSql');
+
+// 쉼표로 여러 납부 상태를 줄 때 받는 값(student_payments.payment_status 의 값들)
+const PAYMENT_STATUSES = ['pending', 'partial', 'paid', 'overdue', 'cancelled'];
 
 module.exports = function(router) {
 
@@ -87,8 +90,21 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
         }
 
         if (payment_status) {
-            query += ' AND p.payment_status = ?';
-            params.push(payment_status);
+            // 한 값은 예전 그대로, 쉼표로 여러 값(예: 미납 칸의 pending,partial)이면 정해진 상태만 IN 으로
+            const statuses = String(payment_status).split(',');
+            if (statuses.length === 1) {
+                query += ' AND p.payment_status = ?';
+                params.push(payment_status);
+            } else {
+                if (!statuses.every(status => PAYMENT_STATUSES.includes(status))) {
+                    return res.status(400).json({
+                        error: 'Validation Error',
+                        message: '납부 상태를 확인해주세요.'
+                    });
+                }
+                query += ` AND p.payment_status IN (${statuses.map(() => '?').join(', ')})`;
+                params.push(...statuses);
+            }
         }
 
         if (payment_type) {
