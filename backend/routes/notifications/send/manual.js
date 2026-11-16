@@ -30,7 +30,7 @@ const {
     ENCRYPTION_KEY,
     logger,
 } = require('./_utils');
-const { remainingAmountSql, dueUnpaidSql } = require('../../../utils/paymentAmountSql');
+const { remainingAmountSql, dueUnpaidSql, seasonNoticeReadySql } = require('../../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -132,6 +132,7 @@ module.exports = function(router) {
                     AND p.year_month = ?
                     AND p.payment_status IN ('pending', 'partial')
                     AND ${dueUnpaidSql('p')}
+                    AND ${seasonNoticeReadySql('p')}
                     AND ${remainingAmountSql('p')} > 0
                     AND s.status = 'active'
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)

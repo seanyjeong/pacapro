@@ -12,7 +12,7 @@ const {
     assertWebhookApiKey,
     logger,
 } = require('./_utils');
-const { remainingAmountSql, dueUnpaidSql } = require('../../../utils/paymentAmountSql');
+const { remainingAmountSql, dueUnpaidSql, seasonNoticeReadySql } = require('../../../utils/paymentAmountSql');
 
 module.exports = function(router) {
     router.post('/send-unpaid-today-auto-sens', async (req, res) => {
@@ -73,6 +73,7 @@ module.exports = function(router) {
                            AND s.deleted_at IS NULL
                            AND p.payment_status IN ('pending', 'partial')
                            AND ${dueUnpaidSql('p')}
+                           AND ${seasonNoticeReadySql('p')}
                            AND ${remainingAmountSql('p')} > 0
                            AND p.year_month = ?
                            AND (

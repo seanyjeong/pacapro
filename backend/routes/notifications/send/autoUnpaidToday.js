@@ -13,7 +13,7 @@ const {
     ENCRYPTION_KEY,
     logger,
 } = require('./_utils');
-const { remainingAmountSql, dueUnpaidSql } = require('../../../utils/paymentAmountSql');
+const { remainingAmountSql, dueUnpaidSql, seasonNoticeReadySql } = require('../../../utils/paymentAmountSql');
 
 module.exports = function(router) {
     router.post('/send-unpaid-today-auto', verifyNotificationAutomation, async (req, res) => {
@@ -87,6 +87,7 @@ module.exports = function(router) {
                         WHERE p.academy_id = ?
                         AND p.payment_status IN ('pending', 'partial')
                         AND ${dueUnpaidSql('p')}
+                        AND ${seasonNoticeReadySql('p')}
                         AND ${remainingAmountSql('p')} > 0
                         AND p.year_month = ?
                         AND s.status = 'active'

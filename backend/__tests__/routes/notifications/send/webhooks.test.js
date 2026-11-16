@@ -180,6 +180,8 @@ describe('POST /send-unpaid-today-auto-sens (X-API-Key)', () => {
         expect(unpaidQuery).toContain('GREATEST');
         expect(unpaidQuery).toContain('p.paid_amount');
         expect(unpaidQuery).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
+        // 시즌비는 시즌 시작일 + 5일(한국 날짜)부터 알림 대상
+        expect(unpaidQuery).toContain("DATE_ADD(notice_season.season_start_date, INTERVAL 5 DAY) <= DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+09:00'))");
         expect(unpaidQuery).toContain('nl.academy_id = s.academy_id');
 
         // ADR-007: sendAlimtalk 첫 인자 객체 셰이프 보존
