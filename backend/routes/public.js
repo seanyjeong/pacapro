@@ -487,6 +487,7 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
 }
 
 router.use(require('./public/reservation'));
+router.use(require('./public/enrolledConsultation'));
 router.use(require('./public/checkSlug'));
 
 module.exports = router;

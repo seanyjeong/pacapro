@@ -9,7 +9,8 @@ import type {
   SettingsResponse,
   WeeklyHour,
   ChecklistTemplate,
-  ConsultationStatus
+  ConsultationStatus,
+  LearningType
 } from '../types/consultation';
 
 // ============================================
@@ -45,6 +46,53 @@ export async function submitConsultation(
 ): Promise<{ message: string; consultationId: number }> {
   const response = await fetch(
     `${PACA_API_BASE_URL}/public/consultation/${slug}/apply`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '상담 신청에 실패했습니다.');
+  }
+  return response.json();
+}
+
+// 재원생 확인 (이름 + 학생·학부모 전화번호)
+export async function verifyEnrolledStudent(
+  slug: string,
+  data: { studentName: string; phone: string }
+): Promise<{ matched: true }> {
+  const response = await fetch(
+    `${PACA_API_BASE_URL}/public/consultation/${slug}/enrolled/verify`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '재원생 확인에 실패했습니다.');
+  }
+  return response.json();
+}
+
+// 재원생 상담 신청
+export async function submitEnrolledConsultation(
+  slug: string,
+  data: {
+    studentName: string;
+    phone: string;
+    learningType: LearningType;
+    inquiryContent: string;
+    preferredDate: string;
+    preferredTime: string;
+  }
+): Promise<{ message: string; consultationId: number }> {
+  const response = await fetch(
+    `${PACA_API_BASE_URL}/public/consultation/${slug}/enrolled/apply`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
