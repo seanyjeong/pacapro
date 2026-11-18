@@ -13,7 +13,7 @@ const profile = {
   memo: text(4000), notes: text(4000),
 };
 const record = {
-  consultation_date: date, consultation_type: Joi.string().valid('regular', 'admission', 'parent', 'counseling'),
+  consultation_date: date, consultation_type: Joi.string().valid('regular', 'admission', 'parent', 'counseling', 'jungsi_season', 'susi_season'),
   admission_type: Joi.string().valid('early', 'regular', 'both').allow(null),
   school_grade_avg: Joi.number().min(0).max(9.99).allow(null),
   mock_test_scores: Joi.object().max(50).allow(null), physical_records: Joi.object().max(60).allow(null),
@@ -41,7 +41,7 @@ const commands = {
   consultation_create: { resource: 'consultations', provider: 'paca', label: '재원생 상담 기록 등록',
     schema: Joi.object({ student_id: Joi.number().integer().positive().required(),
       preferred_date: date.required(), preferred_time: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required(),
-      learning_type: Joi.string().valid('regular', 'admission', 'parent', 'counseling').required(),
+      learning_type: Joi.string().valid('regular', 'admission', 'parent', 'counseling', 'jungsi_season', 'susi_season').required(),
       admin_notes: text(10000), consultation_memo: text(10000) }).unknown(false) },
   consultation_update: { resource: 'consultations', provider: 'paca', label: '상담 메모 부분 수정',
     schema: Joi.object({ admin_notes: text(10000), consultation_memo: text(10000) }).min(1).unknown(false) },

@@ -2,7 +2,7 @@
 
 export type ConsultationType = 'new_registration' | 'learning';
 export type ConsultationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-export type LearningType = 'regular' | 'admission' | 'parent' | 'counseling';
+export type LearningType = 'regular' | 'admission' | 'parent' | 'counseling' | 'jungsi_season' | 'susi_season';
 
 // 체크리스트 입력 필드 타입
 export interface ChecklistInput {
@@ -270,7 +270,9 @@ export const LEARNING_TYPE_LABELS: Record<LearningType, string> = {
   regular: '정기상담',
   admission: '진학상담',
   parent: '학부모상담',
-  counseling: '고민상담'
+  counseling: '고민상담',
+  jungsi_season: '정시시즌',
+  susi_season: '수시시즌'
 };
 
 // 상담 상태 라벨

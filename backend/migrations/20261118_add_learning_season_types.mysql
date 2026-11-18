@@ -1,0 +1,9 @@
+-- Backup first. Apply before deploying code that writes the new learning types.
+-- 재원생 상담 종류에 정시시즌(jungsi_season)·수시시즌(susi_season)을 더한다.
+-- Append at the end of the ENUM so MySQL 8 can use INSTANT without rebuilding existing rows.
+ALTER TABLE consultations
+    MODIFY COLUMN learning_type ENUM('regular','admission','parent','counseling','jungsi_season','susi_season') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+    ALGORITHM=INSTANT;
+ALTER TABLE student_consultations
+    MODIFY COLUMN consultation_type ENUM('regular','admission','parent','counseling','jungsi_season','susi_season') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    ALGORITHM=INSTANT;

@@ -17,7 +17,9 @@ const LEARNING_TYPE_LABELS = {
     regular: '정기상담',
     admission: '진학상담',
     parent: '학부모상담',
-    counseling: '고민상담'
+    counseling: '고민상담',
+    jungsi_season: '정시시즌',
+    susi_season: '수시시즌'
 };
 
 // POST /paca/public/consultation/:slug/enrolled/verify - 재원생 확인 (일정 고르기 전에)

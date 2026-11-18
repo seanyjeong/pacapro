@@ -202,6 +202,8 @@ export function EnrolledConsultationCreateDialog({
                   <SelectItem value="admission">진학 상담</SelectItem>
                   <SelectItem value="parent">학부모 상담</SelectItem>
                   <SelectItem value="counseling">고민 상담</SelectItem>
+                  <SelectItem value="jungsi_season">정시시즌</SelectItem>
+                  <SelectItem value="susi_season">수시시즌</SelectItem>
                 </SelectContent>
               </Select>
             </div>

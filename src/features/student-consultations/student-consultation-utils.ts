@@ -11,6 +11,8 @@ export const CONSULTATION_TYPE_LABELS: Record<string, string> = {
     admission: '진학상담',
     parent: '학부모상담',
     counseling: '고민상담',
+    jungsi_season: '정시시즌',
+    susi_season: '수시시즌',
 };
 
 export const INITIAL_STATUS_LABELS: Record<string, string> = {

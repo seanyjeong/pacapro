@@ -1,0 +1,5 @@
+-- Manual rollback only. 정시시즌·수시시즌으로 저장된 상담이 있으면 먼저 다른 종류로 바꿔야 한다(아니면 실패).
+ALTER TABLE consultations
+    MODIFY COLUMN learning_type ENUM('regular','admission','parent','counseling') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL;
+ALTER TABLE student_consultations
+    MODIFY COLUMN consultation_type ENUM('regular','admission','parent','counseling') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;

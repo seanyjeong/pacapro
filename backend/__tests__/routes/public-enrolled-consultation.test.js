@@ -134,6 +134,31 @@ describe('재원생 상담 신청 공개 API', () => {
         expect(pushService.sendPushToAcademyAdmins).toHaveBeenCalledWith(2, expect.objectContaining({ title: '재원생 상담 신청' }));
     });
 
+    test('정시시즌·수시시즌 상담 종류도 받는다', async () => {
+        db.query
+            .mockResolvedValueOnce([[academyRow]])
+            .mockResolvedValueOnce([[studentRow()]])
+            .mockResolvedValueOnce([[{ count: 0 }]])
+            .mockResolvedValueOnce([{ insertId: 902 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/public/consultation/imaxnew/enrolled/apply')
+            .send({ ...applyBody, learningType: 'jungsi_season' });
+
+        expect(res.status).toBe(201);
+        expect(db.query.mock.calls[3][1][1]).toBe('jungsi_season');
+        expect(pushService.sendPushToAcademyAdmins).toHaveBeenCalledWith(2, expect.objectContaining({ body: expect.stringContaining('정시시즌') }));
+    });
+
+    test('모르는 상담 종류는 거부한다', async () => {
+        const res = await request(makeApp())
+            .post('/paca/public/consultation/imaxnew/enrolled/apply')
+            .send({ ...applyBody, learningType: 'winter_season' });
+
+        expect(res.status).toBe(400);
+        expect(db.query).not.toHaveBeenCalled();
+    });
+
     test('이미 찬 시간이면 409 로 막는다', async () => {
         db.query
             .mockResolvedValueOnce([[academyRow]])

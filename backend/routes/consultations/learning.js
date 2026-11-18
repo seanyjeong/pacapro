@@ -41,7 +41,7 @@ module.exports = function (router) {
                 studentId,
                 preferredDate,
                 preferredTime,  // 시간 (스케줄 달력 표시용)
-                learningType,   // regular, admission, parent, counseling
+                learningType,   // regular, admission, parent, counseling, jungsi_season, susi_season
                 adminNotes,
                 mockExamScores  // { '3월': { 국어: '2', 수학: '1', ... }, ... }
             } = req.body;
@@ -157,7 +157,9 @@ module.exports = function (router) {
                     regular: '정기상담',
                     admission: '진학상담',
                     parent: '학부모상담',
-                    counseling: '고민상담'
+                    counseling: '고민상담',
+                    jungsi_season: '정시시즌',
+                    susi_season: '수시시즌'
                 };
                 await pushService.sendPushToAcademyAdmins(academyId, {
                     title: '재원생 상담 등록',
