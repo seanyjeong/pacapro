@@ -11,7 +11,7 @@ import { submitEnrolledConsultation, verifyEnrolledStudent } from '@/lib/api/con
 import { LEARNING_TYPE_LABELS, type ConsultationPageInfo, type LearningType, type TimeSlot } from '@/lib/types/consultation';
 import { cn } from '@/lib/utils/cn';
 import { fetchBookingPageInfo, fetchBookingSlots } from './booking-api';
-import { BOOKING_PAGE_ERROR, BOOKING_SLOTS_ERROR, BOOKING_SUBMIT_ERROR, formatPhoneNumber } from './booking-constants';
+import { BOOKING_PAGE_ERROR, BOOKING_SLOTS_ERROR, BOOKING_SUBMIT_ERROR, ENROLLED_BOOKING_SLUGS, formatPhoneNumber } from './booking-constants';
 import { BookingError } from './booking-error';
 import { BookingLoading } from './booking-loading';
 import { BookingScheduleStep } from './booking-schedule-step';
@@ -20,15 +20,13 @@ import { BookingActionBar, BookingCard } from './booking-ui';
 
 const fieldClass = 'h-12 w-full min-w-0 rounded-xl border border-transparent bg-muted px-4 text-base text-foreground transition-colors focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10';
 const learningTypes = Object.keys(LEARNING_TYPE_LABELS) as LearningType[];
-// 우선 일산만 연다(서버 routes/public/enrolledConsultation.js 의 목록과 같게 둔다).
-const ENABLED_ACADEMY_SLUGS = ['imaxnew'];
 
 /** 재원생 상담 신청: 이름·전화번호로 재원생 확인 → 신규 상담과 같은 시간표에서 시간 선택 → 신청(원장님 확인 전까지 대기). */
 export function EnrolledBookingPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  if (!ENABLED_ACADEMY_SLUGS.includes(slug)) {
+  if (!ENROLLED_BOOKING_SLUGS.includes(slug)) {
     return (
       <div className="mx-auto flex min-h-[60vh] w-full max-w-xl flex-col justify-center" data-testid="enrolled-booking-closed">
         <div className="flex flex-col items-center rounded-2xl bg-card px-5 py-10 text-center">

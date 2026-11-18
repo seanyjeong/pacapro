@@ -1,5 +1,9 @@
 import type { ConsultationFormData, StudentGrade } from '@/lib/types/consultation';
 
+// 재원생 상담 신청(/c/학원주소/enrolled)을 연 학원. 우선 일산만 연다.
+// 서버 backend/routes/public/enrolledConsultation.js 의 ENABLED_ACADEMY_SLUGS 와 같게 둔다.
+export const ENROLLED_BOOKING_SLUGS = ['imaxnew'];
+
 export const BOOKING_PAGE_ERROR = '상담 예약 페이지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 export const BOOKING_SLOTS_ERROR = '상담 가능 시간을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 export const BOOKING_SUBMIT_ERROR = '상담 신청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';

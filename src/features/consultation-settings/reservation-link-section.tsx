@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { ENROLLED_BOOKING_SLUGS } from '@/features/consultation-booking/booking-constants';
 
 interface ReservationLinkSectionProps {
   isEnabled?: boolean;
@@ -14,11 +15,13 @@ interface ReservationLinkSectionProps {
   checkingSlug: boolean;
   savingSlug: boolean;
   copied: boolean;
+  enrolledCopied: boolean;
   onEnabledChange: (checked: boolean) => void;
   onSlugChange: (value: string) => void;
   onCheckSlug: () => void;
   onSaveSlug: () => void;
   onCopyLink: () => void;
+  onCopyEnrolledLink: () => void;
 }
 
 export function ReservationLinkSection({
@@ -29,11 +32,13 @@ export function ReservationLinkSection({
   checkingSlug,
   savingSlug,
   copied,
+  enrolledCopied,
   onEnabledChange,
   onSlugChange,
   onCheckSlug,
   onSaveSlug,
   onCopyLink,
+  onCopyEnrolledLink,
 }: ReservationLinkSectionProps) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -104,6 +109,28 @@ export function ReservationLinkSection({
                 </Button>
               </Link>
             </div>
+          </div>
+        )}
+
+        {slug && originalSlug && ENROLLED_BOOKING_SLUGS.includes(originalSlug) && (
+          <div className="space-y-1">
+            <Label>재원생 상담 신청 링크</Label>
+            <div className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary-soft p-3 sm:flex-row sm:items-center">
+              <span className="min-w-0 flex-1 break-all text-sm text-primary">
+                {origin}/c/{originalSlug}/enrolled
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={onCopyEnrolledLink} aria-label="재원생 링크 복사">
+                  {enrolledCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+                <Link href={`/c/${originalSlug}/enrolled`} target="_blank">
+                  <Button variant="outline" size="sm" aria-label="재원생 신청 페이지 열기">
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">재원생이 이름·전화번호로 확인한 뒤 신규상담과 같은 시간표에서 상담을 신청합니다.</p>
           </div>
         )}
       </CardContent>

@@ -72,11 +72,13 @@ export function ConsultationSettingsPage() {
                 checkingSlug={state.checkingSlug}
                 savingSlug={state.savingSlug}
                 copied={state.copied}
+                enrolledCopied={state.enrolledCopied}
                 onEnabledChange={(checked) => state.updateSetting('isEnabled', checked)}
                 onSlugChange={state.setSlugValue}
                 onCheckSlug={state.checkSlug}
                 onSaveSlug={state.handleSaveSlug}
                 onCopyLink={state.copyLink}
+                onCopyEnrolledLink={state.copyEnrolledLink}
               />
 
               <PageSettingsSection

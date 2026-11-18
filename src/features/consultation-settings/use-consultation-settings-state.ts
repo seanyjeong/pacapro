@@ -44,6 +44,7 @@ export function useConsultationSettingsState() {
   const [addChecklistModalOpen, setAddChecklistModalOpen] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [enrolledCopied, setEnrolledCopied] = useState(false);
   const [defaultStartTime, setDefaultStartTime] = useState('09:00:00');
   const [defaultEndTime, setDefaultEndTime] = useState('18:00:00');
   const [addingHolidays, setAddingHolidays] = useState(false);
@@ -374,6 +375,14 @@ export function useConsultationSettingsState() {
     toast.success('링크가 복사되었습니다.');
   };
 
+  const copyEnrolledLink = () => {
+    const url = `${window.location.origin}/c/${originalSlug}/enrolled`;
+    void navigator.clipboard.writeText(url);
+    setEnrolledCopied(true);
+    setTimeout(() => setEnrolledCopied(false), 2000);
+    toast.success('재원생 링크가 복사되었습니다.');
+  };
+
   return {
     loading,
     saving,
@@ -399,6 +408,7 @@ export function useConsultationSettingsState() {
     addChecklistModalOpen,
     savingChecklist,
     copied,
+    enrolledCopied,
     defaultStartTime,
     defaultEndTime,
     addingHolidays,
@@ -431,5 +441,6 @@ export function useConsultationSettingsState() {
     saveChecklist,
     resetToDefaultChecklist,
     copyLink,
+    copyEnrolledLink,
   };
 }
