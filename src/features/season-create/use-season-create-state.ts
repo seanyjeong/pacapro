@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { SeasonFormData, TimeSlot } from '@/lib/types/season';
+import { toggleOperatingDaySlot } from '@/lib/types/season';
 import { createSeasonFromForm } from './season-create-api';
 import { createInitialSeasonForm, SEASON_CREATE_SAVE_ERROR, validateSeasonCreateForm } from './season-create-utils';
 
@@ -19,6 +20,13 @@ export function useSeasonCreateState(onCreated: () => void) {
       operating_days: previous.operating_days.includes(day)
         ? previous.operating_days.filter((value) => value !== day)
         : [...previous.operating_days, day].sort((a, b) => a - b),
+    }));
+  };
+
+  const toggleDaySlot = (day: number, timeSlot: TimeSlot) => {
+    setFormData((previous) => ({
+      ...previous,
+      operating_day_slots: toggleOperatingDaySlot(previous.operating_day_slots, day, timeSlot),
     }));
   };
 
@@ -65,6 +73,7 @@ export function useSeasonCreateState(onCreated: () => void) {
     formData,
     submit,
     submitting,
+    toggleDaySlot,
     toggleOperatingDay,
     toggleTimeSlot,
   };

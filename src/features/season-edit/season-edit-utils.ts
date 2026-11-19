@@ -1,6 +1,6 @@
 import { DEFAULT_SEASON_MONTHLY_POLICY, normalizeSeasonMonthlyPolicy } from '@/lib/season-monthly-policy';
-import type { GradeTimeSlots, Season, SeasonFormData, SeasonStatus, SeasonType } from '@/lib/types/season';
-import { parseOperatingDays } from '@/lib/types/season';
+import type { GradeTimeSlots, OperatingDaySlots, Season, SeasonFormData, SeasonStatus, SeasonType } from '@/lib/types/season';
+import { buildOperatingDaySlotsPayload, parseOperatingDays, parseOperatingDaySlots } from '@/lib/types/season';
 
 export const SEASON_EDIT_LOAD_ERROR = '시즌 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 export const SEASON_EDIT_SAVE_ERROR = '시즌을 수정하지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -14,6 +14,7 @@ export interface SeasonEditRequest {
   continuous_to_season_type: SeasonType | null;
   default_season_fee: number;
   grade_time_slots: SeasonFormData['grade_time_slots'];
+  operating_day_slots: OperatingDaySlots | null;
   non_season_end_date: string;
   operating_days: number[];
   season_end_date: string;
@@ -37,6 +38,7 @@ export function mapSeasonToEditForm(season: Season): SeasonFormData {
     grade_time_slots: normalizeGradeTimeSlots(season.grade_time_slots),
     non_season_end_date: season.non_season_end_date || '',
     operating_days: parseOperatingDays(season.operating_days),
+    operating_day_slots: parseOperatingDaySlots(season.operating_day_slots),
     season_fee: Number.parseFloat(season.default_season_fee) || 0,
     season_monthly_policy: normalizeSeasonMonthlyPolicy(season.season_monthly_policy),
     season_name: season.season_name,
@@ -71,6 +73,7 @@ export function buildSeasonEditPayload(formData: SeasonFormData): SeasonEditRequ
     grade_time_slots: formData.grade_time_slots,
     non_season_end_date: formData.non_season_end_date || getPreviousDate(formData.start_date),
     operating_days: formData.operating_days,
+    operating_day_slots: buildOperatingDaySlotsPayload(formData.operating_days, formData.operating_day_slots),
     season_end_date: formData.end_date,
     free_lesson_end_date: formData.free_lesson_end_date || null,
     post_free_action: formData.post_free_action || null,

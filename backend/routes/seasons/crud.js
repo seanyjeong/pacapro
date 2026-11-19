@@ -39,6 +39,7 @@ const { verifyToken, requireRole, checkPermission } = require('../../middleware/
 const { isSeasonMonthlyPolicy } = require('../../utils/seasonMonthlyPolicy');
 const { validateSeasonAftercare } = require('../../services/seasonAftercarePolicy');
 const { validateSeasonCreate, insertSeason } = require('../../services/seasonCreateService');
+const { validateOperatingDaySlots } = require('../../utils/seasonDaySlots');
 
 // 지점별 시즌: null = 전 지점(지금과 같음). 값이 있으면 이 학원의 지점이어야 한다. 문제 없으면 null.
 async function seasonBranchError(academyId, branchId) {
@@ -111,6 +112,7 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             non_season_end_date,
             operating_days,
             grade_time_slots,
+            operating_day_slots,
             default_season_fee,
             payment_due_date,
             season_monthly_policy,
@@ -176,6 +178,14 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         if (grade_time_slots !== undefined) {
             updates.push('grade_time_slots = ?');
             params.push(grade_time_slots ? JSON.stringify(grade_time_slots) : null);
+        }
+        if (operating_day_slots !== undefined) {
+            const daySlotsError = validateOperatingDaySlots(operating_day_slots);
+            if (daySlotsError) {
+                return res.status(400).json({ error: 'Validation Error', message: daySlotsError });
+            }
+            updates.push('operating_day_slots = ?');
+            params.push(operating_day_slots ? JSON.stringify(operating_day_slots) : null);
         }
         if (default_season_fee !== undefined) {
             updates.push('default_season_fee = ?');

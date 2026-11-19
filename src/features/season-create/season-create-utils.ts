@@ -1,5 +1,6 @@
 import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
-import type { SeasonFormData, SeasonType } from '@/lib/types/season';
+import type { OperatingDaySlots, SeasonFormData, SeasonType } from '@/lib/types/season';
+import { buildOperatingDaySlotsPayload } from '@/lib/types/season';
 
 export const SEASON_CREATE_SAVE_ERROR = '시즌을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.';
 const CONTINUOUS_TARGET_SEASON_TYPE: SeasonType = 'regular';
@@ -11,6 +12,7 @@ export interface SeasonCreateRequest {
   continuous_to_season_type: SeasonType | null;
   default_season_fee: number;
   grade_time_slots: SeasonFormData['grade_time_slots'];
+  operating_day_slots: OperatingDaySlots | null;
   non_season_end_date: string;
   operating_days: number[];
   season_end_date: string;
@@ -67,6 +69,7 @@ export function buildSeasonCreatePayload(formData: SeasonFormData): SeasonCreate
     grade_time_slots: formData.grade_time_slots,
     non_season_end_date: formData.non_season_end_date || getPreviousDate(formData.start_date),
     operating_days: formData.operating_days,
+    operating_day_slots: buildOperatingDaySlotsPayload(formData.operating_days, formData.operating_day_slots),
     season_end_date: formData.end_date,
     free_lesson_end_date: formData.free_lesson_end_date || null,
     post_free_action: formData.post_free_action || null,

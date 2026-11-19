@@ -7,6 +7,7 @@ import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
 import { SeasonMonthlyPolicyControl } from '@/features/seasons/season-monthly-policy-control';
 import { SeasonAftercareControl } from '@/features/seasons/season-aftercare-control';
 import { SeasonBranchField } from '@/features/seasons/season-branch-field';
+import { SeasonDaySlotsField } from '@/features/seasons/season-day-slots-field';
 import type { ContinuousDiscountType, SeasonFormData, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -17,6 +18,7 @@ interface SeasonCreateFormProps {
   onCancel: () => void;
   onChange: (field: keyof SeasonFormData, value: unknown) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onToggleDaySlot: (day: number, timeSlot: TimeSlot) => void;
   onToggleOperatingDay: (day: number) => void;
   onToggleTimeSlot: (grade: string, timeSlot: TimeSlot) => void;
   submitting: boolean;
@@ -31,6 +33,7 @@ export function SeasonCreateForm({
   onCancel,
   onChange,
   onSubmit,
+  onToggleDaySlot,
   onToggleOperatingDay,
   onToggleTimeSlot,
   submitting,
@@ -129,6 +132,12 @@ export function SeasonCreateForm({
               })}
             </div>
           </div>
+
+          <SeasonDaySlotsField
+            operatingDays={formData.operating_days}
+            daySlots={formData.operating_day_slots}
+            onToggle={onToggleDaySlot}
+          />
 
           <div>
             <p className="text-[13px] font-semibold text-secondary-foreground">학년별 수업 시간대</p>

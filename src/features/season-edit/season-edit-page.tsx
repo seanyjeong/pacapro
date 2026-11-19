@@ -34,6 +34,7 @@ export function SeasonEditPage() {
         onChange={state.changeField}
         onSubmit={state.submit}
         onToggleOperatingDay={state.toggleOperatingDay}
+        onToggleDaySlot={state.toggleDaySlot}
         onToggleTimeSlot={state.toggleTimeSlot}
         saving={state.saving}
       />

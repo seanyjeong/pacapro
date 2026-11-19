@@ -5,6 +5,7 @@
 
 const pool = require('../config/database');
 const logger = require('../utils/logger');
+const { parseOperatingDaySlots, slotsForDay } = require('../utils/seasonDaySlots');
 
 /**
  * 학생을 시즌 스케줄에 자동 배정 (시즌 기간 동안 운영 요일 + 시간대 별 attendance 생성)
@@ -21,6 +22,9 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
                 ? JSON.parse(season.grade_time_slots)
                 : season.grade_time_slots)
             : null;
+
+        // 요일별 운영 시간대. 없으면 모든 운영 요일에 같은 시간대(지금과 같음)
+        const operatingDaySlots = parseOperatingDaySlots(season.operating_day_slots);
 
         let timeSlots = [];
 
@@ -70,7 +74,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
             if (numericDays.includes(dayOfWeek)) {
                 const dateStr = currentDate.toISOString().split('T')[0];
 
-                for (const timeSlot of timeSlots) {
+                for (const timeSlot of slotsForDay(operatingDaySlots, dayOfWeek, timeSlots)) {
                     let [schedules] = await dbConn.execute(
                         `SELECT id FROM class_schedules
                          WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,

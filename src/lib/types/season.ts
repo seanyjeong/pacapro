@@ -23,6 +23,10 @@ export interface GradeTimeSlots {
   [grade: string]: TimeSlot[]; // { "고3": ["afternoon", "evening"], "N수": ["morning", "afternoon"] }
 }
 
+// 요일별 운영 시간대 { "1": ["morning","afternoon","evening"], "2": ["morning","afternoon"] } (키 = 요일 0~6)
+// 키가 없는 요일은 모든 시간대를 운영한다. 시즌 수업 일정만 따르고 일할계산·환불은 운영 요일로 센다.
+export type OperatingDaySlots = Record<string, TimeSlot[]>;
+
 // 시즌 대상 학년 (고3, N수만 시즌 사용)
 export const SEASON_TARGET_GRADES = ['고3', 'N수'] as const;
 export type SeasonTargetGrade = typeof SEASON_TARGET_GRADES[number];
@@ -43,6 +47,7 @@ export interface Season {
   non_season_end_date: string | null; // 비시즌 종강일 (일할계산용)
   operating_days: number[] | string; // JSON string 또는 배열
   grade_time_slots: GradeTimeSlots | string | null; // 학년별 시간대 설정
+  operating_day_slots?: OperatingDaySlots | string | null; // 요일별 운영 시간대. null = 모든 요일 전부
   default_season_fee: string; // 백엔드 필드명 (decimal)
   payment_due_date?: string | null; // 시즌비 납부 마감일 (null이면 등록일+7일 폴백)
   season_monthly_policy?: SeasonMonthlyPolicy | null; // 시즌 기간 월납부 처리 방식
@@ -68,6 +73,7 @@ export interface SeasonFormData {
   non_season_end_date?: string;
   operating_days: number[];
   grade_time_slots?: GradeTimeSlots; // 학년별 시간대 설정
+  operating_day_slots?: OperatingDaySlots; // 요일별 운영 시간대(키 없는 요일 = 전부)
   season_fee: number;
   payment_due_date?: string; // 시즌비 납부 마감일
   season_monthly_policy?: SeasonMonthlyPolicy;
@@ -395,4 +401,42 @@ export function parseOperatingDays(days: number[] | string): number[] {
   } catch {
     return [];
   }
+}
+
+const ALL_TIME_SLOTS: TimeSlot[] = ['morning', 'afternoon', 'evening'];
+
+export function parseOperatingDaySlots(value: Season['operating_day_slots']): OperatingDaySlots {
+  if (!value) return {};
+  if (typeof value !== 'string') return { ...value };
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** 그 요일에 운영하는 시간대. 따로 고른 적이 없으면 전부. */
+export function operatingSlotsForDay(daySlots: OperatingDaySlots | undefined, day: number): TimeSlot[] {
+  return daySlots?.[String(day)] ?? ALL_TIME_SLOTS;
+}
+
+/** 요일 시간대 켜고 끄기. 운영하는 요일은 시간대가 하나는 남아야 해서 마지막 하나는 끄지 않는다. */
+export function toggleOperatingDaySlot(daySlots: OperatingDaySlots | undefined, day: number, slot: TimeSlot): OperatingDaySlots {
+  const current = operatingSlotsForDay(daySlots, day);
+  const next = current.includes(slot)
+    ? current.filter((value) => value !== slot)
+    : ALL_TIME_SLOTS.filter((value) => value === slot || current.includes(value));
+  if (next.length === 0) return { ...daySlots };
+  return { ...daySlots, [String(day)]: next };
+}
+
+/** 저장할 값: 운영 요일 중 시간대를 줄인 요일만. 모두 전부면 null(지금과 같음). */
+export function buildOperatingDaySlotsPayload(operatingDays: number[], daySlots: OperatingDaySlots | undefined): OperatingDaySlots | null {
+  const payload: OperatingDaySlots = {};
+  operatingDays.forEach((day) => {
+    const slots = operatingSlotsForDay(daySlots, day);
+    if (slots.length < ALL_TIME_SLOTS.length) payload[String(day)] = slots;
+  });
+  return Object.keys(payload).length > 0 ? payload : null;
 }

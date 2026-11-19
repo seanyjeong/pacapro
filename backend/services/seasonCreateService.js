@@ -8,6 +8,7 @@ const {
     isSeasonMonthlyPolicy,
 } = require('../utils/seasonMonthlyPolicy');
 const { validateSeasonAftercare } = require('./seasonAftercarePolicy');
+const { validateOperatingDaySlots } = require('../utils/seasonDaySlots');
 
 // 거절 문구(화면 400 message) 또는 null
 function validateSeasonCreate(input) {
@@ -34,6 +35,9 @@ function validateSeasonCreate(input) {
     if (!(season_monthly_policy === undefined || isSeasonMonthlyPolicy(season_monthly_policy))) {
         return '월납부 처리 방식을 확인해주세요.';
     }
+
+    const daySlotsError = validateOperatingDaySlots(input.operating_day_slots);
+    if (daySlotsError) return daySlotsError;
 
     const nonSeasonEnd = new Date(non_season_end_date);
     const seasonStart = new Date(season_start_date);
@@ -67,6 +71,7 @@ async function insertSeason(conn, academyId, input) {
             non_season_end_date,
             operating_days,
             grade_time_slots,
+            operating_day_slots,
             default_season_fee,
             payment_due_date,
             season_monthly_policy,
@@ -76,7 +81,7 @@ async function insertSeason(conn, academyId, input) {
             continuous_discount_rate,
             branch_id,
             status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
         [
             academyId,
             input.season_name,
@@ -88,6 +93,8 @@ async function insertSeason(conn, academyId, input) {
             input.non_season_end_date,
             JSON.stringify(input.operating_days),
             input.grade_time_slots ? JSON.stringify(input.grade_time_slots) : null,
+            // 요일별 운영 시간대. 없으면 모든 운영 요일에 같은 시간대(지금과 같음)
+            input.operating_day_slots ? JSON.stringify(input.operating_day_slots) : null,
             input.default_season_fee || 0,
             input.payment_due_date || null,
             input.season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY,

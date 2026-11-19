@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
 import type { SeasonFormData, TimeSlot } from '@/lib/types/season';
+import { toggleOperatingDaySlot } from '@/lib/types/season';
 import { fetchSeasonForEdit, updateSeasonFromForm } from './season-edit-api';
 import { mapSeasonToEditForm, SEASON_EDIT_LOAD_ERROR, SEASON_EDIT_SAVE_ERROR, validateSeasonEditForm } from './season-edit-utils';
 
@@ -64,6 +65,13 @@ export function useSeasonEditState(seasonId: number, onUpdated: () => void) {
     }));
   };
 
+  const toggleDaySlot = (day: number, timeSlot: TimeSlot) => {
+    setFormData((previous) => ({
+      ...previous,
+      operating_day_slots: toggleOperatingDaySlot(previous.operating_day_slots, day, timeSlot),
+    }));
+  };
+
   const toggleTimeSlot = (grade: string, timeSlot: TimeSlot) => {
     setFormData((previous) => {
       const currentSlots = previous.grade_time_slots?.[grade] || [];
@@ -109,6 +117,7 @@ export function useSeasonEditState(seasonId: number, onUpdated: () => void) {
     saveError,
     saving,
     submit,
+    toggleDaySlot,
     toggleOperatingDay,
     toggleTimeSlot,
   };

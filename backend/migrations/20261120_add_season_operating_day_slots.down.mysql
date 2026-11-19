@@ -1,0 +1,2 @@
+-- Manual rollback only. 요일별로 다르게 고른 운영 시간대가 사라지고 모든 운영 요일이 같은 시간대로 돌아간다.
+ALTER TABLE seasons DROP COLUMN operating_day_slots;

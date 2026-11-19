@@ -160,6 +160,45 @@ describe('POST /paca/seasons', () => {
         expect(pool.execute.mock.calls[0][1]).toContain('graduate');
     });
 
+    test('201: 요일별 운영 시간대를 저장하고, 없으면 NULL(지금과 같음)', async () => {
+        const base = {
+            season_name: '정시', season_type: 'regular',
+            season_start_date: '2026-12-01', season_end_date: '2027-01-31',
+            free_lesson_end_date: '2027-01-31', post_free_action: 'regular',
+            non_season_end_date: '2026-11-30', operating_days: [1, 2],
+        };
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([{ insertId: 44 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 44 }]]);
+        const daySlots = { 1: ['morning', 'afternoon', 'evening'], 2: ['morning', 'afternoon'] };
+        const res = await request(makeApp()).post('/paca/seasons').send({ ...base, operating_day_slots: daySlots });
+        expect(res.status).toBe(201);
+        expect(pool.execute.mock.calls[0][0]).toContain('operating_day_slots');
+        expect(pool.execute.mock.calls[0][1]).toContain(JSON.stringify(daySlots));
+        const placeholderCount = (pool.execute.mock.calls[0][0].match(/\?/g) || []).length;
+        expect(placeholderCount).toBe(pool.execute.mock.calls[0][1].length);
+
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([{ insertId: 45 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 45 }]]);
+        await request(makeApp()).post('/paca/seasons').send(base);
+        const params = pool.execute.mock.calls[0][1];
+        expect(params[params.indexOf(JSON.stringify([1, 2])) + 2]).toBeNull();
+    });
+
+    test('400: 운영하는 요일에 시간대를 하나도 안 고르면 거부', async () => {
+        const res = await request(makeApp()).post('/paca/seasons').send({
+            season_name: '정시', season_type: 'regular',
+            season_start_date: '2026-12-01', season_end_date: '2027-01-31',
+            free_lesson_end_date: '2027-01-31', post_free_action: 'regular',
+            non_season_end_date: '2026-11-30', operating_days: [1, 2],
+            operating_day_slots: { 2: [] },
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('운영하는 요일마다 시간대를 하나 이상 골라주세요.');
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB error xyz'));
@@ -212,6 +251,31 @@ describe('PUT /paca/seasons/:id', () => {
         expect(res.status).toBe(200);
         expect(pool.execute.mock.calls[1][0]).toContain('free_lesson_end_date = ?');
         expect(pool.execute.mock.calls[1][1]).toContain('graduate');
+    });
+
+    test('200: 요일별 운영 시간대 저장·지우기, 잘못된 시간대는 400', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 5 }]]);
+        let res = await request(makeApp()).put('/paca/seasons/5').send({ operating_day_slots: { 2: ['morning'] } });
+        expect(res.status).toBe(200);
+        expect(pool.execute.mock.calls[1][0]).toContain('operating_day_slots = ?');
+        expect(pool.execute.mock.calls[1][1]).toContain('{"2":["morning"]}');
+
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 5 }]]);
+        res = await request(makeApp()).put('/paca/seasons/5').send({ operating_day_slots: null });
+        expect(res.status).toBe(200);
+        expect(pool.execute.mock.calls[1][1][0]).toBeNull();
+
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]);
+        res = await request(makeApp()).put('/paca/seasons/5').send({ operating_day_slots: { 2: ['night'] } });
+        expect(res.status).toBe(400);
+        expect(pool.execute).toHaveBeenCalledTimes(1);
     });
 
     test('200: 정상 update + scheduleAssignment=null (status 미변경)', async () => {
