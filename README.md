@@ -21,8 +21,7 @@ Isolated private workspace for redesigning the P-ACA frontend without changing t
 
 ## External Engine Shortcuts
 
-- Jungsi engine frontend: `NEXT_PUBLIC_JUNGSI_ENGINE_URL`, default `https://seanyjeong.github.io/maxjungsi222/`
-- Susi engine frontend: `NEXT_PUBLIC_SUSI_ENGINE_URL`, default `https://seanyjeong.github.io/26maxsusi/`
+- 통합엔진(수시·정시): `https://engine.supermax.kr/` (예전 정시엔진·수시엔진 바로가기를 대신함)
 
 ## Next Step
 

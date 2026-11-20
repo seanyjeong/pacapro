@@ -1,12 +1,12 @@
 'use client';
 
-import { Activity, ArrowUpRight, FileChartColumn, Landmark, Mountain } from 'lucide-react';
+import { Activity, ArrowUpRight, Landmark, Mountain } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { openPeakSso } from '@/lib/peak-sso';
 import { SidebarTooltip } from './sidebar-tooltip';
 
-const JUNGSI_ENGINE_URL = process.env.NEXT_PUBLIC_JUNGSI_ENGINE_URL || 'https://seanyjeong.github.io/maxjungsi222/';
-const SUSI_ENGINE_URL = process.env.NEXT_PUBLIC_SUSI_ENGINE_URL || 'https://seanyjeong.github.io/26maxsusi/';
+// 수시·정시 통합엔진(예전 정시엔진·수시엔진 바로가기를 대신한다)
+const MAX_ENGINE_URL = 'https://engine.supermax.kr/';
 const MOVEMENT_ANALYSIS_URL = 'https://www.performetrics.co.kr/';
 
 type Shortcut =
@@ -15,8 +15,7 @@ type Shortcut =
 
 const shortcuts: Shortcut[] = [
     { label: 'P-EAK 실기관리', Icon: Mountain, tint: 'bg-warning/10 text-warning', onClick: () => { void openPeakSso(); } },
-    { label: '정시엔진', Icon: Landmark, tint: 'bg-success/10 text-success', href: JUNGSI_ENGINE_URL },
-    { label: '수시엔진', Icon: FileChartColumn, tint: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', href: SUSI_ENGINE_URL },
+    { label: '통합엔진', Icon: Landmark, tint: 'bg-success/10 text-success', href: MAX_ENGINE_URL },
     { label: '동작분석', Icon: Activity, tint: 'bg-sky-500/10 text-sky-600 dark:text-sky-400', href: MOVEMENT_ANALYSIS_URL },
 ];
 

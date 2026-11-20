@@ -192,15 +192,13 @@ async function assertOperationsBoard(page) {
 }
 
 async function assertSidebarEngineShortcuts(page) {
-  const jungsiLink = page.getByRole('link', { name: '정시엔진' });
-  const susiLink = page.getByRole('link', { name: '수시엔진' });
-  await jungsiLink.waitFor();
-  await susiLink.waitFor();
-  if ((await jungsiLink.getAttribute('href')) !== 'https://seanyjeong.github.io/maxjungsi222/') {
-    throw new Error('정시엔진 바로가기 URL이 다릅니다.');
+  const engineLink = page.getByRole('link', { name: '통합엔진' });
+  await engineLink.waitFor();
+  if ((await engineLink.getAttribute('href')) !== 'https://engine.supermax.kr/') {
+    throw new Error('통합엔진 바로가기 URL이 다릅니다.');
   }
-  if ((await susiLink.getAttribute('href')) !== 'https://seanyjeong.github.io/26maxsusi/') {
-    throw new Error('수시엔진 바로가기 URL이 다릅니다.');
+  if (await page.getByRole('link', { name: '정시엔진' }).count() || await page.getByRole('link', { name: '수시엔진' }).count()) {
+    throw new Error('예전 정시엔진·수시엔진 바로가기가 남아 있습니다.');
   }
 }
 
