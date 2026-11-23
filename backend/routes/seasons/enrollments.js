@@ -324,7 +324,7 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
         });
 
         const [academySettings] = await pool.execute(
-            `SELECT academy_name, phone, address FROM academy_settings WHERE academy_id = ?`,
+            `SELECT name AS academy_name, phone, address FROM academies WHERE id = ?`,
             [req.user.academyId]
         );
 

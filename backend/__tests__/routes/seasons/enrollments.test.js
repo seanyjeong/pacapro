@@ -236,7 +236,9 @@ describe('POST /paca/seasons/enrollments/:id/refund-preview', () => {
         expect(res.body.enrollment.student_name).toBe('홍길동');
         expect(res.body.cancellation_date).toBe('2026-05-02');
         expect(res.body.refund).toBeDefined();
-        expect(res.body.academy).toBeDefined();
+        expect(res.body.academy).toEqual({ academy_name: 'A', phone: '010', address: 'addr' });
+        // 학원 이름·연락처·주소는 academies 표에 있다(academy_settings 에는 이 칸이 없다)
+        expect(pool.execute.mock.calls[1][0]).toMatch(/FROM academies WHERE id = \?/);
         // calculateSeasonRefund 호출 인자 셰이프 보존
         expect(calculateSeasonRefund).toHaveBeenCalledTimes(1);
         const callArg = calculateSeasonRefund.mock.calls[0][0];
