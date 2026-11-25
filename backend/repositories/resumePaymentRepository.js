@@ -12,7 +12,7 @@ async function canCreateMonthlyPayment(connection, student, yearMonth) {
 async function findMonthlyPayments(connection, student, yearMonth, lock = true) {
     const [rows] = await connection.execute(
         `SELECT id, base_amount, discount_amount, additional_amount, carryover_amount,
-                final_amount, paid_amount, payment_status, due_date, is_prorated
+                final_amount, paid_amount, payment_status, due_date, is_prorated, notes
          FROM student_payments
          WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ?
            AND payment_type = 'monthly' ORDER BY id ${lock ? 'FOR UPDATE' : ''}`,

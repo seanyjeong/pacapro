@@ -23,9 +23,9 @@ const commands = {
   season_enrollment_update: { resource: 'student_seasons', provider: 'paca', label: '학생 시즌 등록 정보 수정',
     schema: Joi.object({ registration_date: date, season_fee: money, discount_amount: money, discount_reason: text(255).allow(''),
       time_slots: slots }).min(1).unknown(false),
-    notice: '파카 화면 시즌 등록 수정과 같이 등록일·이 학생 시즌비(일할·할인 전)·직접 할인이 바뀌면 등록 때와 같은 계산(시즌 도중 합류 일할 → 연속 등록 할인 → 직접 할인)으로 다시 계산하고, 낸 돈이 없는 시즌비 청구도 같은 금액으로 고칩니다. 낸 돈이 있는 청구는 금액이 달라지면 확인되지 않으니 청구 금액 수정(payment_update)으로 고칩니다. 넘기지 않은 값은 그대로 둡니다.' },
+    notice: '파카 화면 시즌 등록 수정과 같이 등록일·이 학생 시즌비(일할·할인 전)·직접 할인이 바뀌면 등록 때와 같은 계산(시즌 도중 합류 일할 → 연속 등록 할인 → 직접 할인)으로 다시 계산하고, 낸 돈이 없는 시즌비 청구도 같은 금액으로 고칩니다. 낸 돈이 있는 청구는 금액이 달라지면 확인되지 않습니다. 청구액을 직접 정한 청구도 같습니다 — 파카 학원비 수정 화면에서 청구액을 직접 고칩니다. 넘기지 않은 값은 그대로 둡니다.' },
   season_enrollment_cancel: { resource: 'student_seasons', provider: 'paca', label: '학생 시즌 등록 취소',
     schema: Joi.object({ cancellation_date: date, include_vat: Joi.boolean(), refund_amount: money }).unknown(false),
-    notice: '파카 화면 시즌 취소와 같이 등록을 지우고 그 시즌의 완납 아닌 시즌비 청구를 지웁니다(일부 납부 청구 포함). 이미 배정된 시즌 출결은 남습니다. 낸 금액이 있으면 미리보기의 계산 환불액을 원장에게 보여 주고 원장이 정한 refund_amount(환불 없음은 "0")로 새 미리보기를 만들어야 확인됩니다. 환불액은 지출 장부에 환불로 기록하며 실제 송금은 하지 않습니다. cancellation_date 생략 시 한국 날짜 오늘.' },
+    notice: '파카 화면 시즌 취소와 같이 등록을 지우고 그 시즌의 받은 돈이 없는 시즌비 청구를 지웁니다(일부 납부 청구는 받은 돈으로 닫아 남깁니다). 이미 배정된 시즌 출결은 남습니다. 낸 금액이 있으면 미리보기의 계산 환불액을 원장에게 보여 주고 원장이 정한 refund_amount(환불 없음은 "0")로 새 미리보기를 만들어야 확인됩니다. 환불액은 지출 장부에 환불로 기록하며 실제 송금은 하지 않습니다. cancellation_date 생략 시 한국 날짜 오늘.' },
 };
 module.exports = { commands };

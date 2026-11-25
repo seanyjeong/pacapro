@@ -49,6 +49,13 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
     setFormData((previous) => ({ ...previous, [key]: value, final_amount: undefined }));
   };
 
+  // 청구액을 직접 적으면 금액 칸은 원래대로 돌린다(둘을 한 번에 바꾸지 않는다)
+  const setDirectAmount = (value: number) => {
+    if (!initialData) return;
+    const { base_amount, discount_amount, additional_amount } = initialData;
+    setFormData((previous) => ({ ...previous, base_amount, discount_amount, additional_amount, final_amount: value }));
+  };
+
   const changeStudent = (studentId: number) => {
     const student = students.find((item) => item.id === studentId);
     const tuition = formData.payment_type === 'monthly' ? getStudentTuitionValues(student) : {};
@@ -129,9 +136,9 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
           </div>
           {editing ? (
             <div className="grid gap-1 border-t border-border/60 px-5 pb-5 pt-4 sm:px-6">
-              <MoneyField label="청구액 직접 입력" value={finalAmount} onChange={(value) => setField('final_amount', value)} />
+              <MoneyField label="청구액 직접 입력" value={finalAmount} onChange={setDirectAmount} />
               <p className="break-keep text-[13px] text-muted-foreground">
-                여기에 적은 금액이 그대로 청구액이 돼요. 이미 받은 돈보다 낮출 수는 없어요.
+                여기에 적은 금액이 그대로 청구액이 돼요(위 금액 칸은 원래대로 돌아가요). 이미 받은 돈보다 낮출 수는 없어요.
               </p>
             </div>
           ) : null}

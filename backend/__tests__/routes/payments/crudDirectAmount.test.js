@@ -116,12 +116,21 @@ describe('청구액 직접 입력(final_amount)', () => {
         expect(seasonUpdate).toBeUndefined();
     });
 
-    test('200: 금액 칸을 같이 바꾸고 지금 청구액을 적어도 적은 금액이 청구액', async () => {
+    test('400: 금액 칸과 청구액을 한 번에 바꾸지 않는다', async () => {
         const monthly = { ...seasonBill, payment_type: 'monthly', season_id: null, base_amount: '500000.00', additional_amount: '0.00', final_amount: '500000.00' };
-        const raised = await put(monthly, { base_amount: 550000, final_amount: 500000 });
-        expect(raised.value('base_amount')).toBe(550000);
-        expect(raised.value('final_amount')).toBe(500000);
-        expect((await put(monthly, { discount_amount: 50000, final_amount: 500000 })).value('final_amount')).toBe(500000);
+        for (const body of [{ base_amount: 550000, final_amount: 500000 }, { discount_amount: 50000, final_amount: 450000 }, { additional_amount: 50000, final_amount: 550000 }]) {
+            const { res, update } = await put(monthly, body);
+            expect(res.status).toBe(400);
+            expect(update).toBeUndefined();
+        }
+    });
+
+    test('200: 메모를 지우거나 고쳐도 직접 수정 기록은 남는다', async () => {
+        const note = '청구액 직접 수정: 3,511,000원 → 3,500,000원';
+        const direct = { ...seasonBill, final_amount: '3500000.00', notes: `메모\n${note}` };
+        expect((await put(direct, { notes: '' })).value('notes')).toBe(note);
+        expect((await put(direct, { notes: '새 메모' })).value('notes')).toBe(`새 메모\n${note}`);
+        expect((await put(direct, { notes: `새 메모\n${note}` })).value('notes')).toBe(`새 메모\n${note}`);
     });
 
     test('낸 금액이 비어 있는 예전 완납 청구는 청구액을 받은 것으로 본다', async () => {

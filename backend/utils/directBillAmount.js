@@ -34,9 +34,15 @@ function directFinalNote(current, finalAmount) {
     return `${DIRECT_NOTE} ${Number(current.final_amount).toLocaleString('ko-KR')}원 → ${finalAmount.toLocaleString('ko-KR')}원`;
 }
 
+// 메모를 지우거나 고쳐도 직접 수정 기록 줄은 남긴다(이 기록으로 직접 정한 청구를 알아본다)
+function keepDirectNotes(before, after) {
+    const lost = String(before || '').split('\n').filter(line => line.includes(DIRECT_NOTE) && !String(after || '').includes(line));
+    return lost.length > 0 ? [after, ...lost].filter(Boolean).join('\n') : after;
+}
+
 // 청구액을 직접 정해 둔 청구 — 다시 계산해 덮으면 안 된다(원래 금액으로 되돌린 청구는 아님)
 function isDirectlyPriced(bill) {
     return String(bill.notes || '').includes(DIRECT_NOTE) && hasSeparateFinal(bill);
 }
 
-module.exports = { isDirectlyPriced, receivedAmount, statusForFinal, directFinalError, directFinalNote };
+module.exports = { isDirectlyPriced, receivedAmount, statusForFinal, directFinalError, directFinalNote, keepDirectNotes };

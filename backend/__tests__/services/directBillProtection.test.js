@@ -40,3 +40,12 @@ test('AI 연결: 일할·할인이 든 시즌 청구의 추가 금액은 바꿀 
     const paused = { ...prorated, payment_type: 'monthly', base_amount: '450000.00', additional_amount: '0.00', final_amount: '225000.00' };
     expect(updated({ additional_amount: '10000', notes: 'x' }, paused).final_amount).toBe('235000.00');
 });
+
+test('휴원 뒤 같은 달 복귀: 직접 정한 완납 청구는 그대로, 미납이면 확인을 받는다(300,000 → 374,000원으로 덮던 것)', () => {
+    const { planResumePayment } = require('../../services/resumePaymentService');
+    const direct = { id: 1, base_amount: '400000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '300000.00', paid_amount: '300000.00', payment_status: 'paid', notes: '청구액 직접 수정: 400,000원 → 300,000원' };
+    const resume = payment => planResumePayment({ student: { monthly_tuition: '400000', discount_rate: 0, rest_start_date: '2026-12-10' }, resumeDate: '2026-12-12', classDays: [1, 3, 5], creditRecalculation: null, payments: [payment] });
+    expect(resume(direct)).toEqual({});
+    expect(() => resume({ ...direct, paid_amount: '0.00', payment_status: 'pending' })).toThrow('청구액을 직접 정한');
+    expect(resume({ ...direct, notes: null }).paymentAdjusted.finalAmount).toBe(374000);
+});

@@ -153,6 +153,9 @@ async function runEdit(browser) {
   await page.goto('/payments/401/edit', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 수정' }).waitFor();
   if (!(await studentSelect(page).isDisabled())) throw new Error('student selector should be locked in edit mode');
+  await page.getByLabel('기본 금액').fill('600000');
+  await page.getByLabel('청구액 직접 입력').fill('500000');
+  if ((await moneyInputDigits(page.getByLabel('기본 금액'))) !== '560000') throw new Error('direct amount should restore amount fields');
   await page.getByLabel('기본 금액').fill('580000');
   await page.getByLabel('내부 메모').fill('수정 후 메모');
   const editSummary = page.getByTestId('payment-form-summary');

@@ -2,6 +2,7 @@ const repository = require('../repositories/resumePaymentRepository');
 const { resolveProratedPaymentDueDate } = require('../utils/proratedPaymentDueDate');
 const { CREDIT_ROUNDING_UNIT } = require('../constants/restCredit');
 const { floorRatio, floorPercent } = require('../utils/monthlyBillAmounts');
+const { isDirectlyPriced } = require('../utils/directBillAmount');
 const { CLASS_DAY_NAMES } = require('../constants/classDayNames');
 const { RestCreditRecalculationConflictError, RestCreditRecalculationValidationError } = require('./restCreditRecalculationService');
 
@@ -50,6 +51,12 @@ function calculateSameMonthAdjustment(payment, student, resumeDate, creditRecalc
     const finalAmount = Number(payment.final_amount);
     const paidAmount = Number(payment.paid_amount || 0);
     if (finalAmount === fullAmount) return null; // A full bill already covers the return period.
+
+    // 청구액을 직접 정한 청구: 완납이면 휴원 때도 손대지 않았으니 그대로 둔다. 아니면 휴원으로 줄인 몫을 알 수 없어 확인을 받는다
+    if (isDirectlyPriced(payment)) {
+        if (payment.payment_status === 'paid') return null;
+        throw new RestCreditRecalculationConflictError('복귀월 청구액을 직접 정한 청구가 있습니다. 결제 내역에서 금액을 먼저 확인해주세요.');
+    }
 
     const [year, month, resumeDay] = resumeDate.split('-').map(Number);
     const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();

@@ -37,7 +37,7 @@ const { pool, decryptStudentName, logger } = require('./_utils');
 const { billFinalAmount, billFinalAfterChange, hasSeparateFinal, sameDecimal } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
-const { receivedAmount, statusForFinal, directFinalError, directFinalNote } = require('../../utils/directBillAmount');
+const { receivedAmount, statusForFinal, directFinalError, directFinalNote, keepDirectNotes } = require('../../utils/directBillAmount');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 // 청구 수정 화면이 서버와 같은 식으로 미리 보도록 내려 주는 값:
@@ -295,9 +295,11 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         // 기본 금액을 줄인 금액으로 고치면 '바꾼 차이만큼' 식으로 0원이 될 수 있었다. 추가 금액은 바꾼 차이만큼 움직인다.
         const changes = key => req.body[key] !== undefined && !sameDecimal(req.body[key], current[key]);
         // 청구액 직접 입력: 계산식 대신 적은 금액을 그대로 청구액으로 쓴다(크레딧을 뺀 뒤 받을 금액).
-        // 지금 청구액과 같은 금액이라도 금액 칸을 같이 바꿨으면 적은 금액이 이긴다.
-        const directFinal = final_amount !== undefined
-            && ['final_amount', 'base_amount', 'discount_amount', 'additional_amount'].some(changes);
+        // 금액 칸과 한 번에 바꾸면 어느 쪽 기준인지 알 수 없어 막는다(화면은 청구액을 적으면 금액 칸을 원래대로 돌린다).
+        const directFinal = changes('final_amount');
+        if (final_amount !== undefined && ['base_amount', 'discount_amount', 'additional_amount'].some(changes)) {
+            return res.status(400).json({ error: 'Validation Error', message: '청구액 직접 입력과 기본·할인·추가 금액을 한 번에 바꿀 수 없습니다.' });
+        }
         if (directFinal) {
             const directError = directFinalError(current, req.body);
             if (directError) return res.status(400).json({ error: 'Validation Error', message: directError });
@@ -376,12 +378,12 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             updates.push('description = ?');
             params.push(description);
         }
-        if (directFinal && changes('final_amount')) {
+        if (directFinal) {
             updates.push('notes = ?');
-            params.push([notes !== undefined ? notes : current.notes, directFinalNote(current, final_amount)].filter(Boolean).join('\n'));
+            params.push([notes !== undefined ? keepDirectNotes(current.notes, notes) : current.notes, directFinalNote(current, final_amount)].filter(Boolean).join('\n'));
         } else if (notes !== undefined) {
             updates.push('notes = ?');
-            params.push(notes);
+            params.push(keepDirectNotes(current.notes, notes));
         }
 
         if (updates.length === 0) {
