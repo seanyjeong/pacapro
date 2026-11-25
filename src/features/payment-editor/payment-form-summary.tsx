@@ -53,8 +53,10 @@ export function PaymentFormSummary({ finalAmount, formData, students, paymentCon
         </div>
         <p className="mt-1 text-[28px] font-extrabold leading-tight tracking-tight text-primary tabular-nums">{formatWon(finalAmount)}</p>
         <p className="mt-1 break-keep text-[13px] text-primary/80 tabular-nums">
-          {amountLocked && paymentContext
-            ? `정해진 청구 ${formatWon(Number(paymentContext.final_amount) || 0)} 기준, 추가 금액 바꾼 만큼 더하고 빼요`
+          {paymentContext && formData.final_amount !== undefined
+            ? `직접 정한 금액 (지금 청구 ${formatWon(Number(paymentContext.final_amount) || 0)})`
+            : amountLocked && paymentContext
+            ? `정해진 청구 ${formatWon(Number(paymentContext.final_amount) || 0)} ${paymentContext.payment_type === 'season' ? '' : ' 기준, 추가 금액 바꾼 만큼 더하고 빼요'}`
             : `기본 ${formatWon(baseAmount)} - 할인 ${formatWon(discountAmount)} + 추가 ${formatWon(additionalAmount)}${creditAmount > 0 ? ` - 크레딧 ${formatWon(creditAmount)}` : ''} (천원 절삭)`}
         </p>
       </div>

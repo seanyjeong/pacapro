@@ -77,7 +77,7 @@ jest.mock('../../config/database', () => {
                 CREATE TABLE student_payments (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, student_id INTEGER, branch_id INTEGER,
                     year_month TEXT, payment_type TEXT, payment_status TEXT, is_prorated INTEGER DEFAULT 0, description TEXT,
-                    base_amount REAL, discount_amount REAL DEFAULT 0, additional_amount REAL DEFAULT 0, carryover_amount REAL DEFAULT 0, final_amount REAL,
+                    base_amount REAL, discount_amount REAL DEFAULT 0, additional_amount REAL DEFAULT 0, carryover_amount REAL DEFAULT 0, final_amount REAL, notes TEXT,
                     updated_at TEXT
                 );
                 CREATE TABLE consultations (id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER);

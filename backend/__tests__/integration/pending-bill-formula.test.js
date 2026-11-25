@@ -92,7 +92,7 @@ function memoryDb({ base, rate, additional, carryover }) {
         CREATE TABLE student_payments (
             id INTEGER PRIMARY KEY, academy_id INTEGER, student_id INTEGER, branch_id INTEGER, year_month TEXT, payment_type TEXT,
             payment_status TEXT, is_prorated INTEGER DEFAULT 0, description TEXT, base_amount REAL, discount_amount REAL,
-            additional_amount REAL DEFAULT 0, carryover_amount REAL DEFAULT 0, final_amount REAL, updated_at TEXT
+            additional_amount REAL DEFAULT 0, carryover_amount REAL DEFAULT 0, final_amount REAL, notes TEXT, updated_at TEXT
         );
     `);
     database.prepare('INSERT INTO academy_settings (academy_id, settings) VALUES (1, ?)')
@@ -195,4 +195,16 @@ describe.each(cases)('할인 $rate%, 학원비 $base, 추가 $additional, 크레
             expect(expected.final_amount).toBe(input.base + input.additional - input.carryover);
         }
     });
+});
+
+test.each(Object.keys(paths))('%s: 청구액을 직접 정한 미납 청구는 그대로, 원래 금액으로 되돌린 청구는 새 학원비', async (name) => {
+    const input = { rate: 0, base: 450000, additional: 0, carryover: 0 };
+    for (const [final, expected] of [[250500, 250500], [300000, 450000]]) {
+        global.__billFormulaDb = memoryDb(input);
+        global.__billFormulaDb.database.prepare('UPDATE student_payments SET final_amount = ?, notes = ? WHERE id = 1')
+            .run(final, '메모\n청구액 직접 수정: 300,000원 → 250,500원');
+        await paths[name](input);
+        const row = global.__billFormulaDb.database.prepare('SELECT final_amount FROM student_payments WHERE id = 1').get();
+        expect(row.final_amount).toBe(expected);
+    }
 });

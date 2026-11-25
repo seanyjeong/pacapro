@@ -176,7 +176,38 @@ async function runEdit(browser) {
   await page.getByRole('button', { name: '수정' }).click();
   await page.waitForURL('**/payments/401');
   if (state.updatePayload?.base_amount !== 580000) throw new Error(`unexpected update payload ${JSON.stringify(state.updatePayload)}`);
+  if ('final_amount' in state.updatePayload) throw new Error('edited parts should not send final_amount');
   if (state.updatePayload?.notes !== '수정 후 메모') throw new Error(`unexpected notes payload ${JSON.stringify(state.updatePayload)}`);
+
+  await context.close();
+  return { state, diagnostics };
+}
+
+// 일할된 시즌 청구: 금액 칸은 모두 잠기고 청구액만 직접 정한다
+async function runSeasonDirectAmount(browser) {
+  const state = makeState({
+    payment: { ...makePayment(), payment_type: 'season', base_amount: 3700000, discount_amount: 0, additional_amount: 189000, final_amount: 3511000, paid_amount: 0, remaining_amount: 3511000, payment_status: 'pending', separately_priced: true },
+  });
+  const context = await createAuthedContext(browser, { width: 1920, height: 1080 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto('/payments/401/edit', { waitUntil: 'networkidle' });
+  for (const label of ['기본 금액', '할인 금액', '추가 금액']) {
+    if (!(await page.getByLabel(label).isDisabled())) throw new Error(`${label} should be locked on a prorated season bill`);
+  }
+  const direct = page.getByLabel('청구액 직접 입력');
+  if ((await moneyInputDigits(direct)) !== '3511000') throw new Error('direct amount should start from the current bill');
+  await direct.fill('3700000');
+  await page.getByTestId('payment-form-summary').getByText('3,700,000원').first().waitFor();
+  await assertNoRawVisibleText(page, 'payment season direct amount');
+  await assertNoHorizontalOverflow(page, 'payment season direct amount');
+  await page.screenshot({ path: '/Users/etlab/paca-payment-edit-season.png' });
+  await page.getByRole('button', { name: '수정' }).click();
+  await page.waitForURL('**/payments/401');
+  if (state.updatePayload?.final_amount !== 3700000) throw new Error(`unexpected direct amount payload ${JSON.stringify(state.updatePayload)}`);
+  if ('additional_amount' in state.updatePayload) throw new Error('locked amount should not be sent');
 
   await context.close();
   return { state, diagnostics };
@@ -224,9 +255,10 @@ async function main() {
   try {
     const create = await runCreate(browser);
     const edit = await runEdit(browser);
+    const season = await runSeasonDirectAmount(browser);
     const createError = await runCreateError(browser);
     const editError = await runEditError(browser);
-    [create, edit, createError, editError].forEach(assertDiagnostics);
+    [create, edit, season, createError, editError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: create.state.createPayload,
       updatePayload: edit.state.updatePayload,

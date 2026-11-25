@@ -56,8 +56,9 @@ export function buildPaymentUpdate(initial: PaymentFormData, data: PaymentFormDa
   return { ...payload, ...getChangedAmountFields(initial, data) };
 }
 
-/** 최종 청구 금액 미리보기 — 서버와 같은 식(크레딧 빼고 천원 절삭, 따로 정한 청구는 그 금액 기준) */
+/** 최종 청구 금액 미리보기 — 청구액을 직접 정했으면 그 금액, 아니면 서버와 같은 식(크레딧 빼고 천원 절삭, 따로 정한 청구는 그 금액 기준) */
 export function getFinalPaymentAmount(data: PaymentFormData, editing?: { payment: Payment; initial: PaymentFormData }) {
+  if (editing && data.final_amount !== undefined) return data.final_amount;
   if (editing) return billFinalAfterChange(editing.payment, getChangedAmountFields(editing.initial, data));
   return billFinalAmount(data.base_amount, data.discount_amount, data.additional_amount);
 }

@@ -363,7 +363,7 @@ describe('PUT /paca/payments/:id', () => {
             .mockResolvedValueOnce([[{ id: 820, student_name: 'enc_유' }]]);
         await request(makeApp()).put('/paca/payments/820').send({ additional_amount: 10000 });
         expect(lockStudentForBilling).toHaveBeenCalledWith(conn, 7, 5);
-        expect(pool.execute.mock.calls[1][0]).toMatch(/FROM student_payments WHERE id = \? FOR UPDATE/);
+        expect(pool.execute.mock.calls[1][0]).toMatch(/FROM student_payments\s+WHERE id = \? FOR UPDATE/);
         expect(conn.commit).toHaveBeenCalled();
     });
 

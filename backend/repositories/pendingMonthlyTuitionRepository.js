@@ -12,13 +12,17 @@ const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
  * 학원비에 맞춰 다시 쓰는 청구: 이번 달(한국 시간)부터, 미납, 월 청구, 그리고 일할이 아닌 것.
  * 일할 청구는 그 달 일부 금액이라 월 정액으로 덮으면 안 된다 —
  * 첫 달·복귀 일할(is_prorated = 1 또는 설명 '일할계산'), 비시즌 종강 일할(services/nonSeasonProratedBilling, 설명 '(비시즌 종강 일할)').
+ * 청구액을 직접 정한 청구(routes/payments/crud 가 메모에 남기는 '청구액 직접 수정:' + 계산식과 다른 금액)도 덮지 않는다.
  * 비시즌 종강 일할 청구에 is_prorated 를 넣지 않는 이유: is_prorated 는 휴원·퇴원 정산과 첫 달 재계산이 '첫 달·복귀 일할'로 읽는다.
  */
 const PENDING_MONTHLY_FILTER = `\`year_month\` >= ?
            AND payment_status = 'pending'
            AND payment_type = 'monthly'
            AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')
-           AND description NOT LIKE '%비시즌 종강 일할%'`;
+           AND description NOT LIKE '%비시즌 종강 일할%'
+           AND NOT (COALESCE(notes, '') LIKE '%청구액 직접 수정:%'
+               AND final_amount <> GREATEST(FLOOR((base_amount - COALESCE(discount_amount, 0)
+                   + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0)) / 1000) * 1000, 0))`;
 
 /**
  * 미납 월 청구를 맞추는 UPDATE [sql, params]. 부르는 쪽이 자기 연결 방식(query/execute)으로 실행한다.

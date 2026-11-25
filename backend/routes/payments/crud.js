@@ -7,7 +7,7 @@
  * Endpoint (4건 — :id 와일드카드 포함):
  *   - GET    /:id   — 결제 상세 조회 (학생 정보 포함)
  *   - POST   /      — 단건 결제 청구 등록 (백원 단위 절삭)
- *   - PUT    /:id   — 결제 수정 (dynamic update, 11 필드, 금액 변경 시 final_amount 재계산)
+ *   - PUT    /:id   — 결제 수정 (dynamic update, 12 필드, 금액 변경 시 final_amount 재계산, final_amount 를 보내면 그 금액)
  *   - DELETE /:id   — 결제 삭제 (owner only)
  *
  * 인증:
@@ -37,6 +37,7 @@ const { pool, decryptStudentName, logger } = require('./_utils');
 const { billFinalAmount, billFinalAfterChange, hasSeparateFinal, sameDecimal } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
+const { receivedAmount, statusForFinal, directFinalError, directFinalNote } = require('../../utils/directBillAmount');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
 
 // 청구 수정 화면이 서버와 같은 식으로 미리 보도록 내려 주는 값:
@@ -46,6 +47,7 @@ function withBillFlags(payment) {
 }
 
 const SEPARATELY_PRICED_MESSAGE = '휴원·퇴원 정산 등으로 금액이 따로 정해진 청구는 기본·할인 금액을 바꿀 수 없습니다. 추가 금액으로 조정해 주세요.';
+const SEASON_ADDITIONAL_MESSAGE = '이 시즌 청구의 추가 금액 칸에는 일할·할인으로 깎은 금액이 들어 있어 바꿀 수 없습니다. 청구액을 직접 입력해 주세요.';
 
 module.exports = function(router) {
 
@@ -268,7 +270,9 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
 
         await lockStudentForBilling(conn, payments[0].student_id, req.user.academyId);
         const [[current]] = await conn.execute(
-            'SELECT base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = ? FOR UPDATE',
+            `SELECT base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                    payment_type, season_id, paid_amount, payment_status, notes
+             FROM student_payments WHERE id = ? FOR UPDATE`,
             [paymentId]
         );
 
@@ -277,6 +281,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             base_amount,
             discount_amount,
             additional_amount,
+            final_amount,
             due_date,
             paid_date,
             paid_amount,
@@ -289,8 +294,20 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구는 기본·할인 금액을 바꿀 수 없다(화면은 칸을 잠근다, 화면을 거치지 않은 요청도 막는다).
         // 기본 금액을 줄인 금액으로 고치면 '바꾼 차이만큼' 식으로 0원이 될 수 있었다. 추가 금액은 바꾼 차이만큼 움직인다.
         const changes = key => req.body[key] !== undefined && !sameDecimal(req.body[key], current[key]);
+        // 청구액 직접 입력: 계산식 대신 적은 금액을 그대로 청구액으로 쓴다(크레딧을 뺀 뒤 받을 금액).
+        // 지금 청구액과 같은 금액이라도 금액 칸을 같이 바꿨으면 적은 금액이 이긴다.
+        const directFinal = final_amount !== undefined
+            && ['final_amount', 'base_amount', 'discount_amount', 'additional_amount'].some(changes);
+        if (directFinal) {
+            const directError = directFinalError(current, req.body);
+            if (directError) return res.status(400).json({ error: 'Validation Error', message: directError });
+        }
         if (hasSeparateFinal(current) && (changes('base_amount') || changes('discount_amount'))) {
             return res.status(400).json({ error: 'Validation Error', message: SEPARATELY_PRICED_MESSAGE });
+        }
+        // 일할·할인이 있는 시즌 청구는 깎은 금액을 추가 금액 칸에 둔다(청구액 = 시즌비 − 그 금액). 바꾸면 반대로 움직여 두 번 깎였다.
+        if (current.payment_type === 'season' && hasSeparateFinal(current) && changes('additional_amount')) {
+            return res.status(400).json({ error: 'Validation Error', message: SEASON_ADDITIONAL_MESSAGE });
         }
 
         // Build update query dynamically
@@ -315,7 +332,10 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         }
 
         // Recalculate final_amount if any amount fields changed
-        if (base_amount !== undefined || discount_amount !== undefined || additional_amount !== undefined) {
+        if (directFinal) {
+            updates.push('final_amount = ?');
+            params.push(final_amount);
+        } else if (base_amount !== undefined || discount_amount !== undefined || additional_amount !== undefined) {
             // 월 청구와 같은 식: 천원 절삭(청구 대상 금액 − 이미 적용된 크레딧), 0 미만이면 0 (utils/monthlyBillAmounts)
             // - 보통 청구: 청구 대상 = 학원비 − 할인액 + 추가 (예전엔 천원 절삭 뒤 크레딧을 빼 월 청구와 최대 999원 달랐다)
             // - 휴원·퇴원·복귀로 최종 금액만 줄인 청구: 줄인 금액에서 바꾼 추가 금액 차이만큼만 더하고 뺀다
@@ -341,7 +361,14 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             updates.push('payment_method = ?');
             params.push(payment_method);
         }
-        if (payment_status !== undefined) {
+        if (directFinal) {
+            updates.push('payment_status = ?');
+            params.push(statusForFinal(current, final_amount));
+            if (!sameDecimal(receivedAmount(current), current.paid_amount)) {
+                updates.push('paid_amount = ?');
+                params.push(receivedAmount(current));
+            }
+        } else if (payment_status !== undefined) {
             updates.push('payment_status = ?');
             params.push(payment_status);
         }
@@ -349,7 +376,10 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             updates.push('description = ?');
             params.push(description);
         }
-        if (notes !== undefined) {
+        if (directFinal && changes('final_amount')) {
+            updates.push('notes = ?');
+            params.push([notes !== undefined ? notes : current.notes, directFinalNote(current, final_amount)].filter(Boolean).join('\n'));
+        } else if (notes !== undefined) {
             updates.push('notes = ?');
             params.push(notes);
         }
@@ -368,6 +398,13 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             `UPDATE student_payments SET ${updates.join(', ')} WHERE id = ?`,
             params
         );
+        // 등록의 시즌비(환불 창의 원래 시즌비)를 청구액과 같게 둔다
+        if (directFinal && current.payment_type === 'season' && current.season_id) {
+            await conn.execute(
+                'UPDATE student_seasons SET season_fee = ? WHERE student_id = ? AND season_id = ? AND is_cancelled = 0',
+                [final_amount, payments[0].student_id, current.season_id]
+            );
+        }
         await conn.commit();
         committed = true;
 

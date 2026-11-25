@@ -24,11 +24,18 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
   const [formData, setFormData] = useState<PaymentFormData>(initialData || buildDefaultPaymentFormData());
   const editing = mode === 'edit' && editingPayment && initialData ? { payment: editingPayment, initial: initialData } : undefined;
   const finalAmount = getFinalPaymentAmount(formData, editing);
-  // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구: 기본·할인 금액은 잠그고 추가 금액으로만 조정(서버도 막는다)
+  // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구: 기본·할인 금액은 잠그고 추가 금액·청구액 직접 입력으로 조정(서버도 막는다)
   const amountLocked = Boolean(editing?.payment.separately_priced);
+  // 일할·할인이 있는 시즌 청구는 깎은 금액이 추가 금액 칸에 있어 그 칸도 잠근다
+  const additionalLocked = amountLocked && editing?.payment.payment_type === 'season';
 
   const setField = <K extends keyof PaymentFormData>(key: K, value: PaymentFormData[K]) => {
     setFormData((previous) => ({ ...previous, [key]: value }));
+  };
+
+  // 금액 칸을 바꾸면 직접 정한 청구액은 지우고 다시 계산한다
+  const setAmount = (key: 'base_amount' | 'discount_amount' | 'additional_amount', value: number) => {
+    setFormData((previous) => ({ ...previous, [key]: value, final_amount: undefined }));
   };
 
   const changeStudent = (studentId: number) => {
@@ -40,7 +47,7 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
   const changePaymentType = (paymentType: PaymentFormData['payment_type']) => {
     const student = students.find((item) => item.id === formData.student_id);
     const tuition = paymentType === 'monthly' && !amountLocked ? getStudentTuitionValues(student) : {};
-    setFormData((previous) => ({ ...previous, payment_type: paymentType, ...tuition }));
+    setFormData((previous) => ({ ...previous, payment_type: paymentType, ...tuition, ...('base_amount' in tuition ? { final_amount: undefined } : {}) }));
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -94,15 +101,24 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
           <SectionHeader title="금액" />
           {amountLocked ? (
             <p className="mx-5 mb-3 break-keep rounded-xl bg-warning/10 px-4 py-3 text-[13px] leading-relaxed text-foreground sm:mx-6" data-testid="payment-amount-locked">
-              휴원·퇴원 정산 등으로 금액이 따로 정해진 청구예요. 기본·할인 금액은 바꿀 수 없어요.
-              금액을 바꾸려면 추가 금액을 쓰세요 — 바꾼 만큼 지금 청구 금액에 더하거나 빠져요.
+              {additionalLocked
+                ? '금액이 따로 정해진 시즌 청구예요(일할·할인 등). 금액을 바꾸려면 청구액을 직접 입력하세요.'
+                : '휴원·퇴원 정산 등으로 금액이 따로 정해진 청구예요. 기본·할인 금액은 바꿀 수 없어요. 추가 금액을 쓰면 바꾼 만큼 더하거나 빠지고, 청구액을 직접 입력할 수도 있어요.'}
             </p>
           ) : null}
           <div className="grid gap-4 px-5 pb-5 sm:grid-cols-3 sm:px-6">
-            <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setField('base_amount', value)} required disabled={amountLocked} />
-            <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setField('discount_amount', value)} disabled={amountLocked} />
-            <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setField('additional_amount', value)} />
+            <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setAmount('base_amount', value)} required disabled={amountLocked} />
+            <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setAmount('discount_amount', value)} disabled={amountLocked} />
+            <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setAmount('additional_amount', value)} disabled={additionalLocked} />
           </div>
+          {editing ? (
+            <div className="grid gap-1 border-t border-border/60 px-5 pb-5 pt-4 sm:px-6">
+              <MoneyField label="청구액 직접 입력" value={finalAmount} onChange={(value) => setField('final_amount', value)} />
+              <p className="break-keep text-[13px] text-muted-foreground">
+                여기에 적은 금액이 그대로 청구액이 돼요. 이미 받은 돈보다 낮출 수는 없어요.
+              </p>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-2xl bg-card">

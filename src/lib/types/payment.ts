@@ -48,6 +48,7 @@ export interface PaymentFormData {
   base_amount: number;
   discount_amount?: number;
   additional_amount?: number;
+  final_amount?: number; // 청구 수정에서 청구액을 직접 정할 때만
   due_date: string;
   year_month: string; // YYYY-MM
   description?: string;
