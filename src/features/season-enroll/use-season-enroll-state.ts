@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { ProRatedPreview, Season, TimeSlot } from '@/lib/types/season';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 import {
   fetchSeasonEligibleStudents,
   fetchSeasonEnrollPreview,
@@ -33,6 +34,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>(['evening']);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [seasonFee, setSeasonFee] = useState(0);
+  const [registrationDate, setRegistrationDate] = useState('');
   const [preview, setPreview] = useState<ProRatedPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -66,11 +68,16 @@ export function useSeasonEnrollState(seasonId: number | null) {
   const selectedStudentId = selectedStudent?.id ?? null;
   useEffect(() => {
     if (!seasonId || !selectedStudentId) return;
+    if (!registrationDate) {
+      setPreview(null);
+      setPreviewLoading(false);
+      return;
+    }
     let cancelled = false;
     setPreviewLoading(true);
     // 금액을 입력하는 동안 매 글자마다 계산하지 않도록 잠깐 기다린다
     const timer = setTimeout(() => {
-      fetchSeasonEnrollPreview(seasonId, selectedStudentId, seasonFee, discountAmount)
+      fetchSeasonEnrollPreview(seasonId, selectedStudentId, seasonFee, discountAmount, registrationDate)
         .then((result) => !cancelled && setPreview(result))
         .catch(() => !cancelled && setPreview(null))
         .finally(() => !cancelled && setPreviewLoading(false));
@@ -79,7 +86,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [seasonId, selectedStudentId, seasonFee, discountAmount]);
+  }, [seasonId, selectedStudentId, seasonFee, discountAmount, registrationDate]);
 
   const filteredStudents = useMemo(() => filterStudents(students, searchTerm), [searchTerm, students]);
   const groupedStudents = useMemo(
@@ -92,6 +99,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
     setSelectedTimeSlots(getDefaultTimeSlots(season, student));
     setDiscountAmount(0);
     setSeasonFee(parseSeasonFee(season));
+    setRegistrationDate(getKoreaDateText());
     setPreview(null);
     setPreviewLoading(true);
   };
@@ -118,6 +126,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
       await registerSeasonStudent(seasonId, {
         student_id: selectedStudent.id,
         season_fee: seasonFee,
+        registration_date: registrationDate,
         discount_amount: discountAmount,
         time_slots: selectedTimeSlots,
       });
@@ -151,6 +160,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
     loading,
     preview,
     previewLoading,
+    registrationDate,
     reload,
     searchTerm,
     season,
@@ -158,6 +168,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
     selectedStudent,
     selectedTimeSlots,
     setDiscountAmount,
+    setRegistrationDate,
     setSeasonFee,
     setSearchTerm,
     totalEligibleCount: students.length,

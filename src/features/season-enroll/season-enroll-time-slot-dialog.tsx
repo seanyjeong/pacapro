@@ -1,5 +1,6 @@
 import { CheckCircle, Clock, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { MoneyInput } from '@/components/ui/money-input';
 import type { ProRatedPreview, TimeSlot } from '@/lib/types/season';
 import type { SeasonEnrollStudent } from './season-enroll-types';
@@ -10,12 +11,15 @@ interface SeasonEnrollTimeSlotDialogProps {
   enrolling: boolean;
   preview: ProRatedPreview | null;
   previewLoading: boolean;
+  registrationDate: string;
+  seasonEndDate: string;
   seasonFee: number;
   selectedStudent: SeasonEnrollStudent | null;
   selectedTimeSlots: TimeSlot[];
   onClose: () => void;
   onConfirm: () => void;
   onDiscountChange: (value: number) => void;
+  onRegistrationDateChange: (value: string) => void;
   onSeasonFeeChange: (value: number) => void;
   onTimeSlotToggle: (slot: TimeSlot) => void;
 }
@@ -25,12 +29,15 @@ export function SeasonEnrollTimeSlotDialog({
   enrolling,
   preview,
   previewLoading,
+  registrationDate,
+  seasonEndDate,
   seasonFee,
   selectedStudent,
   selectedTimeSlots,
   onClose,
   onConfirm,
   onDiscountChange,
+  onRegistrationDateChange,
   onSeasonFeeChange,
   onTimeSlotToggle,
 }: SeasonEnrollTimeSlotDialogProps) {
@@ -96,6 +103,18 @@ export function SeasonEnrollTimeSlotDialog({
           </div>
 
           <div className="space-y-2 border-t border-border/60 pt-4">
+            <div className="space-y-1">
+              <label className="block text-[13px] font-semibold text-secondary-foreground" htmlFor="season-enroll-date">
+                등록일 (시즌 시작 후 합류 시 일할계산)
+              </label>
+              <Input
+                id="season-enroll-date"
+                max={seasonEndDate}
+                type="date"
+                value={registrationDate}
+                onChange={(event) => onRegistrationDateChange(event.target.value)}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="block text-[13px] font-semibold text-secondary-foreground" htmlFor="season-enroll-fee">
@@ -119,7 +138,7 @@ export function SeasonEnrollTimeSlotDialog({
               )}
               {discountAmount > 0 && <span className="text-destructive">할인 {formatWon(discountAmount)}</span>}
               <span className="font-semibold text-foreground">
-                최종 {previewLoading ? '계산 중...' : preview ? formatWon(preview.final_calculation.total_due) : '계산하지 못했습니다'}
+                최종 {!registrationDate ? '등록일을 골라 주세요' : previewLoading ? '계산 중...' : preview ? formatWon(preview.final_calculation.total_due) : '계산하지 못했습니다'}
               </span>
             </div>
           </div>

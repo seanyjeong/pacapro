@@ -22,6 +22,7 @@ export interface SeasonEnrollLoadResult {
 export interface SeasonEnrollPayload {
   student_id: number;
   season_fee: number;
+  registration_date: string;
   discount_amount: number;
   time_slots: TimeSlot[];
 }

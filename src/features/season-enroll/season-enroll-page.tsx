@@ -56,12 +56,15 @@ export function SeasonEnrollPage() {
         enrolling={state.enrollingId === state.selectedStudent?.id}
         preview={state.preview}
         previewLoading={state.previewLoading}
+        registrationDate={state.registrationDate}
+        seasonEndDate={state.season.season_end_date}
         seasonFee={state.seasonFee}
         selectedStudent={state.selectedStudent}
         selectedTimeSlots={state.selectedTimeSlots}
         onClose={state.closeDialog}
         onConfirm={state.confirmEnrollment}
         onDiscountChange={state.setDiscountAmount}
+        onRegistrationDateChange={state.setRegistrationDate}
         onSeasonFeeChange={state.setSeasonFee}
         onTimeSlotToggle={state.changeTimeSlot}
       />

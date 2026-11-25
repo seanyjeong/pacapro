@@ -18,17 +18,19 @@ export async function fetchSeasonEligibleStudents(): Promise<SeasonEnrollStudent
   return response.students ?? [];
 }
 
-// 등록과 같은 계산(오늘 등록 기준 시즌 도중 합류 일할 + 직접 할인)으로 실제 청구될 금액
+// 등록과 같은 계산(고른 등록일 기준 시즌 도중 합류 일할 + 직접 할인)으로 실제 청구될 금액
 export async function fetchSeasonEnrollPreview(
   seasonId: number,
   studentId: number,
   seasonFee: number,
-  discountAmount: number
+  discountAmount: number,
+  registrationDate: string
 ): Promise<ProRatedPreview> {
   const query = new URLSearchParams({
     student_id: String(studentId),
     season_fee: String(seasonFee),
     discount_amount: String(discountAmount),
+    registration_date: registrationDate,
   });
   const response = await apiClient.get<{ preview: ProRatedPreview }>(`/seasons/${seasonId}/preview?${query}`, QUIET_REQUEST);
   return response.preview;

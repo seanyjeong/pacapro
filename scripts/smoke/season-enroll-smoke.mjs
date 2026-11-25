@@ -262,6 +262,14 @@ async function runNormal(browser) {
   await page.getByRole('dialog', { name: '시간대 선택' }).waitFor();
   await page.getByRole('button', { name: '오전' }).click();
   await page.getByText('최종 1,200,000원').waitFor();
+  // 등록일은 오늘(한국 시간)이 기본이고 지난 날짜로 바꿀 수 있다 — 비우면 등록할 수 없다
+  const dateInput = page.getByLabel('등록일 (시즌 시작 후 합류 시 일할계산)');
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+  if ((await dateInput.inputValue()) !== today) throw new Error(`default registration date mismatch: ${await dateInput.inputValue()}`);
+  await dateInput.fill('');
+  await page.getByText('최종 등록일을 골라 주세요').waitFor();
+  if (await page.getByRole('button', { name: '등록하기' }).isEnabled()) throw new Error('enroll enabled without registration date');
+  await dateInput.fill('2026-07-01');
   await page.getByLabel('이 학생 시즌비').fill('1400000');
   await page.getByLabel('할인 금액').fill('100000');
   await page.getByText('최종 1,020,000원').waitFor();
@@ -275,6 +283,10 @@ async function runNormal(browser) {
   if (payload?.season_fee !== 1400000) throw new Error(`unexpected fee ${JSON.stringify(payload)}`);
   if (!state.previewQueries.some((query) => query.includes('season_fee=1400000') && query.includes('discount_amount=100000'))) {
     throw new Error(`preview did not use edited fee: ${JSON.stringify(state.previewQueries)}`);
+  }
+  if (payload?.registration_date !== '2026-07-01') throw new Error(`unexpected registration date ${JSON.stringify(payload)}`);
+  if (!state.previewQueries.some((query) => query.includes('registration_date=2026-07-01'))) {
+    throw new Error(`preview did not use registration date: ${JSON.stringify(state.previewQueries)}`);
   }
   if (payload?.discount_amount !== 100000) throw new Error(`unexpected discount ${JSON.stringify(payload)}`);
   for (const slot of ['afternoon', 'evening', 'morning']) {
