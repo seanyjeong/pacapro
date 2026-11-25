@@ -45,7 +45,7 @@ async function settle(conn, salary) {
 // 실수령액 맞추기: 지금 기준으로 다시 맞춘 실수령액과의 차이만큼 세금에 넣지 않는 조정을 만든다
 async function matchInput(conn, salary, { target_net: target, label, memo }) {
     if (!isWon(target) || target < 0 || target % 10 !== 0) throw fail(400, 'VALIDATION_ERROR', '실수령액은 10원 단위로 입력해 주세요.');
-    const current = Math.floor((await refreshTotals(conn, salary)).netSalary / 10) * 10;
+    const current = Math.floor((await refreshTotals(conn, salary, { allowNegative: true })).netSalary / 10) * 10;
     if (target === current) throw fail(400, 'VALIDATION_ERROR', '지금 실수령액과 같습니다.');
     return adjustmentInput({ label, memo, amount: target - current, taxable: false });
 }
@@ -90,6 +90,8 @@ module.exports = function(router) {
                 const values = { incentive_amount, total_deduction, payment_status, payment_date, base_override };
                 const keys = Object.keys(values).filter(key => values[key] !== undefined);
                 if (keys.length === 0) throw fail(400, 'VALIDATION_ERROR', '수정할 항목이 없습니다.');
+                // 지급은 지출 기록을 남기는 지급 처리(/pay)로만 한다
+                if (payment_status === 'paid') throw fail(400, 'VALIDATION_ERROR', '지급은 지급 완료 버튼으로 처리해 주세요.');
                 if (payment_status !== undefined && [incentive_amount, total_deduction, base_override].some(value => value !== undefined)) {
                     throw fail(400, 'VALIDATION_ERROR', '금액과 지급 상태를 한 번에 바꿀 수 없습니다.');
                 }
@@ -103,7 +105,7 @@ module.exports = function(router) {
                 const next = { ...salary, ...Object.fromEntries(keys.map(key => [key, values[key]])), payment_status: salary.payment_status };
                 // 상태만 바꾸는 요청은 금액을 다시 계산하지 않는다
                 if (base_override !== undefined) await recalculate(conn, next);
-                else if (incentive_amount !== undefined || total_deduction !== undefined) await refreshTotals(conn, next);
+                else if (incentive_amount !== undefined || total_deduction !== undefined) await refreshTotals(conn, next, { floorNet: true });
                 const [[row]] = await conn.execute(
                     `SELECT s.*, i.name as instructor_name FROM salary_records s JOIN instructors i ON s.instructor_id = i.id WHERE s.id = ?`,
                     [salaryId]

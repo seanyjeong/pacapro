@@ -3,6 +3,7 @@
  * 저장하면 그 규칙이 닿는 달의 미지급 급여만 다시 계산한다. 지급 완료된 급여와 그 달 분할액은 바꾸지 않는다.
  */
 const { SLOTS, parseSlots, dateText, isPaymentOnly } = require('../utils/salaryBreakdown');
+const { currentMonth } = require('../repositories/salaryRepository');
 const { recalculateMonth, createInstallmentSalaries } = require('./salaryService');
 
 const PAY_TYPES = ['per_class', 'monthly', 'daily', 'fixed_total'];
@@ -26,8 +27,9 @@ function ruleInput(body) {
     const payType = body.pay_type;
     if (!PAY_TYPES.includes(payType)) throw invalid('급여 방식을 골라 주세요.');
     if (!isWon(body.amount)) throw invalid('금액은 1원 이상 원 단위 숫자로 입력해 주세요.');
-    const start = dateOrNull(body.start_date);
     const end = dateOrNull(body.end_date);
+    // 날짜 없는 고정급은 금액만 지급한다. 그 밖에 시작하는 날을 비우면 이번 달 1일부터(옛 미지급 급여를 바꾸지 않는다)
+    const start = dateOrNull(body.start_date) ?? (payType === 'fixed_total' && !end ? null : `${currentMonth()}-01`);
     if (start && end && start > end) throw invalid('끝나는 날이 시작하는 날보다 빠릅니다.');
     const slots = body.time_slots === undefined ? SLOTS : body.time_slots;
     if (!Array.isArray(slots) || slots.length === 0 || slots.some(slot => !SLOTS.includes(slot))) throw invalid('시간대를 하나 이상 골라 주세요.');

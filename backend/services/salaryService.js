@@ -4,7 +4,7 @@
 const repo = require('../repositories/salaryRepository');
 const { buildBase, totals } = require('../utils/salaryBreakdown');
 
-const RETRYABLE = ['ER_LOCK_DEADLOCK', 'ER_LOCK_WAIT_TIMEOUT'];
+const RETRYABLE = ['ER_LOCK_DEADLOCK'];
 
 // 잠근 뒤에 읽는 값이 항상 최신이 되도록 READ COMMITTED 로 돈다(잠금을 기다리는 동안 커밋된 조정·규칙·출근을 놓치지 않는다)
 async function inTransaction(pool, work, attempts = 3) {
@@ -32,12 +32,15 @@ const hasRuleLines = lines => lines.some(line => RULE_KINDS.includes(line.kind))
 const negative = () => Object.assign(new Error('NEGATIVE_SALARY'), { status: 400,
     body: { error: 'NEGATIVE_SALARY', message: '실수령액이 0원보다 작아집니다. 금액을 확인해 주세요.' } });
 
-// 마지막에 어느 방식으로 계산했는지. 기록이 없는 예전 급여는 저장된 세금·실수령액이 맞는 방식, 둘 다 아니면 10원 단위인지로 본다
-function lastMode(salary) {
+// 마지막에 어느 방식으로 계산했는지. 기록이 없는 예전 급여는 두 방식으로 다시 계산해 저장된 기본급과 맞는 쪽, 둘 다 맞으면 세금·실수령액까지 맞는 쪽
+async function lastMode(conn, salary) {
     const stored = parse(salary.calculation_details)?.mode;
     if (stored) return stored;
+    const attendances = await repo.monthAttendances(conn, salary.instructor_id, salary.year_month);
+    const stands = ['auto', 'recalc'].filter(mode => Math.abs(buildBase({ instructor: salary, attendances, mode }).baseAmount - Number(salary.base_amount)) < 0.005);
+    if (stands.length < 2) return stands[0] ?? 'recalc';
     const [tax, net] = [Number(salary.tax_amount), Number(salary.net_salary)];
-    const matched = ['auto', 'recalc'].find(mode => {
+    const matched = stands.find(mode => {
         const result = totals({ baseAmount: Number(salary.base_amount) || 0, incentive: Number(salary.incentive_amount) || 0,
             deduction: Number(salary.total_deduction) || 0, taxType: salary.tax_type, yearMonth: salary.year_month, mode });
         return result.taxAmount === tax && result.netSalary === net;
@@ -45,23 +48,28 @@ function lastMode(salary) {
     return matched ?? (net % 10 !== 0 ? 'auto' : 'recalc');
 }
 
-async function save(conn, salary, base, { mode, keepTax = false }) {
+async function save(conn, salary, base, { mode, keepTax = false, floorNet = false, allowNegative = false }) {
     const adjustments = await repo.listAdjustments(conn, salary.id);
     const incentive = parseFloat(salary.incentive_amount) || 0;
     const deduction = parseFloat(salary.total_deduction) || 0;
-    const custom = adjustments.length > 0 || hasOverride(salary) || hasRuleLines(base.lines);
-    // 세금 대상이 그대로면(인센티브만 고치거나 세금에 안 넣는 조정만 바꾸면) 지금 세금을 그대로 둔다
-    const taxableBefore = (parse(salary.calculation_details)?.adjustments ?? []).filter(item => item.taxable);
-    const taxableNow = adjustments.filter(item => Number(item.taxable));
-    const sameTaxable = JSON.stringify(taxableBefore.map(item => item.amount)) === JSON.stringify(taxableNow.map(item => item.amount));
-    const kept = keepTax && sameTaxable
-        ? { taxAmount: parseFloat(salary.tax_amount) || 0, insuranceDetails: parse(salary.insurance_details) } : null;
+    // 실수령액을 10원 단위로 맞추는 급여: 조정·직접 입력·규칙·인센티브·공제가 있거나 사람이 금액을 고친 때
+    const custom = floorNet || adjustments.length > 0 || hasOverride(salary) || hasRuleLines(base.lines) || incentive !== 0 || deduction !== 0;
+    const before = parse(salary.calculation_details);
+    const taxable = list => JSON.stringify(list.filter(item => Number(item.taxable)).map(item => item.amount));
+    const hasTaxable = adjustments.some(item => Number(item.taxable));
+    const currentTax = { taxType: salary.tax_type, taxAmount: parseFloat(salary.tax_amount) || 0, insuranceDetails: parse(salary.insurance_details) };
+    // 세금 대상이 그대로면(인센티브만 고치거나 세금에 안 넣는 조정만 바꾸면) 지금 세금을, 세금 대상 조정을 모두 지우면 넣기 전 세금을 쓴다
+    let kept = null;
+    if (keepTax && taxable(before?.adjustments ?? []) === taxable(adjustments)) kept = currentTax;
+    else if (keepTax && !hasTaxable) kept = before?.plain_tax ?? null;
     // 강사의 세금 유형이 바뀐 옛 급여 줄은 낡은 유형이 남아 있을 수 있다 — 다시 계산할 때는 강사 설정을 쓴다
-    const taxType = kept ? salary.tax_type : salary.instructor_tax_type || 'none';
+    const taxType = kept ? kept.taxType : salary.instructor_tax_type || 'none';
     const result = totals({ ...base, incentive, deduction, adjustments, taxType, yearMonth: salary.year_month, mode, custom, keepTax: kept });
-    if (result.netSalary < 0) throw negative();
+    if (result.netSalary < 0 && !allowNegative) throw negative();
+    const plainTax = { taxType, taxAmount: result.taxAmount, insuranceDetails: result.insuranceDetails };
     const details = {
         mode,
+        plain_tax: !hasTaxable ? plainTax : !keepTax ? null : before?.plain_tax ?? (taxable(before?.adjustments ?? []) === '[]' ? currentTax : null),
         base_lines: base.lines,
         non_taxable_base: base.nonTaxable,
         adjustments: adjustments.map(({ id, label, amount, taxable, memo }) => ({ id, label, amount, taxable: Boolean(Number(taxable)), memo })),
@@ -89,13 +97,14 @@ async function computeBase(conn, salary, mode) {
 }
 
 // 출근·단가·규칙으로 기본급부터 다시 계산한다(기본급을 직접 입력해 두었으면 그 금액). mode 를 안 주면 마지막에 계산한 방식
-async function recalculate(conn, salary, mode = lastMode(salary)) {
-    return save(conn, salary, await computeBase(conn, salary, mode), { mode });
+async function recalculate(conn, salary, mode, options = {}) {
+    const used = mode ?? await lastMode(conn, salary);
+    return save(conn, salary, await computeBase(conn, salary, used), { ...options, mode: used });
 }
 
 // 규칙을 저장·삭제한 뒤: 규칙이 실제로 닿는(닿았던) 달만 다시 계산한다
 async function recalculateIfRuled(conn, salary) {
-    const mode = lastMode(salary);
+    const mode = await lastMode(conn, salary);
     const base = await computeBase(conn, salary, mode);
     if (!hasRuleLines(base.lines) && !hasRuleLines(parse(salary.calculation_details)?.base_lines ?? [])) return false;
     await save(conn, salary, base, { mode });
@@ -103,14 +112,14 @@ async function recalculateIfRuled(conn, salary) {
 }
 
 // 기본급은 그대로 두고 인센티브·공제·조정·세금·실수령액만 다시 맞춘다
-async function refreshTotals(conn, salary) {
+async function refreshTotals(conn, salary, options = {}) {
     const details = parse(salary.calculation_details);
     const base = {
         baseAmount: parseFloat(salary.base_amount) || 0,
         nonTaxable: details?.non_taxable_base || 0,
         lines: details?.base_lines || []
     };
-    return save(conn, salary, base, { mode: lastMode(salary), keepTax: true });
+    return save(conn, salary, base, { ...options, mode: await lastMode(conn, salary), keepTax: true });
 }
 
 // 출근 체크 뒤: 그 달 급여 줄을 만들거나 다시 계산한다. 결석은 줄을 새로 만들지 않는다.
@@ -127,7 +136,8 @@ async function recalculateMonth(conn, { instructorId, academyId, yearMonth, crea
     }
     if (!salary || isPaid(salary)) return null;
     if (onlyIfRuled) return recalculateIfRuled(conn, salary);
-    return recalculate(conn, salary, mode);
+    // 출근 체크에서는 음수라도 저장한다(멈추면 틀린 금액이 남는다). 지급할 때 막는다
+    return recalculate(conn, salary, mode, { allowNegative: true });
 }
 
 // 이번 달까지의 분할 지급 달 중 급여 줄이 없는 것을 만든다

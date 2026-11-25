@@ -373,13 +373,84 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
         expect((await post('/rules/season/21/sync', { rule_ids: rules.map(rule => rule.id) })).status).toBe(200);
     });
 
+    test('배포 전에 재계산한 시급·혼합 급여(기록 없음)는 조정·규칙·직접 입력을 넣었다 빼도 0원이 되지 않는다', async () => {
+        await q('INSERT INTO instructors SET ?', { id: 500, academy_id: 1, name: 'x', salary_type: 'hourly', hourly_rate: 12000, base_salary: 0, tax_type: 'none' });
+        await q('INSERT INTO instructors SET ?', { id: 501, academy_id: 1, name: 'x', salary_type: 'mixed', hourly_rate: 30000, base_salary: 1000000, tax_type: 'none' });
+        for (const [id, net] of [[500, 72000], [501, 1060000]]) {
+            for (const day of ['02', '03']) await attend(id, `2026-11-${day}`, ['evening']);
+            const salary = await salaryOf(id, '2026-11');
+            await q('UPDATE salary_records SET base_amount = ?, net_salary = ?, calculation_details = NULL WHERE id = ?', [net, net, salary.id]);
+            await request(app).put(`/salaries/${salary.id}`).send({ base_override: 500000 });
+            await request(app).put(`/salaries/${salary.id}`).send({ base_override: null });
+            expect(Number((await salaryOf(id, '2026-11')).net_salary)).toBe(net);
+            await q('UPDATE salary_records SET calculation_details = NULL WHERE id = ?', [salary.id]);
+            const rule = await post('/rules', { instructor_id: id, pay_type: 'fixed_total', amount: 100000, memo: 'b', installments: [{ pay_year_month: '2026-11', amount: 100000 }] });
+            expect(Number((await salaryOf(id, '2026-11')).net_salary)).toBe(net + 100000);
+            await request(app).delete(`/rules/${rule.body.id}`);
+            expect(Number((await salaryOf(id, '2026-11')).net_salary)).toBe(net);
+        }
+    });
+
+    test('혼합 급여: 출근에 닿지 않는 규칙은 기본급을 바꾸지 않는다', async () => {
+        await q('INSERT INTO instructors SET ?', { id: 501, academy_id: 1, name: 'x', salary_type: 'mixed', hourly_rate: 30000, base_salary: 1000000, tax_type: 'none' });
+        await attend(501, '2026-11-02', ['evening']);
+        await post('/rules', season(501, { start_date: '2026-11-29' }));
+        await attend(501, '2026-11-03', ['evening']);
+        expect(Number((await salaryOf(501, '2026-11')).net_salary)).toBe(0);
+    });
+
+    test('출근 체크는 실수령액이 음수여도 저장하고, 지급에서 막는다(누구인지 알려 준다)', async () => {
+        await november();
+        const { id } = await salaryOf(YEONYO, '2026-11');
+        await post(`/salaries/${id}/adjustments`, { label: 'x', amount: -550000 });
+        await q('UPDATE instructors SET hourly_rate = 10000 WHERE id = ?', [YEONYO]);
+        await attend(YEONYO, '2026-11-26', ['evening']);
+        const salary = await salaryOf(YEONYO, '2026-11');
+        expect([Number(salary.base_amount), Number(salary.net_salary)]).toEqual([170000, -380000]);
+        expect((await post(`/salaries/${id}/pay`, {})).body.error).toBe('NEGATIVE_SALARY');
+        const bulk = await post('/salaries/bulk-pay', { year_month: '2026-11' });
+        expect([bulk.status, bulk.body.message]).toEqual([400, expect.stringContaining('합성')]);
+        expect(await q("SELECT id FROM salary_records WHERE payment_status = 'paid'")).toHaveLength(0);
+        expect((await request(app).put(`/salaries/${id}`).send({ payment_status: 'paid' })).status).toBe(400);
+        // 맞추기로 바로 고칠 수 있다
+        expect((await post(`/salaries/${id}/adjustments`, { label: '맞춤', target_net: 100000 })).body.net_salary).toBe(100000);
+    });
+
+    test('인센티브 저장은 예전처럼 10원 단위, 세금 대상 조정을 넣었다 지우면 넣기 전 세금으로', async () => {
+        await q("UPDATE instructors SET tax_type = '3.3%' WHERE id = ?", [YEONYO]);
+        await attend(YEONYO, '2026-11-02', ['evening']);
+        const { id } = await salaryOf(YEONYO, '2026-11');
+        await request(app).put(`/salaries/${id}`).send({ incentive_amount: 50000 });
+        expect(Number((await salaryOf(YEONYO, '2026-11')).net_salary)).toBe(83840);
+        await request(app).put(`/salaries/${id}`).send({ incentive_amount: 0 });
+        expect(Number((await salaryOf(YEONYO, '2026-11')).net_salary)).toBe(33840);
+        const opened = await post('/salaries/open', { instructor_id: SEONGJUN, year_month: '2026-12' });
+        const seongjun = opened.body.salary.id;
+        await request(app).put(`/salaries/${seongjun}`).send({ incentive_amount: 300000 });
+        const before = await salaryOf(SEONGJUN, '2026-12');
+        expect([Number(before.tax_amount), Number(before.net_salary)]).toEqual([242935, 2557060]);
+        const added = await post(`/salaries/${seongjun}/adjustments`, { label: 'x', amount: 10000 });
+        const second = await post(`/salaries/${seongjun}/adjustments`, { label: 'y', amount: 20000 });
+        for (const item of second.body.adjustments) await request(app).delete(`/salaries/${seongjun}/adjustments/${item.id}`);
+        expect(added.body.tax_amount).not.toBe(242935);
+        const after = await salaryOf(SEONGJUN, '2026-12');
+        expect([after.tax_amount, after.net_salary, after.insurance_details]).toEqual([before.tax_amount, before.net_salary, before.insurance_details]);
+    });
+
+    test('시작하는 날을 비운 규칙은 이번 달 1일로 저장된다', async () => {
+        const { currentMonth } = require('../../repositories/salaryRepository');
+        expect((await post('/rules', { instructor_id: YEONYO, pay_type: 'daily', amount: 1000 })).status).toBe(201);
+        expect((await one('SELECT start_date FROM instructor_pay_rules')).start_date).toBe(`${currentMonth()}-01`);
+        expect((await post('/rules', { instructor_id: YEONYO, pay_type: 'daily', amount: 1000, end_date: '2026-01-01' })).status).toBe(400);
+    });
+
     test('인센티브가 있으면 출근 체크 뒤에도 실수령액에 남는다(예전엔 빠졌다). 세금은 예전 출근 체크와 같다', async () => {
         await november();
         const { id } = await salaryOf(SEONGJUN, '2026-11');
         await request(app).put(`/salaries/${id}`).send({ incentive_amount: 300000 });
         await attend(SEONGJUN, '2026-11-03', ['evening']);
         const salary = await salaryOf(SEONGJUN, '2026-11');
-        expect([Number(salary.tax_amount), Number(salary.net_salary)]).toEqual([242935, 2557065]);
+        expect([Number(salary.tax_amount), Number(salary.net_salary)]).toEqual([242935, 2557060]);
     });
 
     test('규칙·조정이 없는 강사: 출근 체크·재계산 금액이 바꾸기 전 계산과 1원까지 같다', async () => {

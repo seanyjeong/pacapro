@@ -95,11 +95,13 @@ module.exports = function(router) {
                 });
             }
 
-            if (salariesToPay.some(s => Number(s.net_salary) < 0)) {
+            const negative = salariesToPay.filter(s => Number(s.net_salary) < 0);
+            if (negative.length > 0) {
                 await connection.rollback();
+                const names = negative.map(s => decryptInstructorName({ ...s }).instructor_name).join(', ');
                 return res.status(400).json({
                     error: 'NEGATIVE_SALARY',
-                    message: '실수령액이 0원보다 작은 급여가 있어 지급하지 않았습니다.'
+                    message: `실수령액이 0원보다 작은 급여가 있어 지급하지 않았습니다: ${names}`
                 });
             }
 

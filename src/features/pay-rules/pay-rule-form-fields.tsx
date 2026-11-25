@@ -54,7 +54,7 @@ export function PayRuleFormFields({ form, fixedOnly = false, onChange }: PayRule
           ? noDates
             ? '날짜가 없으면 출근 계산은 그대로 두고 아래 달에 금액만 더해요.'
             : '이 기간의 출근은 횟수·단가 계산에서 빠져요.'
-          : noDates ? '날짜가 없으면 이번 달부터 계속 이 규칙을 따라요.' : '이 기간의 출근은 기본 급여 대신 이 규칙을 따라요.'}
+          : noDates ? '날짜가 없으면 이번 달 1일부터 계속 이 규칙을 따라요.' : '이 기간의 출근은 기본 급여 대신 이 규칙을 따라요.'}
       </p>
 
       {fixed && noDates ? null : (

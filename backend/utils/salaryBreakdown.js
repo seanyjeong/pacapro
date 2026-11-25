@@ -136,7 +136,8 @@ function buildBase({ instructor, attendances, rules = [], installments = [], ove
 
     const lines = [];
     let totalHours = 0;
-    const plainAuto = mode === 'auto' && activeRules.length === 0 && installments.length === 0;
+    const ruled = installments.length > 0 || activeRules.some(rule => rule.pay_type === 'monthly' || byRule.get(rule.id).length > 0);
+    const plainAuto = mode === 'auto' && !ruled;
     if (override !== null && override !== undefined) {
         lines.push({ kind: 'override', label: '기본급 직접 입력', amount: Number(override) });
     } else if (instructor.salary_type === 'mixed' && plainAuto) {

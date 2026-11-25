@@ -34,11 +34,10 @@ async function monthAttendances(conn, instructorId, yearMonth) {
     return rows;
 }
 
-// 시작하는 날이 없는 규칙은 만든 달부터 적용한다(옛 미지급 급여를 바꾸지 않는다)
 async function monthRules(conn, instructorId, yearMonth) {
     const [rows] = await conn.execute(
         `SELECT r.*, se.season_name FROM instructor_pay_rules r LEFT JOIN seasons se ON se.id = r.season_id
-         WHERE r.instructor_id = ? AND DATE_FORMAT(COALESCE(r.start_date, r.created_at), '%Y-%m') <= ?
+         WHERE r.instructor_id = ? AND (r.start_date IS NULL OR DATE_FORMAT(r.start_date, '%Y-%m') <= ?)
            AND (r.end_date IS NULL OR DATE_FORMAT(r.end_date, '%Y-%m') >= ?)
            AND NOT (r.pay_type = 'fixed_total' AND r.start_date IS NULL AND r.end_date IS NULL)
          ORDER BY r.start_date, r.id`,
