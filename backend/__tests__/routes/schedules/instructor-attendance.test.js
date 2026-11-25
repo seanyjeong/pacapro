@@ -137,7 +137,7 @@ describe('POST /paca/schedules/:id/instructor-attendance', () => {
         expect(res.status).toBe(200);
         expect(fakeConn.commit).toHaveBeenCalled();
         expect(fakeConn.release).toHaveBeenCalled();
-        expect(updateSalaryFromAttendance).toHaveBeenCalledWith(fakeConn, 5, 1, '2026-01-15', 'present');
+        expect(updateSalaryFromAttendance).toHaveBeenCalledWith(pool, 5, 1, '2026-01-15', 'present');
     });
 
     test('잘못된 status → 400 + rollback', async () => {
@@ -220,6 +220,6 @@ describe('POST /paca/schedules/date/:date/instructor-attendance', () => {
             .send({ attendances: [{ instructor_id: 5, time_slot: 'evening', attendance_status: 'present' }] });
         expect(res.status).toBe(200);
         expect(fakeConn.commit).toHaveBeenCalled();
-        expect(updateSalaryFromAttendance).toHaveBeenCalledWith(fakeConn, 5, 1, '2026-01-15', 'present');
+        expect(updateSalaryFromAttendance).toHaveBeenCalledWith(pool, 5, 1, '2026-01-15', 'present');
     });
 });

@@ -37,17 +37,21 @@ export function SalaryAdjustmentDialog({ mode, adjustment, netSalary, saving, on
       toast.error('항목명을 적어 주세요.');
       return;
     }
-    // 실수령액 맞추기: 세금에 넣지 않는 조정으로 차이만큼 더하거나 뺀다
-    const value = matching ? amount - netSalary : minus ? -amount : amount;
+    // 실수령액 맞추기는 서버가 차이를 계산해 세금에 넣지 않는 조정을 만든다
+    if (matching) {
+      if (amount % 10 !== 0) {
+        toast.error('실수령액은 10원 단위로 입력해 주세요.');
+        return;
+      }
+      onSave({ label: label.trim(), target_net: amount, memo: memo.trim() || null });
+      return;
+    }
+    const value = minus ? -amount : amount;
     if (value === 0) {
-      toast.error(matching ? '지금 실수령액과 같습니다.' : '금액을 입력해 주세요.');
+      toast.error('금액을 입력해 주세요.');
       return;
     }
-    if (matching && amount % 10 !== 0) {
-      toast.error('실수령액은 10원 단위로 입력해 주세요.');
-      return;
-    }
-    onSave({ label: label.trim(), amount: value, taxable: matching ? false : taxable, memo: memo.trim() || null });
+    onSave({ label: label.trim(), amount: value, taxable, memo: memo.trim() || null });
   };
 
   return (

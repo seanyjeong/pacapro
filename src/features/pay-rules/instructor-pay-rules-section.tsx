@@ -19,7 +19,7 @@ interface InstructorPayRulesSectionProps {
 export function InstructorPayRulesSection({ instructorId, salaryType, onChanged }: InstructorPayRulesSectionProps) {
   const state = usePayRules({ instructorId });
   // 월급 강사는 기본 월급을 그대로 두고 고정급만 더한다
-  const fixedOnly = salaryType === 'monthly';
+  const fixedOnly = salaryType === 'monthly' && (!state.editing || state.editing.pay_type === 'fixed_total');
   const saved = () => {
     state.saved();
     onChanged();

@@ -65,7 +65,10 @@ async function installRoutes(context, state) {
     }
     const adjustment = path.match(/^\/salaries\/154\/adjustments(?:\/(\d+))?$/);
     if (adjustment) {
-      if (method === 'POST') state.adjustments.push({ id: state.adjustments.length + 1, ...body });
+      if (method === 'POST') {
+        const { target_net: target, ...rest } = body;
+        state.adjustments.push({ id: state.adjustments.length + 1, ...rest, ...(target === undefined ? {} : { amount: target - state.salary.net_salary, taxable: false }) });
+      }
       if (method === 'PUT') Object.assign(state.adjustments.find((item) => item.id === Number(adjustment[1])), body);
       if (method === 'DELETE') state.adjustments = state.adjustments.filter((item) => item.id !== Number(adjustment[1]));
       settle(state);
@@ -121,7 +124,7 @@ async function runSalary(page, state) {
   await page.getByLabel('실수령액', { exact: true }).fill('400000');
   await page.getByRole('dialog').getByRole('button', { name: '저장' }).click();
   await page.getByTestId('salary-adjustments').getByText('+115,000원').waitFor();
-  expectEqual(state.posts.at(-1).body, { label: '실수령액 맞춤', amount: 115000, taxable: false, memo: null }, 'match payload');
+  expectEqual(state.posts.at(-1).body, { label: '실수령액 맞춤', target_net: 400000, memo: null }, 'match payload');
   await check(page, '2-salary-detail');
 
   await page.getByRole('button', { name: '실수령액 맞춤 삭제' }).click();

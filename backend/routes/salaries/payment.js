@@ -62,7 +62,7 @@ module.exports = function(router) {
                      JOIN instructors i ON s.instructor_id = i.id
                      WHERE s.id IN (${placeholders})
                        AND s.payment_status = 'pending'
-                       AND i.academy_id = ? FOR UPDATE`,
+                       AND i.academy_id = ? FOR UPDATE OF s`,
                     [...salary_ids, req.user.academyId]
                 );
                 salariesToPay = rows;
@@ -74,7 +74,7 @@ module.exports = function(router) {
                      JOIN instructors i ON s.instructor_id = i.id
                      WHERE s.\`year_month\` = ?
                        AND s.payment_status = 'pending'
-                       AND i.academy_id = ? FOR UPDATE`,
+                       AND i.academy_id = ? FOR UPDATE OF s`,
                     [year_month, req.user.academyId]
                 );
                 salariesToPay = rows;
@@ -92,6 +92,14 @@ module.exports = function(router) {
                     message: '지급 처리할 미지급 급여가 없습니다.',
                     paid_count: 0,
                     salaries: []
+                });
+            }
+
+            if (salariesToPay.some(s => Number(s.net_salary) < 0)) {
+                await connection.rollback();
+                return res.status(400).json({
+                    error: 'NEGATIVE_SALARY',
+                    message: '실수령액이 0원보다 작은 급여가 있어 지급하지 않았습니다.'
                 });
             }
 
@@ -173,7 +181,7 @@ module.exports = function(router) {
                 `SELECT s.*, i.academy_id, i.name as instructor_name
                  FROM salary_records s
                  JOIN instructors i ON s.instructor_id = i.id
-                 WHERE s.id = ? FOR UPDATE`,
+                 WHERE s.id = ? FOR UPDATE OF s`,
                 [salaryId]
             );
 
@@ -200,6 +208,14 @@ module.exports = function(router) {
                 return res.status(400).json({
                     error: 'SALARY_PAID',
                     message: '이미 지급 완료된 급여입니다.'
+                });
+            }
+
+            if (Number(salary.net_salary) < 0) {
+                await connection.rollback();
+                return res.status(400).json({
+                    error: 'NEGATIVE_SALARY',
+                    message: '실수령액이 0원보다 작은 급여는 지급할 수 없습니다.'
                 });
             }
 

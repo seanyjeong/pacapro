@@ -26,12 +26,9 @@ export function recalculateSalaryForPage(id: number): Promise<{
   return apiClient.post(`/salaries/${id}/recalculate`, undefined, SILENT_CONFIG);
 }
 
-export interface AdjustmentPayload {
-  label: string;
-  amount: number;
-  taxable: boolean;
-  memo: string | null;
-}
+export type AdjustmentPayload =
+  | { label: string; amount: number; taxable: boolean; memo: string | null }
+  | { label: string; target_net: number; memo: string | null }; // 실수령액 맞추기
 
 export function addSalaryAdjustment(salaryId: number, payload: AdjustmentPayload): Promise<unknown> {
   return apiClient.post(`/salaries/${salaryId}/adjustments`, payload, SILENT_CONFIG);

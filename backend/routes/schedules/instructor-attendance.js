@@ -222,13 +222,15 @@ router.post('/:id/instructor-attendance', verifyToken, checkPermission('schedule
                 check_in_time,
                 check_out_time
             });
-
-            // 급여 자동 계산/업데이트
-            await updateSalaryFromAttendance(connection, instructor_id, req.user.academyId, schedule.class_date, attendance_status);
         }
 
         await connection.commit();
         connection.release();
+
+        // 급여 자동 계산/업데이트 — 출근 기록이 저장된 뒤에 한다
+        for (const record of processedRecords) {
+            if (record.attendance_status) await updateSalaryFromAttendance(db, record.instructor_id, req.user.academyId, schedule.class_date, record.attendance_status);
+        }
 
         res.json({
             message: `Instructor attendance recorded for ${processedRecords.length} records`,
@@ -504,13 +506,15 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
                 time_slot,
                 attendance_status
             });
-
-            // 급여 자동 계산/업데이트
-            await updateSalaryFromAttendance(connection, instructor_id, req.user.academyId, workDate, attendance_status);
         }
 
         await connection.commit();
         connection.release();
+
+        // 급여 자동 계산/업데이트 — 출근 기록이 저장된 뒤에 한다
+        for (const record of processedRecords) {
+            if (record.attendance_status) await updateSalaryFromAttendance(db, record.instructor_id, req.user.academyId, workDate, record.attendance_status);
+        }
 
         res.json({
             message: `Instructor attendance recorded for ${processedRecords.length} records`,

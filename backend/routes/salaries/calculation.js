@@ -223,7 +223,7 @@ module.exports = function(router) {
             const outcome = await inTransaction(pool, async conn => {
                 const salary = await lockSalary(conn, salaryId, req.user.academyId);
                 if (!salary || isPaid(salary)) return { salary };
-                return { salary, result: await recalculate(conn, salary) };
+                return { salary, result: await recalculate(conn, salary, 'recalc') };
             });
 
             if (!outcome.salary) {
@@ -260,6 +260,7 @@ module.exports = function(router) {
                 }
             });
         } catch (error) {
+            if (error.status) return res.status(error.status).json(error.body);
             logger.error('Error recalculating salary:', error);
             res.status(500).json({
                 error: 'RECALCULATE_FAILED',

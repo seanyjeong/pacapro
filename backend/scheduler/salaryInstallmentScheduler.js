@@ -4,12 +4,12 @@
 const cron = require('node-cron');
 const db = require('../config/database');
 const logger = require('../utils/logger');
-const { inTransaction, createInstallmentSalaries } = require('../services/salaryService');
+const { createAllInstallmentSalaries } = require('../services/salaryService');
 
 function startSalaryInstallmentScheduler() {
     cron.schedule('15 0 * * *', async () => {
         try {
-            const created = await inTransaction(db, conn => createInstallmentSalaries(conn));
+            const created = await createAllInstallmentSalaries(db, logger);
             if (created > 0) logger.info(`[SalaryInstallmentScheduler] 급여 명세서 ${created}건 생성`);
         } catch (error) {
             logger.error('[SalaryInstallmentScheduler] 오류:', error);

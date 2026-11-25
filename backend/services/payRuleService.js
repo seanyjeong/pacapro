@@ -83,8 +83,17 @@ async function ruleInstallments(conn, ruleIds) {
 
 // 같은 날짜·시간대에 규칙이 두 개면 어느 쪽을 따를지 알 수 없다
 async function assertNoOverlap(conn, instructorId, rule, exceptId = 0) {
-    if (isPaymentOnly(rule)) return;
     const [rows] = await conn.execute('SELECT * FROM instructor_pay_rules WHERE instructor_id = ? AND id <> ?', [instructorId, exceptId]);
+    if (isPaymentOnly(rule)) {
+        // 날짜 없는 금액 규칙은 겹칠 수 있지만, 이름·금액·지급 달이 모두 같으면 두 번 저장한 것으로 본다
+        const same = rows.filter(other => isPaymentOnly(other) && (other.memo || null) === rule.memo && Number(other.amount) === Number(rule.amount));
+        const months = list => list.map(item => `${item.pay_year_month}:${Number(item.amount)}`).join();
+        const installments = await ruleInstallments(conn, same.map(other => other.id));
+        if (same.some(other => months(installments.filter(item => item.pay_rule_id === other.id)) === months(rule.installments))) {
+            throw fail(409, 'RULE_DUPLICATE', '이름·금액·지급 달이 같은 규칙이 이미 있습니다. 따로 더 주는 것이면 규칙 이름을 다르게 적어 주세요.');
+        }
+        return;
+    }
     const range = item => [item.start_date ? dateText(item.start_date) : '0000-00-00', item.end_date ? dateText(item.end_date) : '9999-99-99'];
     const [start, end] = range(rule);
     const clash = rows.find(other => {
@@ -95,17 +104,18 @@ async function assertNoOverlap(conn, instructorId, rule, exceptId = 0) {
     if (clash) throw fail(409, 'RULE_OVERLAP', `같은 날짜·시간대에 이미 규칙이 있습니다(${clash.memo || `${range(clash).join(' ~ ')}`}).`);
 }
 
-// 이미 지급한 달의 분할액은 더하거나 빼거나 바꿀 수 없다
+// 이미 지급한 달의 분할액은(지급과 동시에 바꾸지 못하게 그 달 급여 줄을 잠근다) 더하거나 빼거나 바꿀 수 없다
 async function assertPaidMonthsKept(conn, instructorId, before, after) {
     const amounts = list => new Map(list.map(item => [item.pay_year_month, Number(item.amount)]));
     const [old, next] = [amounts(before), amounts(after)];
     const changed = [...new Set([...old.keys(), ...next.keys()])].filter(month => old.get(month) !== next.get(month));
     if (changed.length === 0) return;
-    const [paid] = await conn.execute(
-        `SELECT \`year_month\` FROM salary_records WHERE instructor_id = ? AND payment_status = 'paid'
-         AND \`year_month\` IN (${changed.map(() => '?').join(',')})`,
+    const [salaries] = await conn.execute(
+        `SELECT \`year_month\`, payment_status FROM salary_records WHERE instructor_id = ?
+         AND \`year_month\` IN (${changed.map(() => '?').join(',')}) FOR UPDATE`,
         [instructorId, ...changed]
     );
+    const paid = salaries.filter(row => row.payment_status === 'paid');
     if (paid.length > 0) throw fail(409, 'MONTH_PAID', `이미 지급 완료된 달(${paid.map(row => row.year_month).join(', ')})의 분할 지급은 바꿀 수 없습니다.`);
 }
 
@@ -128,7 +138,7 @@ async function refreshSalaries(conn, instructor, rules) {
             && (!rule.end_date || month <= dateText(rule.end_date).slice(0, 7))));
     const months = pending.map(row => row.year_month).filter(touches);
     for (const yearMonth of months) {
-        await recalculateMonth(conn, { instructorId: instructor.id, academyId: instructor.academy_id, yearMonth, create: false });
+        await recalculateMonth(conn, { instructorId: instructor.id, academyId: instructor.academy_id, yearMonth, create: false, onlyIfRuled: true });
     }
     await createInstallmentSalaries(conn, { instructorId: instructor.id });
     return months;
@@ -174,7 +184,7 @@ async function listRules(conn, academyId, { instructorId = null, seasonId = null
     const [rows] = await conn.execute(
         `SELECT r.*, i.name AS instructor_name, se.season_name FROM instructor_pay_rules r
          JOIN instructors i ON i.id = r.instructor_id LEFT JOIN seasons se ON se.id = r.season_id
-         WHERE i.academy_id = ? ${instructorId ? 'AND r.instructor_id = ?' : ''} ${seasonId ? 'AND r.season_id = ?' : ''}
+         WHERE i.academy_id = ? AND i.deleted_at IS NULL ${instructorId ? 'AND r.instructor_id = ?' : ''} ${seasonId ? 'AND r.season_id = ?' : ''}
          ORDER BY r.start_date IS NULL, r.start_date, r.id`,
         [academyId, ...(instructorId ? [instructorId] : []), ...(seasonId ? [seasonId] : [])]
     );

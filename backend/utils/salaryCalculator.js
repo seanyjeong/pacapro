@@ -223,7 +223,7 @@ function calculateInstructorSalary(instructor, workData, bonus = 0, deduction = 
 
 /**
  * 강사 출근 체크 시 급여 자동 계산/업데이트
- * @param {object} db - 데이터베이스 커넥션
+ * @param {object} db - 커넥션 풀. 출근 기록을 커밋한 뒤 부른다(급여 계산이 실패해도 출근 기록은 남는다)
  * @param {number} instructorId - 강사 ID
  * @param {number} academyId - 학원 ID
  * @param {string} workDate - 근무 날짜 (YYYY-MM-DD)
@@ -237,9 +237,9 @@ async function updateSalaryFromAttendance(db, instructorId, academyId, workDate,
     }
 
     try {
-        const { recalculateMonth } = require('../services/salaryService');
-        // year_month = 근무월. 지급 완료된 달은 null
-        const result = await recalculateMonth(db, { instructorId, academyId, yearMonth: String(workDate).slice(0, 7), mode: 'auto' });
+        const { inTransaction, recalculateMonth } = require('../services/salaryService');
+        // year_month = 근무월. 지급 완료된 달은 null. 출근 저장이 커밋된 뒤 자기 트랜잭션에서 계산한다
+        const result = await inTransaction(db, conn => recalculateMonth(conn, { instructorId, academyId, yearMonth: String(workDate).slice(0, 7), mode: 'auto' }));
         return result && {
             yearMonth: String(workDate).slice(0, 7),
             baseAmount: result.baseAmount,

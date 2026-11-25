@@ -45,18 +45,23 @@ function findRule(rules, date, slot) {
         && !isPaymentOnly(rule) && parseSlots(rule.time_slots).includes(slot)) || null;
 }
 
+// 예전 계산과 1원까지 같게: 출근 체크는 분을 모아 나누고, 재계산은 기록마다 나눠 더하며 시각이 없으면 3시간으로 친다
 function hoursOf(attendances, mode) {
     let minutes = 0;
+    let hours = 0;
     for (const { check_in_time: start, check_out_time: end } of attendances) {
         if (!start || !end) {
-            if (mode === 'recalc') minutes += 180;
+            hours += 3;
             continue;
         }
         const [inH, inM] = start.split(':').map(Number);
         const [outH, outM] = end.split(':').map(Number);
-        minutes += Math.max(0, outH * 60 + outM - inH * 60 - inM);
+        const worked = outH * 60 + outM - inH * 60 - inM;
+        if (worked <= 0) continue;
+        minutes += worked;
+        hours += worked / 60;
     }
-    return minutes / 60;
+    return mode === 'auto' ? minutes / 60 : hours;
 }
 
 function classLines(instructor, attendances) {
@@ -151,9 +156,10 @@ function buildBase({ instructor, attendances, rules = [], installments = [], ove
 }
 
 /**
- * 세금: 3.3% 는 (기본급 + 세금 대상 조정), 4대보험은 인센티브·공제까지 넣은 금액 — 지금까지와 같은 기준에 조정만 더했다.
+ * 세금: 3.3% 는 (기본급 + 세금 대상 조정), 4대보험은 재계산에서 인센티브·공제까지 넣은 금액 — 지금까지와 같은 기준에 조정만 더했다.
+ * 실수령액은 재계산이거나 조정·규칙·직접 입력이 있으면 10원 미만을 버린다(실수령액 맞추기가 다음 출근 체크 뒤에도 맞게).
  */
-function totals({ baseAmount, nonTaxable = 0, incentive = 0, deduction = 0, adjustments = [], taxType, yearMonth, mode = 'recalc', keepTax = null }) {
+function totals({ baseAmount, nonTaxable = 0, incentive = 0, deduction = 0, adjustments = [], taxType, yearMonth, mode = 'recalc', custom = false, keepTax = null }) {
     const adjustmentAmount = adjustments.reduce((sum, item) => sum + Number(item.amount), 0);
     const taxableAdjustment = adjustments.filter(item => Number(item.taxable)).reduce((sum, item) => sum + Number(item.amount), 0);
     const taxableBase = baseAmount - nonTaxable + taxableAdjustment;
@@ -165,11 +171,11 @@ function totals({ baseAmount, nonTaxable = 0, incentive = 0, deduction = 0, adju
         const tax = Math.max(0, taxableBase) * 0.033;
         taxAmount = mode === 'auto' ? Math.round(tax) : Math.floor(tax);
     } else if (taxType === 'insurance') {
-        insuranceDetails = calculate4Insurance(taxableBase + incentive - deduction, yearMonth);
+        insuranceDetails = calculate4Insurance(mode === 'auto' ? taxableBase : taxableBase + incentive - deduction, yearMonth);
         taxAmount = insuranceDetails.totalDeduction;
     }
     const net = baseAmount + incentive - deduction + adjustmentAmount - taxAmount;
-    const netSalary = mode === 'auto' ? net : Math.floor(net / 10) * 10;
+    const netSalary = mode === 'auto' && !custom ? net : Math.floor(net / 10) * 10;
     return { adjustmentAmount, taxableAmount: taxableBase, taxAmount, insuranceDetails, netSalary };
 }
 

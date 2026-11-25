@@ -95,6 +95,9 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
             await admin.query(`CREATE TABLE \`${table}\` (${defs.join(',')}) ENGINE=InnoDB`);
         }
         await admin.query('ALTER TABLE salary_records ADD UNIQUE KEY uk_instructor_salary (instructor_id, `year_month`)');
+        await admin.query('ALTER TABLE instructor_attendance ADD UNIQUE KEY uk_work (instructor_id, work_date, time_slot)');
+        // 운영과 같은 외래키 — 없으면 동시 저장 교착이 드러나지 않는다
+        for (const table of ['salary_records', 'instructor_attendance', 'expenses']) await admin.query(`ALTER TABLE ${table} ADD FOREIGN KEY (instructor_id) REFERENCES instructors (id)`);
         // 되돌리기가 되는지까지: 적용 → 되돌리기 → 다시 적용 두 번(두 번째는 아무 일도 없어야 한다)
         for (const file of ['', '.down', '', '']) for (const statement of migration(`20261126_add_salary_rules${file}.mysql`)) await admin.query(statement);
         pool = mysql.createPool({ ...options, database });
@@ -102,6 +105,7 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
         app = express(); app.use(express.json());
         app.use('/salaries', require('../../routes/salaries'));
         app.use('/rules', require('../../routes/payRules'));
+        const schedules = express.Router(); require('../../routes/schedules/instructor-attendance')(schedules); app.use('/schedules', schedules);
     });
     afterAll(async () => { await pool?.end(); await admin?.end(); });
 
@@ -278,6 +282,106 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
         expect((await one('SELECT end_date FROM instructor_pay_rules LIMIT 1')).end_date).toBe('2027-02-05');
     });
 
+    const checkIn = (date, records) => post(`/schedules/date/${date}/instructor-attendance`, { attendances: records.map(([id, slot]) => ({ instructor_id: id, time_slot: slot, attendance_status: 'present' })) });
+
+    test('동시에 저장해도 출근이 사라지지 않고 급여 = 출근 × 단가 + 조정', async () => {
+        for (let day = 1; day <= 15; day++) {
+            const date = `2026-10-${String(day).padStart(2, '0')}`;
+            const results = await Promise.all([checkIn(date, [[YEONYO, 'morning'], [CHEOLMIN, 'morning']]), checkIn(date, [[CHEOLMIN, 'afternoon'], [YEONYO, 'afternoon']])]);
+            expect(results.map(res => res.status)).toEqual([200, 200]);
+        }
+        expect((await one('SELECT COUNT(*) c FROM instructor_attendance')).c).toBe(60);
+        expect(Number((await salaryOf(YEONYO, '2026-10')).base_amount)).toBe(30 * 35000);
+        const { id } = await salaryOf(YEONYO, '2026-10');
+        for (let i = 1; i <= 12; i++) {
+            const results = await Promise.all([checkIn(`2026-10-${15 + i}`, [[YEONYO, 'evening']]), post(`/salaries/${id}/adjustments`, { label: `b${i}`, amount: 1000 })]);
+            expect(results.map(res => res.status)).toEqual([200, 201]);
+            const salary = await salaryOf(YEONYO, '2026-10');
+            expect([Number(salary.base_amount), salary.adjustment_amount, Number(salary.net_salary)]).toEqual([(30 + i) * 35000, i * 1000, (30 + i) * 35000 + i * 1000]);
+        }
+    }, 60000);
+
+    test('같은 규칙을 동시에 두 번 저장해도 하나만 남는다', async () => {
+        for (const [url, body] of [['/rules/season/21', { instructor_ids: [YEONYO, CHEOLMIN], amount: 3000000, installments: season(YEONYO).installments }],
+            ['/rules', { instructor_id: YEONYO, pay_type: 'fixed_total', amount: 500000, memo: '보너스', installments: [{ pay_year_month: '2026-12', amount: 500000 }] }]]) {
+            for (let i = 0; i < 8; i++) {
+                await q('DELETE FROM instructor_pay_rules');
+                const results = await Promise.all([post(url, body), post(url, body)]);
+                expect(results.map(res => res.status).sort()).toEqual([201, 409]);
+            }
+        }
+    }, 60000);
+
+    test('실수령액 맞추기는 적은 금액과 정확히 같다(인센티브·4대보험·낡은 급여 줄 포함)', async () => {
+        await november();
+        const salary = await salaryOf(SEONGJUN, '2026-11');
+        expect(Number(salary.net_salary)).toBe(2257065);
+        await request(app).put(`/salaries/${salary.id}`).send({ incentive_amount: 300000 });
+        expect((await post(`/salaries/${salary.id}/adjustments`, { label: '맞춤', target_net: 2600000 })).body.net_salary).toBe(2600000);
+        await attend(SEONGJUN, '2026-11-03', ['evening']);
+        expect(Number((await salaryOf(SEONGJUN, '2026-11')).net_salary)).toBe(2600000);
+        expect((await post(`/salaries/${salary.id}/adjustments`, { label: '맞춤', target_net: 2600005 })).status).toBe(400);
+        // 예전 자동 계산이 인센티브를 빠뜨린 줄
+        const old = await salaryOf(YEONYO, '2026-11');
+        await q('UPDATE salary_records SET incentive_amount = 50000, net_salary = 560000, calculation_details = NULL WHERE id = ?', [old.id]);
+        expect((await post(`/salaries/${old.id}/adjustments`, { label: '맞춤', target_net: 340000 })).body.net_salary).toBe(340000);
+    });
+
+    test('조정·규칙을 넣었다 지우면 원래 금액으로 돌아온다(계산 방식이 바뀌지 않는다)', async () => {
+        await q('INSERT INTO instructors SET ?', { id: 500, academy_id: 1, name: 'x', salary_type: 'hourly', hourly_rate: 12000, base_salary: 0, tax_type: '3.3%' });
+        await q('INSERT INTO instructors SET ?', { id: 501, academy_id: 1, name: 'x', salary_type: 'mixed', hourly_rate: 35000, base_salary: 1000000, tax_type: '3.3%' });
+        await q('INSERT INTO instructors SET ?', { id: 502, academy_id: 1, name: 'x', salary_type: 'monthly', hourly_rate: 0, base_salary: 2333333, tax_type: '3.3%' });
+        for (const id of [500, 501, 502, SEONGJUN]) {
+            await attend(id, '2026-11-02', ['evening']);
+            const before = await salaryOf(id, '2026-11');
+            const added = await post(`/salaries/${before.id}/adjustments`, { label: 'b', amount: 10000 });
+            await attend(id, '2026-11-03', ['evening']);
+            expect(Number((await salaryOf(id, '2026-11')).base_amount)).toBe(Number(before.base_amount));
+            await request(app).delete(`/salaries/${before.id}/adjustments/${added.body.adjustments[0].id}`);
+            expect(Number((await salaryOf(id, '2026-11')).net_salary)).toBe(Number(before.net_salary));
+            const rule = await post('/rules', season(id, { start_date: '2026-11-29' }));
+            if (id === 502 || id === SEONGJUN) expect(Number((await salaryOf(id, '2026-11')).net_salary)).toBe(Number(before.net_salary));
+            await request(app).delete(`/rules/${rule.body.id}`);
+            const after = await salaryOf(id, '2026-11');
+            expect([after.base_amount, after.tax_amount, after.net_salary]).toEqual([before.base_amount, before.tax_amount, before.net_salary]);
+        }
+    });
+
+    test('강사 세금 유형을 바꾼 뒤의 옛 급여 줄·상태와 금액 동시 변경·음수 실수령액·삭제 강사', async () => {
+        await november();
+        const { id } = await salaryOf(CHEOLMIN, '2026-11');
+        await q("UPDATE salary_records SET tax_type = 'none', calculation_details = NULL WHERE id = ?", [id]);
+        const adjusted = await post(`/salaries/${id}/adjustments`, { label: 'x', amount: -5000 });
+        expect([adjusted.body.tax_amount, adjusted.body.net_salary]).toEqual([Math.floor(1195000 * 0.033), Math.floor((1195000 - 39435) / 10) * 10]);
+        expect((await request(app).put(`/salaries/${id}`).send({ incentive_amount: 1000, payment_status: 'paid' })).status).toBe(400);
+        // 실수령액이 음수가 되는 규칙은 저장하지 않는다
+        const yeonyo = await salaryOf(YEONYO, '2026-11');
+        await post(`/salaries/${yeonyo.id}/adjustments`, { label: 'x', amount: -500000 });
+        expect((await post('/rules', season(YEONYO))).body.error).toBe('NEGATIVE_SALARY');
+        expect(await q('SELECT id FROM instructor_pay_rules')).toHaveLength(0);
+        // 손으로 만든 옛 미지급 급여는 규칙이 닿지 않으면 그대로
+        await q("INSERT INTO salary_records (instructor_id, `year_month`, base_amount, tax_type, net_salary, payment_status) VALUES (?, '2025-03', 280000, 'none', 280000, 'pending')", [YEONYO]);
+        await q('DELETE FROM salary_adjustments');
+        expect((await post('/rules', { instructor_id: YEONYO, pay_type: 'monthly', amount: 100000 })).status).toBe(201);
+        expect(Number((await salaryOf(YEONYO, '2025-03')).base_amount)).toBe(280000);
+        // 시즌 강사 한 명을 삭제해도 나머지 기간은 맞출 수 있다
+        await q('DELETE FROM instructor_pay_rules');
+        await post('/rules/season/21', { instructor_ids: [YEONYO, CHEOLMIN], amount: 1, installments: [{ pay_year_month: '2026-12', amount: 1 }] });
+        await q('UPDATE instructors SET deleted_at = NOW() WHERE id = ?', [YEONYO]);
+        const { rules } = (await request(app).get('/rules?season_id=21')).body;
+        expect(rules.map(rule => rule.instructor_id)).toEqual([CHEOLMIN]);
+        expect((await post('/rules/season/21/sync', { rule_ids: rules.map(rule => rule.id) })).status).toBe(200);
+    });
+
+    test('인센티브가 있으면 출근 체크 뒤에도 실수령액에 남는다(예전엔 빠졌다). 세금은 예전 출근 체크와 같다', async () => {
+        await november();
+        const { id } = await salaryOf(SEONGJUN, '2026-11');
+        await request(app).put(`/salaries/${id}`).send({ incentive_amount: 300000 });
+        await attend(SEONGJUN, '2026-11-03', ['evening']);
+        const salary = await salaryOf(SEONGJUN, '2026-11');
+        expect([Number(salary.tax_amount), Number(salary.net_salary)]).toEqual([242935, 2557065]);
+    });
+
     test('규칙·조정이 없는 강사: 출근 체크·재계산 금액이 바꾸기 전 계산과 1원까지 같다', async () => {
         let seed = 7;
         const random = max => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % max; };
@@ -291,7 +395,7 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
             for (let day = 1; day <= 1 + random(12); day++) {
                 const timed = random(3) > 0;
                 attendances.push({ instructor_id: instructor.id, work_date: `2026-10-${String(day).padStart(2, '0')}`, time_slot: pick(ALL), attendance_status: pick(['present', 'late', 'absent', 'present']),
-                    check_in_time: timed ? '09:10:00' : null, check_out_time: timed ? pick(['12:00:00', '13:35:00']) : null });
+                    check_in_time: timed ? '09:10:00' : null, check_out_time: timed ? pick(['12:00:00', '13:35:00', '12:40:00', '11:17:00']) : null });
             }
             for (const row of attendances) await q('INSERT INTO instructor_attendance SET ?', row);
             const counted = attendances.filter(row => row.attendance_status !== 'absent');

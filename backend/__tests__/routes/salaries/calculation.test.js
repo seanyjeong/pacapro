@@ -60,7 +60,7 @@ function resetMocks() {
   pool.execute.mockReset();
   pool.getConnection.mockResolvedValue({
     execute: (...args) => pool.execute(...args),
-    beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
+    query: jest.fn(), beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
   });
   pool.query.mockReset();
   decrypt.mockClear();

@@ -7,6 +7,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { apiErrorMessage } from '@/features/pay-rules/pay-rule-utils';
 import { updateSalaryForPage } from './salary-detail-api';
 import type { SalaryDetailWithRates } from './salary-detail-types';
+import { parseCalculationDetails } from '@/lib/utils/salary-lines';
 import { formatCurrency, toNumber } from './salary-detail-utils';
 
 const iconButton = 'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted no-print';
@@ -17,6 +18,11 @@ export function SalaryBaseOverride({ salary, onChanged }: { salary: SalaryDetail
   const [value, setValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const overridden = salary.base_override !== null && salary.base_override !== undefined;
+
+  // 나눠 주는 고정급은 직접 입력한 기본급에 따로 더해지므로 처음 값에서 뺀다
+  const installments = (parseCalculationDetails(salary.calculation_details)?.base_lines ?? [])
+    .filter((line) => line.kind === 'installment')
+    .reduce((sum, line) => sum + line.amount, 0);
 
   const save = async (baseOverride: number | null) => {
     setSaving(true);
@@ -36,7 +42,8 @@ export function SalaryBaseOverride({ salary, onChanged }: { salary: SalaryDetail
     <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-border/60 py-2">
       <span className="text-secondary-foreground">기본급{overridden ? ' (직접 입력)' : ''}</span>
       {editing ? (
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {installments > 0 ? <span className="text-[13px] text-muted-foreground">고정급 {formatCurrency(installments)}은 따로 더해요</span> : null}
           <MoneyInput aria-label="기본급 직접 입력" value={value} onChange={setValue} className="h-10 w-36 text-sm" />
           <button type="button" aria-label="기본급 저장" disabled={saving} className="flex h-9 w-9 items-center justify-center rounded-lg text-success hover:bg-success-soft" onClick={() => void save(value)}><Save className="h-4 w-4" /></button>
           <button type="button" aria-label="기본급 수정 취소" className={iconButton} onClick={() => setEditing(false)}><X className="h-4 w-4" /></button>
@@ -47,7 +54,7 @@ export function SalaryBaseOverride({ salary, onChanged }: { salary: SalaryDetail
           {salary.payment_status === 'pending' ? (
             <>
               {overridden ? <button type="button" aria-label="기본급 자동 계산으로" title="자동 계산으로 되돌리기" disabled={saving} className={iconButton} onClick={() => void save(null)}><RotateCcw className="h-4 w-4" /></button> : null}
-              <button type="button" aria-label="기본급 수정" className={iconButton} onClick={() => { setValue(overridden ? toNumber(salary.base_override) : toNumber(salary.base_amount)); setEditing(true); }}><Edit3 className="h-4 w-4" /></button>
+              <button type="button" aria-label="기본급 수정" className={iconButton} onClick={() => { setValue(overridden ? toNumber(salary.base_override) : toNumber(salary.base_amount) - installments); setEditing(true); }}><Edit3 className="h-4 w-4" /></button>
             </>
           ) : null}
         </div>

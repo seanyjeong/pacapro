@@ -2,7 +2,7 @@
  * Salaries Amounts Sub-Router — 사람이 금액을 정하는 경로. 지급 완료된 급여는 모두 막는다.
  *   - POST   /open                          : 출근이 없는 달 명세서 만들기 { instructor_id, year_month }
  *   - PUT    /:id                           : 인센티브·공제·지급 상태(예전과 같음) + base_override(기본급 직접 입력, null = 자동)
- *   - POST   /:id/adjustments               : 조정 추가 { label, amount, taxable, memo }
+ *   - POST   /:id/adjustments               : 조정 추가 { label, amount, taxable, memo } 또는 실수령액 맞추기 { label, target_net, memo }
  *   - PUT    /:id/adjustments/:adjustmentId : 조정 수정
  *   - DELETE /:id/adjustments/:adjustmentId : 조정 삭제
  */
@@ -35,12 +35,19 @@ async function editableSalary(conn, req) {
     return salary;
 }
 
-// 조정을 바꾼 뒤 세금·실수령액을 다시 맞춘다. 실수령액이 0원보다 작아지면 되돌린다
+// 조정을 바꾼 뒤 세금·실수령액을 다시 맞춘다(실수령액이 0원보다 작아지면 오류로 되돌아간다)
 async function settle(conn, salary) {
     const result = await refreshTotals(conn, salary);
-    if (result.netSalary < 0) throw fail(400, 'NEGATIVE_SALARY', '실수령액이 0원보다 작아집니다. 금액을 확인해 주세요.');
     return { net_salary: result.netSalary, tax_amount: result.taxAmount, adjustment_amount: result.adjustmentAmount,
         adjustments: await listAdjustments(conn, salary.id) };
+}
+
+// 실수령액 맞추기: 지금 기준으로 다시 맞춘 실수령액과의 차이만큼 세금에 넣지 않는 조정을 만든다
+async function matchInput(conn, salary, { target_net: target, label, memo }) {
+    if (!isWon(target) || target < 0 || target % 10 !== 0) throw fail(400, 'VALIDATION_ERROR', '실수령액은 10원 단위로 입력해 주세요.');
+    const current = Math.floor((await refreshTotals(conn, salary)).netSalary / 10) * 10;
+    if (target === current) throw fail(400, 'VALIDATION_ERROR', '지금 실수령액과 같습니다.');
+    return adjustmentInput({ label, memo, amount: target - current, taxable: false });
 }
 
 async function findAdjustment(conn, salary, req) {
@@ -65,7 +72,7 @@ module.exports = function(router) {
                 if (existing) return existing;
                 await createEmptySalary(conn, instructor.id, year_month, instructor.tax_type);
                 const created = await lockSalaryByMonth(conn, instructor.id, year_month);
-                await recalculate(conn, created);
+                await recalculate(conn, created, 'recalc');
                 return created;
             });
             res.status(201).json({ message: '급여 명세서를 열었습니다.', salary: { id: salary.id } });
@@ -83,6 +90,9 @@ module.exports = function(router) {
                 const values = { incentive_amount, total_deduction, payment_status, payment_date, base_override };
                 const keys = Object.keys(values).filter(key => values[key] !== undefined);
                 if (keys.length === 0) throw fail(400, 'VALIDATION_ERROR', '수정할 항목이 없습니다.');
+                if (payment_status !== undefined && [incentive_amount, total_deduction, base_override].some(value => value !== undefined)) {
+                    throw fail(400, 'VALIDATION_ERROR', '금액과 지급 상태를 한 번에 바꿀 수 없습니다.');
+                }
                 if (base_override !== undefined && base_override !== null && (!isWon(base_override) || base_override < 0)) {
                     throw fail(400, 'VALIDATION_ERROR', '기본급은 0원 이상 원 단위 숫자로 입력해 주세요.');
                 }
@@ -92,10 +102,8 @@ module.exports = function(router) {
                 );
                 const next = { ...salary, ...Object.fromEntries(keys.map(key => [key, values[key]])), payment_status: salary.payment_status };
                 // 상태만 바꾸는 요청은 금액을 다시 계산하지 않는다
-                let result = null;
-                if (base_override !== undefined) result = await recalculate(conn, next);
-                else if (incentive_amount !== undefined || total_deduction !== undefined) result = await refreshTotals(conn, next, { keepTaxIfPlain: true });
-                if (result && result.netSalary < 0) throw fail(400, 'NEGATIVE_SALARY', '실수령액이 0원보다 작아집니다. 금액을 확인해 주세요.');
+                if (base_override !== undefined) await recalculate(conn, next);
+                else if (incentive_amount !== undefined || total_deduction !== undefined) await refreshTotals(conn, next);
                 const [[row]] = await conn.execute(
                     `SELECT s.*, i.name as instructor_name FROM salary_records s JOIN instructors i ON s.instructor_id = i.id WHERE s.id = ?`,
                     [salaryId]
@@ -110,12 +118,14 @@ module.exports = function(router) {
 
     router.post('/:id/adjustments', verifyToken, requireRole('owner'), async (req, res) => {
         try {
-            const input = adjustmentInput(req.body);
+            const matching = req.body.target_net !== undefined;
+            const input = matching ? null : adjustmentInput(req.body);
             const result = await inTransaction(pool, async conn => {
                 const salary = await editableSalary(conn, req);
+                const adjustment = matching ? await matchInput(conn, salary, req.body) : input;
                 await conn.execute(
                     'INSERT INTO salary_adjustments (salary_record_id, label, amount, taxable, memo, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-                    [salary.id, input.label, input.amount, input.taxable, input.memo, req.user.userId ?? null]
+                    [salary.id, adjustment.label, adjustment.amount, adjustment.taxable, adjustment.memo, req.user.userId ?? null]
                 );
                 return settle(conn, salary);
             });
