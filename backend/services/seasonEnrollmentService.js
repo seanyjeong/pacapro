@@ -20,7 +20,7 @@ const {
     seasonRegularBlockStart
 } = require('./seasonScheduleAssignment');
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
-const { seasonBillMatchSql, seasonBillMatchParams } = require('../repositories/seasonBillMatch');
+const { closeSeasonBills } = require('../repositories/seasonBillClose');
 
 const VALID_TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 
@@ -384,7 +384,7 @@ function planSeasonCancel({ enrollment, operatingDays, cancelDate, includeVat })
     return { originalFee, paidAmount, refund };
 }
 
-// 낸 돈이 있고 환불액이 있으면 지출(refund) 기록 → 등록 삭제 → 시즌 표시 해제 → 그 시즌의 완납 아닌 시즌비 청구 삭제
+// 낸 돈이 있고 환불액이 있으면 지출(refund) 기록 → 등록 삭제 → 시즌 표시 해제 → 그 시즌의 받은 돈 없는 시즌비 청구 삭제(일부 납부는 받은 돈으로 닫음)
 async function applySeasonCancel(conn, { enrollment, cancelDate, includeVat, refundAmount, paidAmount }) {
     if (refundAmount > 0 && paidAmount > 0) {
         await conn.execute(
@@ -411,12 +411,7 @@ async function applySeasonCancel(conn, { enrollment, cancelDate, includeVat, ref
         [enrollment.student_id]
     );
 
-    await conn.execute(
-        `DELETE FROM student_payments
-        WHERE student_id = ? AND payment_type = 'season' AND payment_status != 'paid'
-        AND ${seasonBillMatchSql()}`,
-        [enrollment.student_id, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)]
-    );
+    await closeSeasonBills(conn, enrollment.student_id, enrollment.season_id, enrollment.season_name);
 }
 
 module.exports = {

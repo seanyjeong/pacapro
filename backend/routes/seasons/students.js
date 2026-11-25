@@ -40,7 +40,7 @@ const {
 const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
-const { seasonBillMatchSql, seasonBillMatchParams } = require('../../repositories/seasonBillMatch');
+const { closeSeasonBills } = require('../../repositories/seasonBillClose');
 
 module.exports = function(router) {
 
@@ -171,12 +171,7 @@ router.delete('/:id/students/:student_id', verifyToken, checkPermission('seasons
             [studentId]
         );
 
-        await pool.execute(
-            `DELETE FROM student_payments
-            WHERE student_id = ? AND payment_type = 'season' AND payment_status != 'paid'
-            AND ${seasonBillMatchSql()}`,
-            [studentId, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)]
-        );
+        await closeSeasonBills(pool, studentId, enrollment.season_id, enrollment.season_name);
 
         res.json({
             message: 'Season enrollment deleted successfully',

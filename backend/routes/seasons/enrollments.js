@@ -206,7 +206,8 @@ router.put('/enrollments/:enrollment_id', verifyToken, checkPermission('seasons'
         const [[season]] = await pool.execute('SELECT * FROM seasons WHERE id = ?', [enrollment.season_id]);
         const [[student]] = await pool.execute('SELECT * FROM students WHERE id = ?', [enrollment.student_id]);
         const [bills] = await pool.execute(
-            `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date
+            `SELECT id, \`year_month\`, base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                    paid_amount, payment_status, due_date, notes
              FROM student_payments
              WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND ${seasonBillMatchSql()}
              ORDER BY id`,

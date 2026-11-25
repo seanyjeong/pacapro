@@ -2,6 +2,16 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import type { Payment, PaymentFormData } from '@/lib/types/payment';
@@ -22,6 +32,7 @@ interface PaymentFormProps {
 
 export function PaymentForm({ mode, initialData, editingPayment, students, onSubmit, onCancel, loading }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>(initialData || buildDefaultPaymentFormData());
+  const [confirmZero, setConfirmZero] = useState(false);
   const editing = mode === 'edit' && editingPayment && initialData ? { payment: editingPayment, initial: initialData } : undefined;
   const finalAmount = getFinalPaymentAmount(formData, editing);
   // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구: 기본·할인 금액은 잠그고 추가 금액·청구액 직접 입력으로 조정(서버도 막는다)
@@ -54,6 +65,11 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
     event.preventDefault();
     if (formData.student_id === 0) {
       toast.error('학생을 선택해주세요.');
+      return;
+    }
+    // 청구액 칸을 비우면 0원이 된다 — 실수로 0원 청구가 되지 않게 한 번 묻는다
+    if (editing && formData.final_amount === 0 && Number(editing.payment.final_amount) > 0) {
+      setConfirmZero(true);
       return;
     }
     await onSubmit(formData);
@@ -138,6 +154,19 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
           <Button type="submit" disabled={loading} className="flex-1 sm:flex-none">{loading ? '저장 중' : mode === 'edit' ? '수정' : '등록'}</Button>
         </div>
       </div>
+
+      <AlertDialog open={confirmZero} onOpenChange={setConfirmZero}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>0원 청구로 저장할까요?</AlertDialogTitle>
+            <AlertDialogDescription>청구액이 0원이 됩니다. 칸을 비운 것이라면 취소하고 금액을 다시 적어 주세요.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void onSubmit(formData)}>0원으로 저장</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

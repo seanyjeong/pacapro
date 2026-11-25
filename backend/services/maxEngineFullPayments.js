@@ -26,6 +26,10 @@ function updated(changes, before) {
   if (hasSeparateFinal(before) && ['base_amount', 'discount_amount'].some(key => changes[key] != null && cents(changes[key]) !== cents(before[key]))) {
     fail(409, 'SEPARATELY_PRICED_BILL', '휴원·퇴원 정산 등으로 금액이 따로 정해진 청구는 기본·할인 금액을 바꿀 수 없습니다. 추가 금액으로 조정해 주세요.');
   }
+  // 시즌 청구는 일할·할인으로 깎은 금액이 추가 금액 칸에 있어 바꾸면 반대로 움직인다(화면 청구 수정과 같음)
+  if (before.payment_type === 'season' && hasSeparateFinal(before) && changes.additional_amount != null && cents(changes.additional_amount) !== cents(before.additional_amount)) {
+    fail(409, 'SEPARATELY_PRICED_BILL', '일할·할인이 든 시즌 청구의 추가 금액은 바꿀 수 없습니다. 파카 학원비 수정 화면에서 청구액을 직접 입력해 주세요.');
+  }
   const base = cents(changes.base_amount ?? before.base_amount), discount = cents(changes.discount_amount ?? before.discount_amount),
     additional = cents(changes.additional_amount ?? before.additional_amount), paid = cents(before.paid_amount);
   // 화면의 청구서 수정(PUT /paca/payments/:id)·월 청구와 같은 공통 함수: 천원 절삭(청구 대상 금액 − 크레딧), 0 미만은 0.

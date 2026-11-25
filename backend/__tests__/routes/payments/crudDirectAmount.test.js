@@ -93,7 +93,7 @@ describe('청구액 직접 입력(final_amount)', () => {
         expect(value('payment_status')).toBe('pending');
         expect(value('notes')).toBe('메모\n청구액 직접 수정: 3,511,000원 → 3,700,500원');
         expect(update[0]).not.toMatch(/base_amount = |discount_amount = |additional_amount = /);
-        expect(seasonUpdate[1]).toEqual([3700500, 7, 21]);
+        expect(seasonUpdate[1]).toEqual([189500, 3700500, 7, 21]);
     });
 
     test('200: 받은 돈에 맞춰 납부 상태가 바뀐다', async () => {

@@ -398,11 +398,15 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             `UPDATE student_payments SET ${updates.join(', ')} WHERE id = ?`,
             params
         );
-        // 등록의 시즌비(환불 창의 원래 시즌비)를 청구액과 같게 둔다
+        // 등록의 시즌비를 청구액과 같게, 할인은 바뀐 만큼 옮긴다(시즌비 + 할인 = 원래 시즌비가 유지된다)
         if (directFinal && current.payment_type === 'season' && current.season_id) {
             await conn.execute(
-                'UPDATE student_seasons SET season_fee = ? WHERE student_id = ? AND season_id = ? AND is_cancelled = 0',
-                [final_amount, payments[0].student_id, current.season_id]
+                `UPDATE student_seasons
+                 SET discount_amount = GREATEST(COALESCE(discount_amount, 0) - ?, 0),
+                     discount_type = IF(discount_type = 'none' AND discount_amount > 0, 'manual', discount_type),
+                     season_fee = ?
+                 WHERE student_id = ? AND season_id = ? AND is_cancelled = 0`,
+                [final_amount - Number(current.final_amount), final_amount, payments[0].student_id, current.season_id]
             );
         }
         await conn.commit();

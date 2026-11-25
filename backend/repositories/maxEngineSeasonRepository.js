@@ -44,7 +44,7 @@ async function enrollmentState(conn, actor, enrollmentId, lock) {
   const [season] = await rows(conn, 'SELECT * FROM seasons WHERE id = ?', [enrollment.season_id], false);
   const student = await commands.row(conn, 'students', enrollment.student_id, actor.academy_id, false);
   return { enrollment, season, student,
-    seasonPayments: await rows(conn, `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date, description FROM student_payments
+    seasonPayments: await rows(conn, `SELECT id, \`year_month\`, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, payment_status, due_date, description, notes FROM student_payments
       WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND ${seasonBillMatchSql()} ORDER BY id`,
       [enrollment.student_id, actor.academy_id, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)], lock) };
 }

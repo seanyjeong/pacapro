@@ -20,6 +20,7 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
       const sql = fs.readFileSync(require.resolve('../../migrations/' + file), 'utf8');
       for (const statement of sql.replace(/^--.*$/gm, '').split(';').filter(s => s.trim())) await f.paca.query(statement);
     }
+    await f.paca.query('ALTER TABLE seasons ADD COLUMN operating_day_slots JSON NULL');
     await f.paca.query('ALTER TABLE student_payments MODIFY paid_amount DECIMAL(10,2) DEFAULT 0, MODIFY carryover_amount DECIMAL(10,2) DEFAULT 0, MODIFY discount_amount DECIMAL(10,2) DEFAULT 0');
     app = express(); app.use(express.json());
     app.use('/full', require('../../routes/integrations/full'));
@@ -203,7 +204,10 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
     expect(p.after.related.refund_decision_required).toBe(false);
     expect(after.enrollments).toHaveLength(0);
     expect(after.expenses).toHaveLength(Number(refund) > 0 ? 1 : 0);
-    expect(after.payments.filter(x => x.payment_type === 'season')).toHaveLength(paid >= 1000000 ? 1 : 0);
+    // 받은 돈이 없는 청구만 지운다. 일부 납부 청구는 받은 돈으로 닫아 기록을 남긴다
+    const seasonBills = after.payments.filter(x => x.payment_type === 'season');
+    expect(seasonBills).toHaveLength(paid > 0 ? 1 : 0);
+    if (paid > 0) expect(seasonBills[0]).toMatchObject({ final_amount: `${paid}.00`, paid_amount: `${paid}.00`, payment_status: 'paid' });
     await reset({ paid });
     const ui = await request(app).post('/paca/seasons/enrollments/4100/cancel')
       .send({ cancellation_date: '2099-07-10', ...(refund !== undefined ? { final_refund_amount: Number(refund) } : {}) });

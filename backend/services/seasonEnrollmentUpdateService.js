@@ -2,11 +2,12 @@
  * 시즌 등록 정보 수정 — 화면(PUT /paca/seasons/enrollments/:id)과 AI 연결(season_enrollment_update)이 같은 계산을 쓴다.
  * 등록일·이 학생 시즌비·직접 할인이 바뀌면 등록할 때와 같은 planSeasonEnrollment 로 다시 계산하고
  * (시즌 도중 합류 일할 → 연속 등록 할인 → 직접 할인), 낸 돈이 없는 시즌비 청구도 같은 금액으로 고친다.
- * 낸 돈이 있는 청구는 금액을 바꾸지 않는다 — 금액이 달라지면 conflict 를 돌려주고 결제 화면에서 고치게 한다.
+ * 낸 돈이 있는 청구·청구액을 직접 정한 청구는 금액을 바꾸지 않는다 — 금액이 달라지면 conflict 를 돌려주고 결제 화면에서 고치게 한다.
  * season_fee 입력은 등록과 같이 일할·할인 전 이 학생 시즌비, student_seasons.season_fee 에는 최종 금액이 남는다.
  */
 
 const { planSeasonEnrollment } = require('./seasonEnrollmentService');
+const { isDirectlyPriced } = require('../utils/directBillAmount');
 
 const AMOUNT_FIELDS = ['registration_date', 'season_fee', 'discount_amount'];
 
@@ -58,9 +59,9 @@ function planSeasonEnrollmentUpdate({ enrollment, season, student, bills, change
 
     const bill = findSeasonBill(bills, plan.yearMonth);
     const billChanged = Boolean(bill) && Math.abs(Number(bill.final_amount) - plan.payment.finalAmount) >= 0.01;
-    const conflict = billChanged && hasPayment(bill)
-        ? '이미 낸 돈이 있는 시즌비 청구라 금액을 바꾸지 않았습니다. 청구 금액은 결제 화면에서 고쳐 주세요.'
-        : null;
+    let conflict = null;
+    if (billChanged && hasPayment(bill)) conflict = '이미 낸 돈이 있는 시즌비 청구라 금액을 바꾸지 않았습니다. 청구 금액은 결제 화면에서 고쳐 주세요.';
+    else if (billChanged && isDirectlyPriced(bill)) conflict = '청구액을 직접 정한 시즌비 청구라 금액을 바꾸지 않았습니다. 청구 금액은 결제 화면에서 고쳐 주세요.';
 
     return { plan, bill, billChanged, conflict };
 }

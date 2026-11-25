@@ -199,6 +199,11 @@ async function runSeasonDirectAmount(browser) {
   }
   const direct = page.getByLabel('청구액 직접 입력');
   if ((await moneyInputDigits(direct)) !== '3511000') throw new Error('direct amount should start from the current bill');
+  await direct.fill('');
+  await page.getByRole('button', { name: '수정' }).click();
+  await page.getByRole('alertdialog', { name: '0원 청구로 저장할까요?' }).waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
+  if (state.updatePayload) throw new Error('0 won bill should not be saved without confirmation');
   await direct.fill('3700000');
   await page.getByTestId('payment-form-summary').getByText('3,700,000원').first().waitFor();
   await assertNoRawVisibleText(page, 'payment season direct amount');

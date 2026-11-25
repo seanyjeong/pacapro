@@ -1,3 +1,5 @@
+const { hasSeparateFinal } = require('./monthlyBillAmounts');
+
 /**
  * 청구액 직접 입력(PUT /paca/payments/:id 의 final_amount) — 검사, 납부 상태, 메모 기록.
  */
@@ -25,9 +27,16 @@ function directFinalError(current, { final_amount, paid_amount, payment_status }
     return null;
 }
 
+const DIRECT_NOTE = '청구액 직접 수정:';
+
 // 메모에 남기는 기록. 학원비 변경(repositories/pendingMonthlyTuitionRepository)이 이 문구로 직접 정한 청구를 알아본다
 function directFinalNote(current, finalAmount) {
-    return `청구액 직접 수정: ${Number(current.final_amount).toLocaleString('ko-KR')}원 → ${finalAmount.toLocaleString('ko-KR')}원`;
+    return `${DIRECT_NOTE} ${Number(current.final_amount).toLocaleString('ko-KR')}원 → ${finalAmount.toLocaleString('ko-KR')}원`;
 }
 
-module.exports = { receivedAmount, statusForFinal, directFinalError, directFinalNote };
+// 청구액을 직접 정해 둔 청구 — 다시 계산해 덮으면 안 된다(원래 금액으로 되돌린 청구는 아님)
+function isDirectlyPriced(bill) {
+    return String(bill.notes || '').includes(DIRECT_NOTE) && hasSeparateFinal(bill);
+}
+
+module.exports = { isDirectlyPriced, receivedAmount, statusForFinal, directFinalError, directFinalNote };

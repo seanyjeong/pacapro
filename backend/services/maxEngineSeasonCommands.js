@@ -108,8 +108,9 @@ function display(command, before) {
     after: { cancelled: true, cancellation_date: before.cancelDate, related: { refund_calculation: result.refund, paid_amount: result.paidAmount,
       refund_amount: result.refundAmount, refund_decision_required: result.decisionRequired,
       expense: recordsRefund ? { category: 'refund', amount: result.refundAmount, expense_date: before.cancelDate } : null,
-      deleted_season_payments: seasonPayments.filter(p => p.payment_status !== 'paid'),
-      kept_season_payments: seasonPayments.filter(p => p.payment_status === 'paid'),
+      deleted_season_payments: seasonPayments.filter(p => p.payment_status !== 'paid' && !(Number(p.paid_amount) > 0)),
+      kept_season_payments: seasonPayments.filter(p => p.payment_status === 'paid' || Number(p.paid_amount) > 0)
+        .map(p => ['paid', 'cancelled'].includes(p.payment_status) ? p : { ...p, final_amount: p.paid_amount, payment_status: 'paid' }),
       student: { is_season_registered: false, current_season_id: null } } }, notice };
 }
 async function apply(conn, actor, command, before) {

@@ -8,6 +8,7 @@ const {
     resolveProratedPaymentDueDate,
 } = require('../../../../utils/proratedPaymentDueDate');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
+const { isDirectlyPriced } = require('../../../../utils/directBillAmount');
 const { updatePendingMonthlyTuition } = require('../../../../repositories/pendingMonthlyTuitionRepository');
 const { floorRatio, floorPercent, sameDecimal, billFinalAmount } = require('../../../../utils/monthlyBillAmounts');
 
@@ -82,7 +83,7 @@ async function recalculateEnrollmentPayment(context) {
     try {
         const oldYearMonth = String(oldEnrollmentDate).slice(0, 7);
         const [proratedRows] = await pool.execute(
-            `SELECT id, payment_status, additional_amount, carryover_amount FROM student_payments
+            `SELECT id, payment_status, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, notes FROM student_payments
              WHERE student_id = ? AND academy_id = ?
                AND \`year_month\` = ? AND payment_type = 'monthly'
                AND (is_prorated = 1 OR description LIKE '%일할계산%')`,
@@ -112,6 +113,9 @@ async function recalculateEnrollmentPayment(context) {
                 type: 'skipped',
                 message: '첫 달 학원비가 이미 납부되어 재계산하지 않았습니다. 결제 내역에서 직접 수정해주세요.',
             };
+        }
+        if (isDirectlyPriced(proratedPayment)) {
+            return { type: 'skipped', message: '청구액을 직접 정한 청구라 재계산하지 않았습니다. 결제 내역에서 직접 수정해주세요.' };
         }
         if (duplicateRows.length > 0) {
             return {
