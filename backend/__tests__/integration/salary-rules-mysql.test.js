@@ -412,8 +412,24 @@ run('급여 조정·규칙 — 실제 MySQL 8', () => {
         expect([bulk.status, bulk.body.message]).toEqual([400, expect.stringContaining('합성')]);
         expect(await q("SELECT id FROM salary_records WHERE payment_status = 'paid'")).toHaveLength(0);
         expect((await request(app).put(`/salaries/${id}`).send({ payment_status: 'paid' })).status).toBe(400);
+        // 음수인 달도 늘리는 수정은 된다. 더 줄이는 수정은 달을 알려 주며 막는다
+        expect(Number((await request(app).put(`/salaries/${id}`).send({ incentive_amount: 100000 })).body.salary.net_salary)).toBe(-280000);
+        const worse = await post(`/salaries/${id}/adjustments`, { label: 'y', amount: -1000 });
+        expect([worse.body.error, worse.body.message]).toEqual(['NEGATIVE_SALARY', expect.stringContaining('2026-11')]);
         // 맞추기로 바로 고칠 수 있다
         expect((await post(`/salaries/${id}/adjustments`, { label: '맞춤', target_net: 100000 })).body.net_salary).toBe(100000);
+    });
+
+    test('기록 없는 옛 급여 줄은 계산 뒤 단가가 바뀌어도 출근 체크 방식으로 다시 계산한다(시각 없는 출근을 3시간으로 치지 않는다)', async () => {
+        await q('INSERT INTO instructors SET ?', { id: 502, academy_id: 1, name: 'x', salary_type: 'hourly', hourly_rate: 10000, base_salary: 0, tax_type: '3.3%' });
+        await q("INSERT INTO instructor_attendance (instructor_id, work_date, time_slot, attendance_status, check_in_time, check_out_time) VALUES (502, '2026-11-02', 'evening', 'present', '18:00', '21:00'), (502, '2026-11-03', 'evening', 'present', NULL, NULL)");
+        await q("INSERT INTO salary_records (instructor_id, `year_month`, base_amount, tax_type, tax_amount, net_salary, payment_status) VALUES (502, '2026-11', 30000, '3.3%', 990, 29010, 'pending')");
+        await q('UPDATE instructors SET hourly_rate = 12000 WHERE id = 502');
+        const { id } = await salaryOf(502, '2026-11');
+        await request(app).put(`/salaries/${id}`).send({ base_override: 50000 });
+        await request(app).put(`/salaries/${id}`).send({ base_override: null });
+        const salary = await salaryOf(502, '2026-11');
+        expect([Number(salary.base_amount), Number(salary.tax_amount), Number(salary.net_salary)]).toEqual([36000, 1188, 34812]);
     });
 
     test('인센티브 저장은 예전처럼 10원 단위, 세금 대상 조정을 넣었다 지우면 넣기 전 세금으로', async () => {

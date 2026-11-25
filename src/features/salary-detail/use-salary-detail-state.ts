@@ -8,6 +8,7 @@ import {
   recordSalaryPayment,
   updateSalaryForPage,
 } from './salary-detail-api';
+import { apiErrorMessage } from '@/features/pay-rules/pay-rule-utils';
 import type { SalaryAdjustment } from '@/lib/types/salary';
 import type { AttendanceSummary, SalaryDetailWithRates } from './salary-detail-types';
 import { formatCurrency } from './salary-detail-utils';
@@ -60,8 +61,8 @@ export function useSalaryDetailState(salaryId: number) {
       await recordSalaryPayment(salaryId);
       toast.success('급여 지급 처리가 완료되었습니다.');
       void loadSalary();
-    } catch {
-      toast.error('지급 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, '지급 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setPaying(false);
     }
@@ -80,8 +81,8 @@ export function useSalaryDetailState(salaryId: number) {
       const result = await recalculateSalaryForPage(salaryId);
       toast.success(`재계산 완료: ${formatCurrency(result.salary.net_salary)}`);
       void loadSalary();
-    } catch {
-      toast.error('급여 재계산을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, '급여 재계산을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setRecalculating(false);
     }
@@ -110,8 +111,8 @@ export function useSalaryDetailState(salaryId: number) {
       toast.success('인센티브가 저장되었습니다.');
       setEditingIncentive(false);
       void loadSalary();
-    } catch {
-      toast.error('인센티브를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, '인센티브를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setSavingIncentive(false);
     }

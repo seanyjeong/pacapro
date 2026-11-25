@@ -29,16 +29,18 @@ const hasOverride = salary => salary.base_override !== null && salary.base_overr
 const isPaid = salary => salary.payment_status === 'paid';
 const RULE_KINDS = ['rule', 'excluded', 'installment'];
 const hasRuleLines = lines => lines.some(line => RULE_KINDS.includes(line.kind));
-const negative = () => Object.assign(new Error('NEGATIVE_SALARY'), { status: 400,
-    body: { error: 'NEGATIVE_SALARY', message: '실수령액이 0원보다 작아집니다. 금액을 확인해 주세요.' } });
+const negative = yearMonth => Object.assign(new Error('NEGATIVE_SALARY'), { status: 400,
+    body: { error: 'NEGATIVE_SALARY', message: `${yearMonth} 급여의 실수령액이 0원보다 작아집니다. 금액을 확인해 주세요.` } });
 
-// 마지막에 어느 방식으로 계산했는지. 기록이 없는 예전 급여는 두 방식으로 다시 계산해 저장된 기본급과 맞는 쪽, 둘 다 맞으면 세금·실수령액까지 맞는 쪽
+// 마지막에 어느 방식으로 계산했는지. 기록이 없는 예전 급여는 두 방식으로 다시 계산해 저장된 기본급과 맞는 쪽, 둘 다 맞거나 둘 다 안 맞으면 세금·실수령액까지 맞는 쪽
 async function lastMode(conn, salary) {
     const stored = parse(salary.calculation_details)?.mode;
     if (stored) return stored;
     const attendances = await repo.monthAttendances(conn, salary.instructor_id, salary.year_month);
-    const stands = ['auto', 'recalc'].filter(mode => Math.abs(buildBase({ instructor: salary, attendances, mode }).baseAmount - Number(salary.base_amount)) < 0.005);
-    if (stands.length < 2) return stands[0] ?? 'recalc';
+    const fits = ['auto', 'recalc'].filter(mode => Math.abs(buildBase({ instructor: salary, attendances, mode }).baseAmount - Number(salary.base_amount)) < 0.005);
+    if (fits.length === 1) return fits[0];
+    // 둘 다 안 맞으면(계산 뒤 단가·출근이 바뀜) 저장된 세금·실수령액으로 고른다
+    const stands = fits.length ? fits : ['auto', 'recalc'];
     const [tax, net] = [Number(salary.tax_amount), Number(salary.net_salary)];
     const matched = stands.find(mode => {
         const result = totals({ baseAmount: Number(salary.base_amount) || 0, incentive: Number(salary.incentive_amount) || 0,
@@ -65,7 +67,8 @@ async function save(conn, salary, base, { mode, keepTax = false, floorNet = fals
     // 강사의 세금 유형이 바뀐 옛 급여 줄은 낡은 유형이 남아 있을 수 있다 — 다시 계산할 때는 강사 설정을 쓴다
     const taxType = kept ? kept.taxType : salary.instructor_tax_type || 'none';
     const result = totals({ ...base, incentive, deduction, adjustments, taxType, yearMonth: salary.year_month, mode, custom, keepTax: kept });
-    if (result.netSalary < 0 && !allowNegative) throw negative();
+    // 음수로 만들거나 더 작게 만드는 것만 막는다(이미 음수인 달을 늘리는 수정은 된다)
+    if (result.netSalary < 0 && !allowNegative && result.netSalary < (parseFloat(salary.net_salary) || 0)) throw negative(salary.year_month);
     const plainTax = { taxType, taxAmount: result.taxAmount, insuranceDetails: result.insuranceDetails };
     const details = {
         mode,

@@ -15,6 +15,7 @@ import {
 } from './salaries-page-api';
 import { calculateSalarySummary, createDefaultFilters, getCurrentFilterYearMonth } from './salaries-page-utils';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
+import { apiErrorMessage } from '@/features/pay-rules/pay-rule-utils';
 
 const LOAD_ERROR_MESSAGE = '급여 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 
@@ -169,8 +170,8 @@ export function useSalariesPageState() {
       const result = await bulkPaySalaries({ year_month: getCurrentFilterYearMonth(filters) });
       toast.success(result.message || '급여 지급 처리가 완료되었습니다.');
       void loadSalaries();
-    } catch {
-      toast.error('일괄 지급 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, '일괄 지급 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setBulkPaying(false);
     }
