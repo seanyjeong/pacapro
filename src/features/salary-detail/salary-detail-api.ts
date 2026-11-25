@@ -25,3 +25,22 @@ export function recalculateSalaryForPage(id: number): Promise<{
 }> {
   return apiClient.post(`/salaries/${id}/recalculate`, undefined, SILENT_CONFIG);
 }
+
+export interface AdjustmentPayload {
+  label: string;
+  amount: number;
+  taxable: boolean;
+  memo: string | null;
+}
+
+export function addSalaryAdjustment(salaryId: number, payload: AdjustmentPayload): Promise<unknown> {
+  return apiClient.post(`/salaries/${salaryId}/adjustments`, payload, SILENT_CONFIG);
+}
+
+export function updateSalaryAdjustment(salaryId: number, adjustmentId: number, payload: AdjustmentPayload): Promise<unknown> {
+  return apiClient.put(`/salaries/${salaryId}/adjustments/${adjustmentId}`, payload, SILENT_CONFIG);
+}
+
+export function deleteSalaryAdjustment(salaryId: number, adjustmentId: number): Promise<unknown> {
+  return apiClient.delete(`/salaries/${salaryId}/adjustments/${adjustmentId}`, SILENT_CONFIG);
+}

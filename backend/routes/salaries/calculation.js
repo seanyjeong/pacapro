@@ -32,11 +32,12 @@ const {
     verifyToken,
     checkPermission,
     calculateInstructorSalary,
-    calculate4Insurance,
     decrypt,
     logger,
     timeSlotLabels,
 } = require('./_utils');
+const { lockSalary } = require('../../repositories/salaryRepository');
+const { inTransaction, isPaid, recalculate } = require('../../services/salaryService');
 
 module.exports = function(router) {
     /**
@@ -211,7 +212,7 @@ module.exports = function(router) {
 
     /**
      * POST /paca/salaries/:id/recalculate
-     * 미지급 급여 재계산 (현재 강사 단가 + 출근 기록 기반).
+     * 미지급 급여 재계산 (현재 강사 단가 + 출근 기록 + 급여 규칙). 조정 항목은 그대로 남는다.
      * - paid 상태는 재계산 불가.
      * - salary_records UPDATE (base_amount, tax_type, tax_amount, net_salary, updated_at).
      */
@@ -219,139 +220,45 @@ module.exports = function(router) {
         const salaryId = parseInt(req.params.id);
 
         try {
-            // 1. 급여 + 강사 정보 조회
-            const [salaries] = await pool.execute(
-                `SELECT s.*, i.salary_type, i.hourly_rate, i.base_salary,
-                        i.tax_type as instructor_tax_type,
-                        i.morning_class_rate, i.afternoon_class_rate, i.evening_class_rate,
-                        i.academy_id
-                 FROM salary_records s
-                 JOIN instructors i ON s.instructor_id = i.id
-                 WHERE s.id = ? AND i.academy_id = ?`,
-                [salaryId, req.user.academyId]
-            );
+            const outcome = await inTransaction(pool, async conn => {
+                const salary = await lockSalary(conn, salaryId, req.user.academyId);
+                if (!salary || isPaid(salary)) return { salary };
+                return { salary, result: await recalculate(conn, salary) };
+            });
 
-            if (salaries.length === 0) {
+            if (!outcome.salary) {
                 return res.status(404).json({
                     error: 'NOT_FOUND',
                     message: '급여 기록을 찾을 수 없습니다.'
                 });
             }
 
-            const salary = salaries[0];
-
-            // 2. 지급 완료된 급여는 재계산 불가
-            if (salary.payment_status === 'paid') {
+            // 지급 완료된 급여는 재계산 불가
+            if (!outcome.result) {
                 return res.status(400).json({
                     error: 'VALIDATION_ERROR',
                     message: '이미 지급 완료된 급여는 재계산할 수 없습니다.'
                 });
             }
 
-            // 3. 해당 월 출근 기록 조회
-            const [attendances] = await pool.execute(
-                `SELECT time_slot, attendance_status, check_in_time, check_out_time
-                 FROM instructor_attendance
-                 WHERE instructor_id = ?
-                   AND DATE_FORMAT(work_date, '%Y-%m') = ?
-                   AND attendance_status IN ('present', 'late', 'half_day')`,
-                [salary.instructor_id, salary.year_month]
-            );
-
-            // 4. 수업 횟수 + 근무 시간 계산
-            let morningClasses = 0, afternoonClasses = 0, eveningClasses = 0;
-            let totalHours = 0;
-            for (const att of attendances) {
-                if (att.time_slot === 'morning') morningClasses++;
-                else if (att.time_slot === 'afternoon') afternoonClasses++;
-                else if (att.time_slot === 'evening') eveningClasses++;
-
-                if (att.check_in_time && att.check_out_time) {
-                    const [inH, inM] = att.check_in_time.split(':').map(Number);
-                    const [outH, outM] = att.check_out_time.split(':').map(Number);
-                    const hours = (outH * 60 + outM - inH * 60 - inM) / 60;
-                    if (hours > 0) totalHours += hours;
-                } else {
-                    totalHours += 3;
-                }
-            }
-
-            // 5. 기본급 계산 (강사 현재 단가 사용)
-            let baseAmount = 0;
-            const salaryType = salary.salary_type;
-            const hourlyRate = parseFloat(salary.hourly_rate) || 0;
-
-            if (salaryType === 'per_class' || salaryType === 'mixed') {
-                const morningRate = parseFloat(salary.morning_class_rate) || hourlyRate;
-                const afternoonRate = parseFloat(salary.afternoon_class_rate) || hourlyRate;
-                const eveningRate = parseFloat(salary.evening_class_rate) || hourlyRate;
-
-                baseAmount =
-                    (morningClasses * morningRate) +
-                    (afternoonClasses * afternoonRate) +
-                    (eveningClasses * eveningRate);
-
-                if (salaryType === 'mixed') {
-                    baseAmount += (parseFloat(salary.base_salary) || 0);
-                }
-            } else if (salaryType === 'monthly') {
-                baseAmount = parseFloat(salary.base_salary) || 0;
-            } else if (salaryType === 'hourly') {
-                baseAmount = hourlyRate * totalHours;
-            }
-
-            // 6. 세금 계산
-            const taxType = salary.instructor_tax_type || 'none';
-            const incentiveAmount = parseFloat(salary.incentive_amount) || 0;
-            const totalDeduction = parseFloat(salary.total_deduction) || 0;
-            const taxableAmount = baseAmount + incentiveAmount - totalDeduction;
-            let taxAmount = 0;
-            let insuranceDetails = null;
-
-            if (taxType === '3.3%') {
-                taxAmount = Math.floor(baseAmount * 0.033);
-            } else if (taxType === 'insurance') {
-                insuranceDetails = calculate4Insurance(taxableAmount, salary.year_month);
-                taxAmount = insuranceDetails.totalDeduction;
-            }
-
-            // 7. 실수령액 계산 (10원 단위 이하 버림)
-            const netSalary = Math.floor((baseAmount + incentiveAmount - totalDeduction - taxAmount) / 10) * 10;
-
-            // 8. 급여 업데이트
-            await pool.execute(
-                `UPDATE salary_records
-                 SET base_amount = ?, tax_type = ?, tax_amount = ?, insurance_details = ?, net_salary = ?, updated_at = NOW()
-                 WHERE id = ?`,
-                [
-                    baseAmount,
-                    taxType,
-                    taxAmount,
-                    insuranceDetails ? JSON.stringify(insuranceDetails) : null,
-                    netSalary,
-                    salaryId
-                ]
-            );
-
-            const totalClasses = morningClasses + afternoonClasses + eveningClasses;
-
+            const { result } = outcome;
             res.json({
                 message: '급여가 재계산되었습니다.',
                 salary: {
                     id: salaryId,
-                    base_amount: baseAmount,
-                    tax_amount: taxAmount,
-                    net_salary: netSalary,
-                    incentive_amount: incentiveAmount,
-                    total_deduction: totalDeduction,
-                    morning_classes: morningClasses,
-                    afternoon_classes: afternoonClasses,
-                    evening_classes: eveningClasses,
-                    total_classes: totalClasses,
-                    total_hours: Math.round(totalHours * 100) / 100
+                    base_amount: result.baseAmount,
+                    tax_amount: result.taxAmount,
+                    net_salary: result.netSalary,
+                    incentive_amount: result.incentive,
+                    total_deduction: result.deduction,
+                    adjustment_amount: result.adjustmentAmount,
+                    morning_classes: result.counts.morning,
+                    afternoon_classes: result.counts.afternoon,
+                    evening_classes: result.counts.evening,
+                    total_classes: result.counts.morning + result.counts.afternoon + result.counts.evening,
+                    total_hours: Math.round(result.totalHours * 100) / 100
                 }
             });
-
         } catch (error) {
             logger.error('Error recalculating salary:', error);
             res.status(500).json({

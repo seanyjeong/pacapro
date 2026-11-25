@@ -1,7 +1,9 @@
 import { Edit3, Save, X } from 'lucide-react';
 import { MoneyInput } from '@/components/ui/money-input';
 import { SectionCard } from '@/components/ui/page';
-import { TAX_TYPE_LABELS } from '@/lib/types/salary';
+import { TAX_TYPE_LABELS, type SalaryAdjustment } from '@/lib/types/salary';
+import { formatSignedWon, parseCalculationDetails, sumAdjustments } from '@/lib/utils/salary-lines';
+import { SalaryBaseOverride } from './salary-base-override';
 import type { AttendanceSummary, SalaryDetailWithRates } from './salary-detail-types';
 import { formatCurrency, parseInsuranceDetails, toNumber } from './salary-detail-utils';
 
@@ -21,6 +23,8 @@ const INSURANCE_FIELDS = [
 interface SalaryCalculationSectionProps {
   salary: SalaryDetailWithRates;
   attendanceSummary: AttendanceSummary | null;
+  adjustments: SalaryAdjustment[];
+  onChanged: () => void;
   editingIncentive: boolean;
   incentiveInput: number;
   savingIncentive: boolean;
@@ -33,6 +37,8 @@ interface SalaryCalculationSectionProps {
 export function SalaryCalculationSection({
   salary,
   attendanceSummary,
+  adjustments,
+  onChanged,
   editingIncentive,
   incentiveInput,
   savingIncentive,
@@ -47,7 +53,7 @@ export function SalaryCalculationSection({
     <SectionCard title="급여 계산" className="print-section" bodyClassName="print-compact">
       <div className="space-y-1 text-[15px]">
         <Formula salary={salary} attendanceSummary={attendanceSummary} />
-        <Line label="기본급" value={formatCurrency(salary.base_amount)} />
+        <SalaryBaseOverride salary={salary} onChanged={onChanged} />
         <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-border/60 py-2">
           <span className="text-secondary-foreground">인센티브</span>
           {editingIncentive ? (
@@ -98,6 +104,10 @@ export function SalaryCalculationSection({
           )}
         </div>
         {salary.total_deduction > 0 ? <Line label="공제액" value={`-${formatCurrency(salary.total_deduction)}`} danger /> : null}
+        {adjustments.map((item) => (
+          <Line key={item.id} label={`조정 · ${item.label}`} value={formatSignedWon(item.amount)} danger={item.amount < 0} />
+        ))}
+        {adjustments.length > 1 ? <Line label="조정 합계" value={formatSignedWon(sumAdjustments(adjustments))} /> : null}
         {insuranceDetails ? (
           <InsuranceDetails details={insuranceDetails} total={salary.tax_amount} />
         ) : (
@@ -113,6 +123,16 @@ export function SalaryCalculationSection({
 }
 
 function Formula({ salary, attendanceSummary }: { salary: SalaryDetailWithRates; attendanceSummary: AttendanceSummary | null }) {
+  const details = parseCalculationDetails(salary.calculation_details);
+  if (details) {
+    return (
+      <div className="mb-2 space-y-1 rounded-xl bg-muted px-4 py-3 text-[13px] tabular-nums text-secondary-foreground" data-testid="salary-lines">
+        {details.base_lines.map((line, index) => (
+          <p key={index} className="flex justify-between gap-3"><span className="min-w-0 break-keep">{line.label}</span><span className="shrink-0 font-semibold">{formatCurrency(line.amount)}</span></p>
+        ))}
+      </div>
+    );
+  }
   if (!attendanceSummary) return null;
   const hourlyRate = toNumber(salary.hourly_rate);
 

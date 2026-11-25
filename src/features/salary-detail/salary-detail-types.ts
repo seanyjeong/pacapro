@@ -1,4 +1,4 @@
-import type { SalaryDetail } from '@/lib/types/salary';
+import type { SalaryAdjustment, SalaryDetail } from '@/lib/types/salary';
 import type { SalaryType } from '@/lib/types/instructor';
 
 export interface AttendanceDetail {
@@ -37,4 +37,5 @@ export interface SalaryDetailWithRates extends Omit<SalaryDetail, 'salary_type' 
 export interface SalaryDetailResponseForPage {
   salary: SalaryDetailWithRates;
   attendance_summary?: AttendanceSummary | null;
+  adjustments?: SalaryAdjustment[];
 }

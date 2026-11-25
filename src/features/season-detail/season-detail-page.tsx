@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { RefundModal } from '@/components/refund/refund-modal';
+import { SeasonPayRulesSection } from '@/features/pay-rules/season-pay-rules-section';
 import { SeasonConfirmDialog } from '@/features/seasons/season-confirm-dialog';
 import type { StudentSeason } from '@/lib/types/season';
 import { EnrolledStudentsSection } from './enrolled-students-section';
@@ -75,6 +76,8 @@ export function SeasonDetailPage() {
         <SeasonInfoPanel season={state.season} />
         <SeasonTimeSlotsPanel season={state.season} />
       </div>
+
+      <SeasonPayRulesSection season={state.season} />
 
       <EnrolledStudentsSection
         cancellingId={state.cancellingId}

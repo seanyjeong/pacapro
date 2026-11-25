@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
+import { SalaryAdjustmentsSection } from './salary-adjustments-section';
 import { SalaryAttendanceSection } from './salary-attendance-section';
 import { SalaryBasicInfo } from './salary-basic-info';
 import { SalaryCalculationSection } from './salary-calculation-section';
@@ -43,8 +44,11 @@ export function SalaryDetailPage() {
         <SalaryBasicInfo salary={state.salary} attendanceSummary={state.attendanceSummary} />
         <SalaryRateInfo salary={state.salary} />
         <SalaryAttendanceSection attendanceSummary={state.attendanceSummary} />
+        <SalaryAdjustmentsSection salary={state.salary} adjustments={state.adjustments} onChanged={() => void state.reload()} />
         <SalaryCalculationSection
           salary={state.salary}
+          adjustments={state.adjustments}
+          onChanged={() => void state.reload()}
           attendanceSummary={state.attendanceSummary}
           editingIncentive={state.editingIncentive}
           incentiveInput={state.incentiveInput}

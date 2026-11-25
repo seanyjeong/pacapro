@@ -16,6 +16,7 @@
 jest.mock('../../../config/database', () => ({
   query: jest.fn(),
   execute: jest.fn(),
+  getConnection: jest.fn(),
 }));
 
 jest.mock('../../../middleware/auth', () => ({
@@ -57,6 +58,10 @@ function makeApp() {
 
 function resetMocks() {
   pool.execute.mockReset();
+  pool.getConnection.mockResolvedValue({
+    execute: (...args) => pool.execute(...args),
+    beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
+  });
   pool.query.mockReset();
   decrypt.mockClear();
   calculateInstructorSalary.mockReset();
@@ -152,7 +157,7 @@ describe('GET /paca/salaries/work-summary/:instructorId/:yearMonth', () => {
       morning_class_rate: '50000', afternoon_class_rate: '60000', evening_class_rate: '70000'
     };
     const attendances = [
-      { time_slot: 'morning', attendance_status: 'present', check_in_time: '09:00:00', check_out_time: '12:00:00', work_date: '2026-04-01' },
+      { work_date: '2026-04-01', time_slot: 'morning', attendance_status: 'present', check_in_time: '09:00:00', check_out_time: '12:00:00', work_date: '2026-04-01' },
       { time_slot: 'afternoon', attendance_status: 'present', check_in_time: '13:00:00', check_out_time: '17:00:00', work_date: '2026-04-01' },
       { time_slot: 'evening', attendance_status: 'late', check_in_time: null, check_out_time: null, work_date: '2026-04-02' },
     ];
@@ -241,12 +246,16 @@ describe('POST /paca/salaries/:id/recalculate', () => {
       academy_id: 1
     };
     const attendances = [
-      { time_slot: 'morning', attendance_status: 'present', check_in_time: '09:00:00', check_out_time: '12:00:00' },
-      { time_slot: 'afternoon', attendance_status: 'present', check_in_time: null, check_out_time: null },
+      { work_date: '2026-04-01', time_slot: 'morning', attendance_status: 'present', check_in_time: '09:00:00', check_out_time: '12:00:00' },
+      { work_date: '2026-04-01', time_slot: 'afternoon', attendance_status: 'present', check_in_time: null, check_out_time: null },
     ];
     pool.execute
       .mockResolvedValueOnce([[salaryRow]])
       .mockResolvedValueOnce([attendances])
+      .mockResolvedValueOnce([[]]) // 규칙
+      .mockResolvedValueOnce([[]]) // 분할 지급
+      .mockResolvedValueOnce([[]]) // 조정
+      .mockResolvedValueOnce([[]]) // 조정(저장)
       .mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE
 
     const res = await request(makeApp()).post('/paca/salaries/10/recalculate').send({});
@@ -269,7 +278,7 @@ describe('POST /paca/salaries/:id/recalculate', () => {
     expect(pool.query).not.toHaveBeenCalled();
 
     // UPDATE SQL 검증
-    const updateCall = pool.execute.mock.calls[2];
+    const updateCall = pool.execute.mock.calls.at(-1);
     expect(updateCall[0]).toMatch(/UPDATE salary_records/);
     expect(updateCall[1][0]).toBe(110000); // base_amount
     expect(updateCall[1][1]).toBe('3.3%'); // tax_type
@@ -298,23 +307,20 @@ describe('POST /paca/salaries/:id/recalculate', () => {
     };
     pool.execute
       .mockResolvedValueOnce([[salaryRow]])
-      .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }]);
-    calculate4Insurance.mockReturnValueOnce(insuranceDetails);
+      .mockResolvedValue([[]]);
 
     const res = await request(makeApp()).post('/paca/salaries/11/recalculate').send({});
 
     expect(res.status).toBe(200);
-    expect(calculate4Insurance).toHaveBeenCalledWith(3100000, '2026-07');
     expect(res.body.salary.tax_amount).toBe(301235);
     expect(res.body.salary.net_salary).toBe(2798760);
 
-    const updateCall = pool.execute.mock.calls[2];
+    const updateCall = pool.execute.mock.calls.at(-1);
     expect(updateCall[0]).toMatch(/insurance_details = \?/);
     expect(updateCall[1][0]).toBe(3000000);
     expect(updateCall[1][1]).toBe('insurance');
     expect(updateCall[1][2]).toBe(301235);
-    expect(JSON.parse(updateCall[1][3])).toEqual(insuranceDetails);
+    expect(JSON.parse(updateCall[1][3])).toMatchObject(insuranceDetails);
     expect(updateCall[1][4]).toBe(2798760);
   });
 

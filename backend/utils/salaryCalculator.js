@@ -237,145 +237,18 @@ async function updateSalaryFromAttendance(db, instructorId, academyId, workDate,
     }
 
     try {
-        // 강사 정보 조회
-        const [instructors] = await db.query(
-            `SELECT id, name, salary_type, hourly_rate, base_salary, tax_type,
-                    morning_class_rate, afternoon_class_rate, evening_class_rate
-             FROM instructors WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
-            [instructorId, academyId]
-        );
-
-        if (instructors.length === 0) {
-            return null;
-        }
-
-        const instructor = instructors[0];
-
-        // work_date에서 년월 계산 (year_month = 근무월)
-        const workDateObj = new Date(workDate);
-        const salaryYear = workDateObj.getFullYear();
-        const salaryMonth = workDateObj.getMonth() + 1;
-        const yearMonth = `${salaryYear}-${String(salaryMonth).padStart(2, '0')}`;
-
-        // 출근 기록 조회할 년월 = 근무월과 동일
-        const attendanceYearMonth = yearMonth;
-
-        // 해당 월의 모든 출근 기록 조회
-        const [monthlyAttendances] = await db.query(
-            `SELECT time_slot, check_in_time, check_out_time, attendance_status
-             FROM instructor_attendance
-             WHERE instructor_id = ?
-             AND DATE_FORMAT(work_date, '%Y-%m') = ?
-             AND attendance_status IN ('present', 'late', 'half_day')`,
-            [instructorId, attendanceYearMonth]
-        );
-
-        let baseAmount = 0;
-        let totalHours = 0;
-        let morningClasses = 0;
-        let afternoonClasses = 0;
-        let eveningClasses = 0;
-
-        if (instructor.salary_type === 'hourly') {
-            // 시급제: 총 근무 시간 계산 (분 단위)
-            let totalMinutes = 0;
-            for (const att of monthlyAttendances) {
-                if (att.check_in_time && att.check_out_time) {
-                    const [inH, inM] = att.check_in_time.split(':').map(Number);
-                    const [outH, outM] = att.check_out_time.split(':').map(Number);
-                    const inMinutes = inH * 60 + inM;
-                    const outMinutes = outH * 60 + outM;
-                    if (outMinutes > inMinutes) {
-                        totalMinutes += (outMinutes - inMinutes);
-                    }
-                }
-            }
-            totalHours = totalMinutes / 60;
-            const hourlyRate = parseFloat(instructor.hourly_rate) || 0;
-            baseAmount = Math.round(totalHours * hourlyRate);
-        } else if (instructor.salary_type === 'per_class') {
-            // 타임제: 시간대별 수업 횟수로 계산
-            for (const att of monthlyAttendances) {
-                if (att.time_slot === 'morning') morningClasses++;
-                else if (att.time_slot === 'afternoon') afternoonClasses++;
-                else if (att.time_slot === 'evening') eveningClasses++;
-            }
-
-            const morningRate = parseFloat(instructor.morning_class_rate) || parseFloat(instructor.hourly_rate) || 0;
-            const afternoonRate = parseFloat(instructor.afternoon_class_rate) || parseFloat(instructor.hourly_rate) || 0;
-            const eveningRate = parseFloat(instructor.evening_class_rate) || parseFloat(instructor.hourly_rate) || 0;
-
-            baseAmount = (morningClasses * morningRate) +
-                        (afternoonClasses * afternoonRate) +
-                        (eveningClasses * eveningRate);
-        } else if (instructor.salary_type === 'monthly') {
-            // 월급제: 기본 월급 적용 (출근 기록과 무관)
-            baseAmount = parseFloat(instructor.base_salary) || 0;
-
-            // 출근 기록은 참고용으로만 집계
-            for (const att of monthlyAttendances) {
-                if (att.time_slot === 'morning') morningClasses++;
-                else if (att.time_slot === 'afternoon') afternoonClasses++;
-                else if (att.time_slot === 'evening') eveningClasses++;
-            }
-        }
-
-        // 세금 계산
-        let taxAmount = 0;
-        let insuranceDetails = null;
-
-        if (instructor.tax_type === '3.3%') {
-            taxAmount = Math.round(baseAmount * 0.033);
-        } else if (instructor.tax_type === 'insurance') {
-            const insurance = calculate4Insurance(baseAmount, yearMonth);
-            taxAmount = insurance.totalDeduction;
-            insuranceDetails = insurance;
-        }
-
-        const netSalary = baseAmount - taxAmount;
-
-        // salary_records 업데이트 또는 생성
-        const [existingSalary] = await db.query(
-            'SELECT id FROM salary_records WHERE instructor_id = ? AND `year_month` = ?',
-            [instructorId, yearMonth]
-        );
-
-        if (existingSalary.length > 0) {
-            // 기존 레코드 업데이트
-            await db.query(
-                `UPDATE salary_records
-                 SET base_amount = ?, tax_amount = ?, net_salary = ?,
-                     total_hours = ?, morning_classes = ?, afternoon_classes = ?,
-                     evening_classes = ?, insurance_details = ?, updated_at = NOW()
-                 WHERE id = ?`,
-                [baseAmount, taxAmount, netSalary, totalHours,
-                 morningClasses, afternoonClasses, eveningClasses,
-                 insuranceDetails ? JSON.stringify(insuranceDetails) : null,
-                 existingSalary[0].id]
-            );
-        } else {
-            // 새 레코드 생성
-            await db.query(
-                `INSERT INTO salary_records
-                 (instructor_id, \`year_month\`, base_amount, incentive_amount, total_deduction,
-                  tax_type, tax_amount, insurance_details, net_salary, total_hours,
-                  morning_classes, afternoon_classes, evening_classes, payment_status)
-                 VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-                [instructorId, yearMonth, baseAmount, instructor.tax_type,
-                 taxAmount, insuranceDetails ? JSON.stringify(insuranceDetails) : null,
-                 netSalary, totalHours, morningClasses, afternoonClasses, eveningClasses]
-            );
-        }
-
-        return {
-            yearMonth,
-            baseAmount,
-            taxAmount,
-            netSalary,
-            totalHours,
-            morningClasses,
-            afternoonClasses,
-            eveningClasses
+        const { recalculateMonth } = require('../services/salaryService');
+        // year_month = 근무월. 지급 완료된 달은 null
+        const result = await recalculateMonth(db, { instructorId, academyId, yearMonth: String(workDate).slice(0, 7), mode: 'auto' });
+        return result && {
+            yearMonth: String(workDate).slice(0, 7),
+            baseAmount: result.baseAmount,
+            taxAmount: result.taxAmount,
+            netSalary: result.netSalary,
+            totalHours: result.totalHours,
+            morningClasses: result.counts.morning,
+            afternoonClasses: result.counts.afternoon,
+            eveningClasses: result.counts.evening
         };
     } catch (error) {
         console.error('Error updating salary from attendance:', error);

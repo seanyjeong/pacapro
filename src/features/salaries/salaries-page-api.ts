@@ -54,3 +54,7 @@ function createSalaryParams(filters: SalaryFilters) {
   if (filters.payment_status) params.payment_status = filters.payment_status;
   return params;
 }
+
+export function openSalaryForPage(instructorId: number, yearMonth: string): Promise<{ salary: { id: number } }> {
+  return apiClient.post<{ salary: { id: number } }>('/salaries/open', { instructor_id: instructorId, year_month: yearMonth }, { suppressErrorToast: true });
+}

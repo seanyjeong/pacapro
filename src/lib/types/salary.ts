@@ -21,8 +21,31 @@ export interface Salary {
   net_salary: number; // 실수령액
   payment_date?: string; // 지급일
   payment_status: 'pending' | 'paid';
+  adjustment_amount?: number; // 조정 합계
+  adjustment_count?: number; // 조정 건수(목록)
+  base_override?: number | null; // 기본급 직접 입력
+  calculation_details?: string | object | null; // 줄 단위 내역
   created_at: string;
   updated_at?: string;
+}
+
+// 급여 조정 항목
+export interface SalaryAdjustment {
+  id: number;
+  label: string;
+  amount: number; // 음수 = 차감
+  taxable: boolean | number;
+  memo?: string | null;
+}
+
+export interface SalaryLine {
+  kind: string;
+  label: string;
+  amount: number;
+}
+
+export interface SalaryCalculationDetails {
+  base_lines: SalaryLine[];
 }
 
 // 급여 상세 정보 (강사 정보 포함)
@@ -43,6 +66,7 @@ export interface SalaryFormData {
   tax_amount?: number;
   insurance_details?: object;
   net_salary: number;
+  base_override?: number | null;
 }
 
 // 급여 계산 요청 DTO

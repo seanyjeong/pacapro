@@ -31,6 +31,16 @@ function StatusBadge({ status }: { status: Salary['payment_status'] }) {
   return <Badge variant={STATUS_BADGE[status] ?? 'secondary'}>{PAYMENT_STATUS_LABELS[status]}</Badge>;
 }
 
+// 목록 금액 = 기본급 + 인센티브 + 조정
+function getGrossAmount(salary: Salary) {
+  return Number(salary.base_amount) + Number(salary.incentive_amount) + Number(salary.adjustment_amount ?? 0);
+}
+
+function AdjustmentBadge({ salary }: { salary: Salary }) {
+  const count = Number(salary.adjustment_count ?? 0);
+  return count > 0 ? <Badge variant="secondary" className="ml-1.5">조정 {count}건</Badge> : null;
+}
+
 export function SalaryList({ salaries, loading, onSalaryClick, toolbar }: SalaryListProps) {
   return (
     <section className="min-w-0 rounded-2xl bg-card" aria-label={loading ? '급여 내역 로딩' : '급여 내역'}>
@@ -65,7 +75,7 @@ function SalaryListBody({ salaries, loading, onSalaryClick }: Omit<SalaryListPro
     <>
       <div className="divide-y divide-border/60 px-4 xl:hidden">
         {salaries.map((salary) => {
-          const grossAmount = salary.base_amount + salary.incentive_amount;
+          const grossAmount = getGrossAmount(salary);
           const deductionAmount = salary.tax_amount + salary.total_deduction;
           return (
             <article
@@ -86,9 +96,10 @@ function SalaryListBody({ salaries, loading, onSalaryClick }: Omit<SalaryListPro
 
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div className="min-w-0 text-[13px] text-muted-foreground">
-                  <p>
+                  <div>
                     총액 <span className="font-semibold tabular-nums text-foreground">{formatSalaryAmount(grossAmount)}</span>
-                  </p>
+                    <AdjustmentBadge salary={salary} />
+                  </div>
                   <div className="mt-0.5">
                     공제 <span className="font-semibold tabular-nums text-destructive">-{formatSalaryAmount(deductionAmount)}</span>
                     <Badge variant="secondary" className="ml-1.5 align-middle">{TAX_TYPE_LABELS[salary.tax_type]}</Badge>
@@ -132,10 +143,11 @@ function SalaryListBody({ salaries, loading, onSalaryClick }: Omit<SalaryListPro
                   {formatYearMonth(salary.year_month)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                  <div className="font-bold tabular-nums text-foreground">{formatSalaryAmount(salary.base_amount + salary.incentive_amount)}</div>
+                  <div className="font-bold tabular-nums text-foreground">{formatSalaryAmount(getGrossAmount(salary))}</div>
                   {salary.incentive_amount > 0 && (
                     <div className="text-[13px] tabular-nums text-primary">인센티브 +{formatSalaryAmount(salary.incentive_amount)}</div>
                   )}
+                  <AdjustmentBadge salary={salary} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
                   <div className="font-bold tabular-nums text-destructive">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>

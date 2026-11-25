@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
 import { SalaryList } from '@/components/salaries/salary-list';
@@ -7,12 +8,14 @@ import { SalariesError } from './salaries-error';
 import { SalariesFilterBar } from './salaries-filter-bar';
 import { SalariesHeader } from './salaries-header';
 import { SalariesSummaryStrip } from './salaries-summary-strip';
+import { SalaryOpenDialog } from './salary-open-dialog';
 import { useSalariesPageState } from './use-salaries-page-state';
-import { formatWon } from './salaries-page-utils';
+import { formatWon, getCurrentFilterYearMonth } from './salaries-page-utils';
 
 export function SalariesPageContent() {
   const router = useRouter();
   const state = useSalariesPageState();
+  const [opening, setOpening] = useState(false);
 
   if (state.error && !state.loading) {
     return <SalariesError message={state.error} onRetry={state.reload} />;
@@ -32,6 +35,7 @@ export function SalariesPageContent() {
         onExportPDF={state.exportPDF}
         onBulkPay={state.requestBulkPay}
         onReload={state.reload}
+        onOpenSalary={() => setOpening(true)}
       />
       <SalariesSummaryStrip summary={state.summary} filters={state.filters} onFilterChange={state.updateFilters} />
       <SalaryList
@@ -49,6 +53,14 @@ export function SalariesPageContent() {
           />
         )}
       />
+      {opening ? (
+        <SalaryOpenDialog
+          instructors={state.instructors}
+          defaultMonth={getCurrentFilterYearMonth(state.filters)}
+          onClose={() => setOpening(false)}
+          onOpened={(id) => router.push(`/salaries/${id}`)}
+        />
+      ) : null}
       <PasswordConfirmModal
         open={state.showPasswordModal}
         onClose={() => state.setShowPasswordModal(false)}

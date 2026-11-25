@@ -9,7 +9,8 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import type { Salary } from '@/lib/types/salary';
 import { SALARY_TYPE_LABELS } from '@/lib/types/instructor';
-import { TAX_TYPE_LABELS } from '@/lib/types/salary';
+import { TAX_TYPE_LABELS, type SalaryAdjustment } from '@/lib/types/salary';
+import { formatSignedWon, parseCalculationDetails } from './salary-lines';
 
 // 확장된 급여 데이터 (API 응답에서 받는 형태)
 interface ExtendedSalary extends Salary {
@@ -55,6 +56,11 @@ interface InsuranceDetails {
 export interface SalaryWithAttendance {
   salary: ExtendedSalary;
   attendance_summary?: AttendanceSummary | null;
+  adjustments?: SalaryAdjustment[];
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatCurrency(amount: number): string {
@@ -141,6 +147,24 @@ function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 
       </div>
     `;
   }
+
+  // 서버가 저장한 줄 단위 내역이 있으면 그것을 쓴다(급여 규칙·분할 지급 포함)
+  const details = parseCalculationDetails(salary.calculation_details);
+  if (details) {
+    calculationHtml = `
+      <div style="background-color: #F9FAFB; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 11px; color: #4B5563;">
+        ${details.base_lines.map((line) => `${escapeHtml(line.label)} = ${formatCurrency(line.amount)}`).join('<br>')}
+      </div>
+    `;
+  }
+
+  // 조정 항목
+  const adjustmentHtml = (data.adjustments ?? []).map((item) => `
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E7EB;">
+        <span style="color: #4B5563;">조정 · ${escapeHtml(item.label)}</span>
+        <span style="color: ${item.amount < 0 ? '#DC2626' : '#111827'}; font-weight: 500;">${formatSignedWon(item.amount)}</span>
+      </div>
+    `).join('');
 
   // 4대보험 상세 내역 HTML
   let insuranceHtml = '';
@@ -308,7 +332,7 @@ function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 
             </div>
           ` : ''}
 
-          ${insuranceHtml}
+          ${adjustmentHtml}${insuranceHtml}
 
           <div style="display: flex; justify-content: space-between; padding: 12px; background-color: #EFF6FF; margin: 8px -12px -12px -12px; border-radius: 0 0 8px 8px;">
             <span style="font-weight: bold; color: #111827;">실수령액</span>

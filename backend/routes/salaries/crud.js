@@ -49,6 +49,7 @@ const {
     decryptSalaryArray,
     timeSlotLabels,
 } = require('./_utils');
+const { listAdjustments } = require('../../repositories/salaryRepository');
 
 module.exports = function(router) {
     /**
@@ -75,6 +76,8 @@ module.exports = function(router) {
                     s.tax_amount,
                     s.insurance_details,
                     s.net_salary,
+                    s.adjustment_amount,
+                    (SELECT COUNT(*) FROM salary_adjustments sa WHERE sa.salary_record_id = s.id) as adjustment_count,
                     s.payment_date,
                     s.payment_status,
                     s.created_at
@@ -213,8 +216,11 @@ module.exports = function(router) {
                 }
             }
 
+            const adjustments = await listAdjustments(pool, salaryId);
+
             res.json({
                 salary: decryptInstructorName(salary),
+                adjustments,
                 attendance_summary: {
                     work_year_month: attendanceYearMonth,
                     attendance_days: Object.keys(dailyBreakdown).length,
@@ -338,116 +344,6 @@ module.exports = function(router) {
     });
 
     /**
-     * PUT /paca/salaries/:id
-     * 급여 수정 (incentive_amount, total_deduction, payment_status, payment_date 만 변경 가능).
-     * - incentive 또는 deduction 변경 시 net_salary 자동 재계산.
-     */
-    router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
-        const salaryId = parseInt(req.params.id);
-
-        try {
-            // 기존 레코드 조회 (재계산 입력값 포함)
-            const [salaries] = await pool.execute(
-                `SELECT s.id, s.base_amount, s.incentive_amount, s.total_deduction, s.tax_amount,
-                        i.academy_id
-                 FROM salary_records s
-                 JOIN instructors i ON s.instructor_id = i.id
-                 WHERE s.id = ?`,
-                [salaryId]
-            );
-
-            if (salaries.length === 0) {
-                return res.status(404).json({
-                    error: 'NOT_FOUND',
-                    message: '급여 기록을 찾을 수 없습니다.'
-                });
-            }
-
-            if (salaries[0].academy_id !== req.user.academyId) {
-                return res.status(403).json({
-                    error: 'FORBIDDEN',
-                    message: '접근 권한이 없습니다.'
-                });
-            }
-
-            const { incentive_amount, total_deduction, payment_status, payment_date } = req.body;
-
-            const updates = [];
-            const params = [];
-
-            if (incentive_amount !== undefined) {
-                updates.push('incentive_amount = ?');
-                params.push(incentive_amount);
-            }
-            if (total_deduction !== undefined) {
-                updates.push('total_deduction = ?');
-                params.push(total_deduction);
-            }
-            if (payment_status !== undefined) {
-                updates.push('payment_status = ?');
-                params.push(payment_status);
-            }
-            if (payment_date !== undefined) {
-                updates.push('payment_date = ?');
-                params.push(payment_date);
-            }
-
-            if (updates.length === 0) {
-                return res.status(400).json({
-                    error: 'VALIDATION_ERROR',
-                    message: '수정할 항목이 없습니다.'
-                });
-            }
-
-            // 인센티브/공제액 변경 시 net_salary 자동 재계산
-            if (incentive_amount !== undefined || total_deduction !== undefined) {
-                const currentSalary = salaries[0];
-                const newIncentive = incentive_amount !== undefined
-                    ? parseFloat(incentive_amount)
-                    : parseFloat(currentSalary.incentive_amount) || 0;
-                const newDeduction = total_deduction !== undefined
-                    ? parseFloat(total_deduction)
-                    : parseFloat(currentSalary.total_deduction) || 0;
-                const baseAmount = parseFloat(currentSalary.base_amount) || 0;
-                const taxAmount = parseFloat(currentSalary.tax_amount) || 0;
-
-                // 실수령액 = 기본급 + 인센티브 - 공제액 - 세금 (10원 단위 이하 버림)
-                const netSalary = Math.floor((baseAmount + newIncentive - newDeduction - taxAmount) / 10) * 10;
-                updates.push('net_salary = ?');
-                params.push(netSalary);
-            }
-
-            updates.push('updated_at = NOW()');
-            params.push(salaryId);
-
-            await pool.execute(
-                `UPDATE salary_records SET ${updates.join(', ')} WHERE id = ?`,
-                params
-            );
-
-            // 업데이트된 레코드 조회
-            const [updated] = await pool.execute(
-                `SELECT s.*, i.name as instructor_name
-                 FROM salary_records s
-                 JOIN instructors i ON s.instructor_id = i.id
-                 WHERE s.id = ?`,
-                [salaryId]
-            );
-
-            res.json({
-                message: '급여 기록이 수정되었습니다.',
-                salary: decryptInstructorName(updated[0])
-            });
-        } catch (error) {
-            logger.error('Error updating salary:', error);
-            res.status(500).json({
-                error: 'UPDATE_SALARY_FAILED',
-                message: '급여 기록 수정에 실패했습니다.'
-            });
-        }
-    });
-
-    /**
      * DELETE /paca/salaries/:id
      * 급여 삭제.
      * 응답 표면: { message, salary:{id, instructor_name, year_month} }
@@ -458,7 +354,7 @@ module.exports = function(router) {
 
         try {
             const [salaries] = await pool.execute(
-                `SELECT s.id, i.academy_id, i.name as instructor_name, s.\`year_month\`
+                `SELECT s.id, s.payment_status, i.academy_id, i.name as instructor_name, s.\`year_month\`
                  FROM salary_records s
                  JOIN instructors i ON s.instructor_id = i.id
                  WHERE s.id = ?`,
@@ -479,7 +375,11 @@ module.exports = function(router) {
                 });
             }
 
-            await pool.execute('DELETE FROM salary_records WHERE id = ?', [salaryId]);
+            if (salaries[0].payment_status === 'paid') {
+                return res.status(400).json({ error: 'SALARY_PAID', message: '지급 완료된 급여는 삭제할 수 없습니다.' });
+            }
+
+            await pool.execute("DELETE FROM salary_records WHERE id = ? AND COALESCE(payment_status, 'pending') <> 'paid'", [salaryId]);
 
             res.json({
                 message: '급여 기록이 삭제되었습니다.',

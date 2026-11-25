@@ -8,6 +8,7 @@ import {
   recordSalaryPayment,
   updateSalaryForPage,
 } from './salary-detail-api';
+import type { SalaryAdjustment } from '@/lib/types/salary';
 import type { AttendanceSummary, SalaryDetailWithRates } from './salary-detail-types';
 import { formatCurrency } from './salary-detail-utils';
 
@@ -16,6 +17,7 @@ const LOAD_ERROR_MESSAGE = '급여 정보를 불러오지 못했습니다. 잠�
 export function useSalaryDetailState(salaryId: number) {
   const [salary, setSalary] = useState<SalaryDetailWithRates | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
+  const [adjustments, setAdjustments] = useState<SalaryAdjustment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
@@ -34,6 +36,7 @@ export function useSalaryDetailState(salaryId: number) {
       const response = await getSalaryDetailForPage(salaryId);
       setSalary(response.salary);
       setAttendanceSummary(response.attendance_summary || null);
+      setAdjustments(response.adjustments ?? []);
     } catch {
       setError(LOAD_ERROR_MESSAGE);
     } finally {
@@ -116,6 +119,7 @@ export function useSalaryDetailState(salaryId: number) {
 
   return {
     salary,
+    adjustments,
     attendanceSummary,
     loading,
     error,

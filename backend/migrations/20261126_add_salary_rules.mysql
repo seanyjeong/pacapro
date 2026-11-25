@@ -1,0 +1,57 @@
+-- Backup first (salary_records, seasons, instructors). Apply before deploying code that reads these tables.
+-- 급여 조정 항목, 강사 기간별 급여 규칙, 시즌 고정급 분할 지급. 기존 급여 행의 금액은 바꾸지 않는다.
+CREATE TABLE IF NOT EXISTS salary_adjustments (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    salary_record_id INT NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    amount INT NOT NULL COMMENT '원 단위, 음수 = 차감',
+    taxable TINYINT(1) NOT NULL DEFAULT 1 COMMENT '세금 계산에 넣을지',
+    memo VARCHAR(500) NULL,
+    created_by INT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_salary_adjustments_record (salary_record_id),
+    CONSTRAINT fk_salary_adjustments_record FOREIGN KEY (salary_record_id) REFERENCES salary_records (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS instructor_pay_rules (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    instructor_id INT NOT NULL,
+    season_id INT NULL,
+    start_date DATE NULL COMMENT 'NULL = 처음부터',
+    end_date DATE NULL COMMENT 'NULL = 계속. 둘 다 NULL 인 fixed_total 은 금액만 지급(출근 계산은 그대로)',
+    pay_type ENUM('per_class','monthly','daily','fixed_total') NOT NULL,
+    amount INT NOT NULL,
+    time_slots JSON NOT NULL,
+    taxable TINYINT(1) NOT NULL DEFAULT 1 COMMENT '분할 지급액을 세금 계산에 넣을지(fixed_total)',
+    memo VARCHAR(200) NULL,
+    created_by INT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_pay_rules_instructor (instructor_id, start_date, end_date),
+    KEY idx_pay_rules_season (season_id),
+    CONSTRAINT fk_pay_rules_instructor FOREIGN KEY (instructor_id) REFERENCES instructors (id) ON DELETE CASCADE,
+    CONSTRAINT fk_pay_rules_season FOREIGN KEY (season_id) REFERENCES seasons (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS pay_rule_installments (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    pay_rule_id INT NOT NULL,
+    pay_year_month VARCHAR(7) NOT NULL COMMENT '넣을 급여 명세서(일한 달)',
+    amount INT NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_pay_rule_month (pay_rule_id, pay_year_month),
+    KEY idx_installments_month (pay_year_month),
+    CONSTRAINT fk_installments_rule FOREIGN KEY (pay_rule_id) REFERENCES instructor_pay_rules (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+SET @salary_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE salary_records ADD COLUMN adjustment_amount INT NOT NULL DEFAULT 0, ADD COLUMN base_override INT NULL, ADD COLUMN calculation_details JSON NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'salary_records' AND COLUMN_NAME = 'adjustment_amount'
+);
+PREPARE salary_stmt FROM @salary_sql;
+EXECUTE salary_stmt;
+DEALLOCATE PREPARE salary_stmt;

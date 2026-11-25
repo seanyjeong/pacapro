@@ -1,4 +1,4 @@
-import { CheckCircle, FileDown, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { CheckCircle, FileDown, FileSpreadsheet, FilePlus2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page';
 
@@ -14,6 +14,7 @@ interface SalariesHeaderProps {
   onExportPDF: () => void;
   onBulkPay: () => void;
   onReload: () => void;
+  onOpenSalary: () => void;
 }
 
 export function SalariesHeader({
@@ -28,6 +29,7 @@ export function SalariesHeader({
   onExportPDF,
   onBulkPay,
   onReload,
+  onOpenSalary,
 }: SalariesHeaderProps) {
   return (
     <PageHeader
@@ -42,6 +44,10 @@ export function SalariesHeader({
           <Button type="button" variant="outline" onClick={onExportExcel} disabled={exporting}>
             <FileSpreadsheet className="h-4 w-4" />
             {exporting ? '다운로드 중' : '엑셀'}
+          </Button>
+          <Button type="button" variant="outline" onClick={onOpenSalary}>
+            <FilePlus2 className="h-4 w-4" />
+            명세서 만들기
           </Button>
           <Button type="button" onClick={onBulkPay} disabled={bulkPaying || pendingCount === 0}>
             <CheckCircle className="h-4 w-4" />

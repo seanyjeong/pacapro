@@ -62,7 +62,7 @@ module.exports = function(router) {
                      JOIN instructors i ON s.instructor_id = i.id
                      WHERE s.id IN (${placeholders})
                        AND s.payment_status = 'pending'
-                       AND i.academy_id = ?`,
+                       AND i.academy_id = ? FOR UPDATE`,
                     [...salary_ids, req.user.academyId]
                 );
                 salariesToPay = rows;
@@ -74,7 +74,7 @@ module.exports = function(router) {
                      JOIN instructors i ON s.instructor_id = i.id
                      WHERE s.\`year_month\` = ?
                        AND s.payment_status = 'pending'
-                       AND i.academy_id = ?`,
+                       AND i.academy_id = ? FOR UPDATE`,
                     [year_month, req.user.academyId]
                 );
                 salariesToPay = rows;
@@ -173,7 +173,7 @@ module.exports = function(router) {
                 `SELECT s.*, i.academy_id, i.name as instructor_name
                  FROM salary_records s
                  JOIN instructors i ON s.instructor_id = i.id
-                 WHERE s.id = ?`,
+                 WHERE s.id = ? FOR UPDATE`,
                 [salaryId]
             );
 
@@ -192,6 +192,14 @@ module.exports = function(router) {
                 return res.status(403).json({
                     error: 'FORBIDDEN',
                     message: '접근 권한이 없습니다.'
+                });
+            }
+
+            if (salary.payment_status === 'paid') {
+                await connection.rollback();
+                return res.status(400).json({
+                    error: 'SALARY_PAID',
+                    message: '이미 지급 완료된 급여입니다.'
                 });
             }
 

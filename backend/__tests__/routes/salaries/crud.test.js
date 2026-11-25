@@ -136,9 +136,11 @@ describe('GET /paca/salaries/:id', () => {
     ];
     pool.execute
       .mockResolvedValueOnce([[salaryRow]])
-      .mockResolvedValueOnce([attendances]);
+      .mockResolvedValueOnce([attendances])
+      .mockResolvedValueOnce([[]]); // 조정
 
     const res = await request(makeApp()).get('/paca/salaries/10');
+    expect(res.body.adjustments).toEqual([]);
 
     expect(res.status).toBe(200);
     // salary 객체 root 키 보존
@@ -242,103 +244,6 @@ describe('POST /paca/salaries', () => {
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('CREATE_SALARY_FAILED');
     expect(res.body.message).toMatch(/급여 기록 등록에 실패/);
-  });
-});
-
-describe('PUT /paca/salaries/:id', () => {
-  beforeEach(() => resetMocks());
-
-  test('급여 미존재 → 404', async () => {
-    pool.execute.mockResolvedValueOnce([[]]);
-
-    const res = await request(makeApp()).put('/paca/salaries/999').send({ incentive_amount: 100 });
-
-    expect(res.status).toBe(404);
-    expect(res.body.message).toMatch(/급여 기록.*찾을 수 없습니다/);
-  });
-
-  test('다른 학원 → 403 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[{
-      id: 10, base_amount: 1000000, incentive_amount: 0, total_deduction: 0, tax_amount: 33000,
-      academy_id: 999
-    }]]);
-
-    const res = await request(makeApp()).put('/paca/salaries/10').send({ incentive_amount: 100 });
-
-    expect(res.status).toBe(403);
-    expect(res.body.error).toBe('FORBIDDEN');
-    expect(res.body.message).toMatch(/접근 권한이 없습니다/);
-  });
-
-  test('수정할 항목 0개 → 400 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[{
-      id: 10, base_amount: 1000000, incentive_amount: 0, total_deduction: 0, tax_amount: 33000,
-      academy_id: 1
-    }]]);
-
-    const res = await request(makeApp()).put('/paca/salaries/10').send({});
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('VALIDATION_ERROR');
-    expect(res.body.message).toMatch(/수정할 항목이 없습니다/);
-  });
-
-  test('incentive 변경 → net_salary 자동 재계산 + 응답 표면 보존', async () => {
-    const beforeRow = {
-      id: 10, base_amount: 1000000, incentive_amount: 0, total_deduction: 0, tax_amount: 33000,
-      academy_id: 1
-    };
-    const updatedRow = {
-      id: 10, instructor_id: 5, instructor_name: 'enc:홍',
-      year_month: '2026-04', net_salary: 1067000, incentive_amount: 100000
-    };
-    pool.execute
-      .mockResolvedValueOnce([[beforeRow]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE
-      .mockResolvedValueOnce([[updatedRow]]); // SELECT updated
-
-    const res = await request(makeApp()).put('/paca/salaries/10').send({ incentive_amount: 100000 });
-
-    expect(res.status).toBe(200);
-    expect(res.body.message).toMatch(/수정되었습니다/);
-    expect(res.body.salary.id).toBe(10);
-    expect(res.body.salary.instructor_name).toBe('홍'); // decrypted
-
-    // UPDATE SQL 에 net_salary 포함 (자동 재계산)
-    const updateCall = pool.execute.mock.calls[1];
-    expect(updateCall[0]).toMatch(/incentive_amount = \?/);
-    expect(updateCall[0]).toMatch(/net_salary = \?/);
-    // params: [incentive=100000, net_salary, updated_at NOW(), salaryId=10]
-    expect(updateCall[1][0]).toBe(100000);
-    // net_salary = floor((1000000 + 100000 - 0 - 33000)/10)*10 = floor(1067000/10)*10 = 1067000
-    expect(updateCall[1][1]).toBe(1067000);
-    expect(updateCall[1][2]).toBe(10); // salaryId
-  });
-
-  test('payment_status 만 변경 → net_salary 재계산 X', async () => {
-    pool.execute
-      .mockResolvedValueOnce([[{
-        id: 10, base_amount: 1000000, incentive_amount: 0, total_deduction: 0, tax_amount: 33000,
-        academy_id: 1
-      }]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }])
-      .mockResolvedValueOnce([[{ id: 10, instructor_name: 'enc:홍' }]]);
-
-    const res = await request(makeApp()).put('/paca/salaries/10').send({ payment_status: 'paid' });
-
-    expect(res.status).toBe(200);
-    const updateCall = pool.execute.mock.calls[1];
-    expect(updateCall[0]).not.toMatch(/net_salary = \?/);
-  });
-
-  test('5xx 에러 → 한국어', async () => {
-    pool.execute.mockRejectedValueOnce(new Error('Lock wait'));
-
-    const res = await request(makeApp()).put('/paca/salaries/10').send({ incentive_amount: 100 });
-
-    expect(res.status).toBe(500);
-    expect(res.body.error).toBe('UPDATE_SALARY_FAILED');
-    expect(res.body.message).toMatch(/수정에 실패/);
   });
 });
 

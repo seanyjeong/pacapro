@@ -36,6 +36,7 @@ const router = express.Router();
 
 require('./payment')(router);
 require('./calculation')(router);
+require('./amounts')(router);
 require('./crud')(router);
 
 module.exports = router;

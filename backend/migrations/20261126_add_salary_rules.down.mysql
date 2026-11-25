@@ -1,0 +1,5 @@
+-- Roll back the code first. 조정·규칙·분할 일정이 지워진다. salary_records 의 기존 금액 칸은 그대로 남는다.
+ALTER TABLE salary_records DROP COLUMN calculation_details, DROP COLUMN base_override, DROP COLUMN adjustment_amount;
+DROP TABLE IF EXISTS pay_rule_installments;
+DROP TABLE IF EXISTS instructor_pay_rules;
+DROP TABLE IF EXISTS salary_adjustments;

@@ -22,6 +22,7 @@ import { InstructorSalaries } from '@/components/instructors/instructor-salaries
 import { InstructorPageHeader } from '@/features/instructors/instructor-page-header';
 import { InstructorInitial, InstructorStatusBadge } from '@/features/instructors/instructor-badges';
 import { INSTRUCTOR_TYPE_LABELS, SALARY_TYPE_LABELS } from '@/lib/types/instructor';
+import { InstructorPayRulesSection } from '@/features/pay-rules/instructor-pay-rules-section';
 import { InstructorWorkCalendar } from '@/features/instructors/instructor-work-calendar';
 import { InstructorErrorPanel, InstructorLoadingPanel } from '@/features/instructors/instructor-page-states';
 import { useDeleteInstructor, useInstructor } from '@/hooks/use-instructors';
@@ -127,6 +128,7 @@ export default function InstructorDetailPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <div className="order-2 min-w-0 space-y-4 xl:order-1">
+          <InstructorPayRulesSection instructorId={instructorId} salaryType={instructor.salary_type} onChanged={reload} />
           <InstructorWorkCalendar instructorId={instructorId} />
           <InstructorAttendanceComponent attendances={attendances} loading={false} />
           <InstructorSalaries salaries={salaries} loading={false} />

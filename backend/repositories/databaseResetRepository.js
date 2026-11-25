@@ -24,6 +24,12 @@ const ACADEMY_DELETE_QUERIES = [
     ],
     ['student_payments', 'DELETE FROM student_payments WHERE academy_id = ?'],
     ['instructor_schedules', 'DELETE FROM instructor_schedules WHERE academy_id = ?'],
+    [
+        'instructor_pay_rules',
+        `DELETE pr FROM instructor_pay_rules pr
+         JOIN instructors i ON i.id = pr.instructor_id
+         WHERE i.academy_id = ?`,
+    ],
     ['overtime_approvals', 'DELETE FROM overtime_approvals WHERE academy_id = ?'],
     ['class_schedules', 'DELETE FROM class_schedules WHERE academy_id = ?'],
     ['students', 'DELETE FROM students WHERE academy_id = ?'],
