@@ -13,6 +13,7 @@ import { StudentSeasonCancelDialog } from './student-season-cancel-dialog';
 import { StudentSeasonHistoryCard } from './student-season-history-card';
 import { StudentSeasonEditModal, StudentSeasonEnrollModal } from './student-season-modals';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
+import { apiErrorMessage } from '@/features/pay-rules/pay-rule-utils';
 
 const EMPTY_EDIT_DATA = {
   registration_date: '',
@@ -25,9 +26,10 @@ interface StudentSeasonsProps {
   studentId: number;
   studentType: 'exam' | 'adult';
   branchId?: number | null; // 학생 지점. 다른 지점 시즌은 등록 후보에서 뺀다
+  onEnrolled?: () => void; // 등록 뒤 학생 정보 다시 읽기(예비생은 재원이 된다)
 }
 
-export function StudentSeasonsComponent({ studentId, studentType, branchId = null }: StudentSeasonsProps) {
+export function StudentSeasonsComponent({ studentId, studentType, branchId = null, onEnrolled }: StudentSeasonsProps) {
   const [enrollments, setEnrollments] = useState<StudentSeason[]>([]);
   const [activeSeasons, setActiveSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,9 +162,10 @@ export function StudentSeasonsComponent({ studentId, studentType, branchId = nul
       toast.success('시즌 등록이 완료되었습니다.');
       closeEnrollModal();
       loadData();
+      onEnrolled?.();
     } catch (err: unknown) {
       console.warn('시즌 등록에 실패했습니다.', err);
-      toast.error('시즌 등록을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error(apiErrorMessage(err, '시즌 등록을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setEnrolling(false);
     }

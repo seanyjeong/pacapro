@@ -301,8 +301,10 @@ async function applySeasonEnrollment(conn, { season, seasonId, student, studentI
         enrollmentId = result.insertId;
     }
 
+    // 예비생은 재원으로 바꾼다. 시즌 규칙(시즌비 청구·시즌 수업 배정)만 따르고 월 학원비 청구·정규 수업은 만들지 않는다
     await conn.execute(
-        `UPDATE students SET is_season_registered = true, current_season_id = ? WHERE id = ?`,
+        `UPDATE students SET is_season_registered = true, current_season_id = ?,
+            status = IF(status = 'prospect', 'active', status) WHERE id = ?`,
         [seasonId, studentId]
     );
 

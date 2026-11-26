@@ -163,7 +163,7 @@ export function StudentDetailPage() {
                 onChanged={reload}
               />
             ) : null}
-            {resolvedActiveTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} branchId={student.branch_id ?? null} /> : null}
+            {resolvedActiveTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} branchId={student.branch_id ?? null} onEnrolled={reload} /> : null}
             {resolvedActiveTab === 'consultations' ? <StudentConsultationsComponent studentId={studentId} studentName={student.name} /> : null}
           </div>
         </SectionCard>
